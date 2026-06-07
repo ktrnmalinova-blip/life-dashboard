@@ -1,0 +1,490 @@
+<!-- journal.html -->
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>Life Dashboard — Дневник</title>
+    <link rel="stylesheet" href="styles.css">
+    <style>
+        /* === МОДУЛЬ ДНЕВНИКА === */
+        .calendar-container { margin-bottom: 24px; background: var(--bg-card); padding: 16px; border-radius: var(--radius-lg); box-shadow: var(--shadow-card); }
+        .calendar-month { text-align: center; font-size: 1.1rem; font-weight: 700; margin-bottom: 14px; text-transform: capitalize; }
+        
+        .calendar-weekdays { display: grid; grid-template-columns: repeat(7, 1fr); gap: 4px; margin-bottom: 8px; }
+        .calendar-weekdays span { text-align: center; font-size: 0.7rem; font-weight: 600; color: var(--text-muted); }
+
+        .calendar-grid { display: grid; grid-template-columns: repeat(7, 1fr); gap: 6px; }
+        .cal-day {
+            aspect-ratio: 1/1; background: var(--bg-input); border-radius: var(--radius-sm);
+            display: flex; flex-direction: column; align-items: center; justify-content: center;
+            cursor: pointer; position: relative; transition: var(--transition); border: 1px solid transparent;
+            overflow: hidden;
+        }
+        .cal-day:hover { border-color: var(--accent); background: var(--bg-card); }
+        .cal-day--today { background: rgba(108, 99, 255, 0.2); border-color: var(--accent); color: var(--accent); font-weight: 700; }
+        .cal-day--empty { background: transparent; cursor: default; border-color: transparent; }
+        .cal-day__num { font-size: 0.85rem; z-index: 2; }
+        .cal-day__media { position: absolute; inset: 0; display: flex; align-items: center; justify-content: center; font-size: 1.2rem; }
+        .cal-day__media img { width: 100%; height: 100%; object-fit: cover; opacity: 0.7; }
+        .cal-day__icon { font-size: 1rem; z-index: 2; }
+
+        /* NOTES LIST */
+        .notes-section-title { font-size: 1.1rem; font-weight: 700; margin: 24px 0 12px; display: flex; align-items: center; gap: 8px; }
+        .notes-list { display: flex; flex-direction: column; gap: 12px; margin-bottom: 80px; }
+        .note-card {
+            background: var(--bg-card); border-radius: var(--radius-md); padding: 14px;
+            border: 1px solid var(--border-color); animation: slideIn 0.25s ease;
+        }
+        .note-card__header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 8px; }
+        .note-card__date { font-size: 0.9rem; font-weight: 700; color: var(--accent); }
+        .note-card__mood { font-size: 1.3rem; }
+        .note-card__text { font-size: 0.9rem; color: var(--text-secondary); margin-bottom: 10px; white-space: pre-wrap; line-height: 1.5; }
+        .note-card__media { display: grid; grid-template-columns: repeat(auto-fill, minmax(80px, 1fr)); gap: 6px; margin-top: 8px; }
+        .note-media-item { aspect-ratio: 1/1; border-radius: var(--radius-sm); overflow: hidden; background: #000; position: relative; }
+        .note-media-item img, .note-media-item video { width: 100%; height: 100%; object-fit: cover; display: block; }
+        .note-media-item audio { width: 100%; height: 32px; }
+        .note-media-item__badge { position: absolute; bottom: 4px; left: 4px; background: rgba(0,0,0,0.7); color: #fff; padding: 2px 5px; border-radius: 3px; font-size: 0.65rem; }
+        .note-card__delete { margin-top: 10px; background: none; border: none; color: var(--text-muted); font-size: 0.8rem; cursor: pointer; padding: 6px 10px; border-radius: var(--radius-sm); transition: var(--transition); }
+        .note-card__delete:hover { background: rgba(248, 113, 113, 0.1); color: var(--danger); }
+
+        /* SLIDE-UP EDITOR */
+        .editor-overlay { position: fixed; inset: 0; background: rgba(0,0,0,0.6); z-index: 140; opacity: 0; pointer-events: none; transition: opacity 0.3s ease; }
+        .editor-overlay.active { opacity: 1; pointer-events: auto; }
+
+        .editor-panel {
+            position: fixed; bottom: 0; left: 0; right: 0; background: var(--bg-secondary);
+            border-radius: var(--radius-lg) var(--radius-lg) 0 0; padding: 24px 16px 32px;
+            transform: translateY(100%); transition: transform 0.35s cubic-bezier(0.2, 0.8, 0.2, 1);
+            z-index: 150; box-shadow: 0 -6px 24px rgba(0,0,0,0.5); max-height: 90vh; overflow-y: auto;
+        }
+        .editor-panel.open { transform: translateY(0); }
+        .editor-content { max-width: 500px; margin: 0 auto; }
+        
+        .editor-header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 18px; }
+        .editor-date { font-size: 1.15rem; font-weight: 700; }
+        .editor-close { background: var(--bg-input); border: none; color: var(--text-secondary); width: 36px; height: 36px; border-radius: 50%; cursor: pointer; font-size: 1.2rem; transition: var(--transition); }
+        .editor-close:hover { background: var(--danger); color: #fff; }
+
+        .mood-selector { display: flex; justify-content: space-between; margin-bottom: 16px; }
+        .mood-btn {
+            font-size: 2rem; background: transparent; border: 2px solid transparent;
+            width: 50px; height: 50px; border-radius: 50%; cursor: pointer;
+            transition: var(--transition); display: flex; align-items: center; justify-content: center;
+        }
+        .mood-btn:hover { background: var(--bg-card); }
+        .mood-btn.selected { border-color: var(--accent); background: rgba(108, 99, 255, 0.15); transform: scale(1.15); }
+
+        .media-toolbar { display: flex; gap: 8px; margin-bottom: 12px; flex-wrap: wrap; }
+        .media-btn {
+            flex: 1; min-width: 85px; padding: 10px; background: var(--bg-input);
+            border: 1px solid var(--border-color); color: var(--text-secondary);
+            border-radius: var(--radius-sm); font-size: 0.85rem; cursor: pointer;
+            display: flex; align-items: center; justify-content: center; gap: 6px;
+            transition: var(--transition);
+        }
+        .media-btn:hover { border-color: var(--accent); color: var(--accent); }
+        .media-btn.recording { background: var(--danger); border-color: var(--danger); color: #fff; animation: pulse 1.5s infinite; }
+        @keyframes pulse { 0%, 100% { transform: scale(1); } 50% { transform: scale(1.05); } }
+
+        .media-preview { display: flex; gap: 6px; flex-wrap: wrap; margin-bottom: 12px; }
+        .preview-item { width: 60px; height: 60px; border-radius: var(--radius-sm); overflow: hidden; background: var(--bg-input); position: relative; border: 1px solid var(--border-color); }
+        .preview-item img, .preview-item video, .preview-item audio { width: 100%; height: 100%; object-fit: cover; display: block; }
+        .preview-item audio { object-fit: contain; background: #000; height: 100%; }
+        .preview-item .remove-preview { position: absolute; top: 2px; right: 2px; width: 18px; height: 18px; background: rgba(0,0,0,0.8); color: #fff; border: none; border-radius: 50%; cursor: pointer; font-size: 0.65rem; display: flex; align-items: center; justify-content: center; z-index: 2; }
+
+        .note-textarea {
+            width: 100%; min-height: 100px; background: var(--bg-input); border: 1px solid var(--border-color);
+            color: var(--text-primary); padding: 12px; border-radius: var(--radius-md); font-size: 0.95rem;
+            resize: none; margin-bottom: 14px; font-family: inherit; transition: var(--transition);
+        }
+        .note-textarea:focus { border-color: var(--accent); outline: none; box-shadow: 0 0 0 3px rgba(108, 99, 255, 0.2); }
+
+        .btn--full { width: 100%; height: 46px; font-size: 1rem; letter-spacing: 0.3px; }
+    </style>
+</head>
+<body>
+
+<div class="app-container">
+    <header class="header">
+        <div class="header__title">📖 Дневник</div>
+        <div class="header__date" id="headerDate"></div>
+    </header>
+
+    <main class="main">
+        <div class="calendar-container">
+            <div class="calendar-month" id="calendarMonth"></div>
+            <div class="calendar-weekdays">
+                <span>Пн</span><span>Вт</span><span>Ср</span><span>Чт</span><span>Пт</span><span>Сб</span><span>Вс</span>
+            </div>
+            <div class="calendar-grid" id="calendarGrid"></div>
+        </div>
+
+        <h2 class="notes-section-title">📝 Записи</h2>
+        <div class="notes-list" id="notesList"></div>
+        <div class="empty-state" id="notesEmpty" style="display: none;">
+            <span class="empty-state__icon">✍️</span>
+            <p>Записей пока нет. Выберите дату в календаре!</p>
+        </div>
+    </main>
+
+    <nav class="bottom-nav">
+        <a href="tasks.html" class="nav-btn"><span class="nav-btn__icon">📋</span><span class="nav-btn__label">Задачи</span></a>
+        <a href="journal.html" class="nav-btn active"><span class="nav-btn__icon">📖</span><span class="nav-btn__label">Дневник</span></a>
+        <a href="habits.html" class="nav-btn"><span class="nav-btn__icon">🎯</span><span class="nav-btn__label">Привычки</span></a>
+        <a href="finance.html" class="nav-btn"><span class="nav-btn__icon">💰</span><span class="nav-btn__label">Финансы</span></a>
+        <a href="health.html" class="nav-btn"><span class="nav-btn__icon">❤️</span><span class="nav-btn__label">Здоровье</span></a>
+    </nav>
+
+    <!-- Редактор заметки -->
+    <div class="editor-overlay" id="editorOverlay"></div>
+    <div class="editor-panel" id="editorPanel">
+        <div class="editor-content">
+            <div class="editor-header">
+                <span class="editor-date" id="editorDate"></span>
+                <button class="editor-close" id="editorClose">✕</button>
+            </div>
+            <div class="mood-selector">
+                <button class="mood-btn" data-mood="😊">😊</button>
+                <button class="mood-btn" data-mood="😐">😐</button>
+                <button class="mood-btn" data-mood="😢">😢</button>
+                <button class="mood-btn" data-mood="😡">😡</button>
+                <button class="mood-btn" data-mood="🤩">🤩</button>
+            </div>
+            <div class="media-toolbar">
+                <button class="media-btn" id="btnPhoto">📷 Фото</button>
+                <button class="media-btn" id="btnVideo">🎥 Видео</button>
+                <button class="media-btn" id="btnAudio">🎤 Голос</button>
+            </div>
+            <div class="media-preview" id="mediaPreview"></div>
+            <textarea id="noteText" class="note-textarea" placeholder="Запишите, как прошёл этот день..."></textarea>
+            <button id="saveNoteBtn" class="btn btn--primary btn--full">Сохранить</button>
+        </div>
+    </div>
+
+    <input type="file" id="fileInput" accept="image/*,video/*" hidden>
+</div>
+
+<script>
+    (function() {
+        const STORAGE_KEY = 'ld_notes';
+        let data = JSON.parse(localStorage.getItem(STORAGE_KEY)) || { notes: [] };
+        let notes = data.notes;
+        let viewDate = new Date();
+        let selectedDate = null;
+        let currentMood = '';
+        let pendingMedia = [];
+        let mediaRecorder = null;
+        let audioChunks = [];
+        let isRecording = false;
+
+        const els = {
+            headerDate: document.getElementById('headerDate'),
+            calMonth: document.getElementById('calendarMonth'),
+            calGrid: document.getElementById('calendarGrid'),
+            notesList: document.getElementById('notesList'),
+            notesEmpty: document.getElementById('notesEmpty'),
+            overlay: document.getElementById('editorOverlay'),
+            panel: document.getElementById('editorPanel'),
+            editorDate: document.getElementById('editorDate'),
+            noteText: document.getElementById('noteText'),
+            saveBtn: document.getElementById('saveNoteBtn'),
+            closeBtn: document.getElementById('editorClose'),
+            moodBtns: document.querySelectorAll('.mood-btn'),
+            preview: document.getElementById('mediaPreview'),
+            fileInput: document.getElementById('fileInput'),
+            btnPhoto: document.getElementById('btnPhoto'),
+            btnVideo: document.getElementById('btnVideo'),
+            btnAudio: document.getElementById('btnAudio')
+        };
+
+        els.headerDate.textContent = new Date().toLocaleDateString('ru-RU', { weekday: 'short', day: 'numeric', month: 'long' });
+
+        function toLocalStr(date) {
+            const y = date.getFullYear();
+            const m = String(date.getMonth() + 1).padStart(2, '0');
+            const d = String(date.getDate()).padStart(2, '0');
+            return `${y}-${m}-${d}`;
+        }
+
+        function saveData() {
+            try {
+                localStorage.setItem(STORAGE_KEY, JSON.stringify({ notes }));
+                return true;
+            } catch (e) {
+                if (e.name === 'QuotaExceededError') {
+                    alert('⚠️ Хранилище заполнено. Удалите старые записи или уменьшите размер медиа.');
+                }
+                return false;
+            }
+        }
+
+        // Сжатие изображения
+        function compressImage(file, callback) {
+            const reader = new FileReader();
+            reader.onload = function(e) {
+                const img = new Image();
+                img.onload = function() {
+                    const canvas = document.createElement('canvas');
+                    const MAX = 600;
+                    const scale = Math.min(1, MAX / img.width, MAX / img.height);
+                    canvas.width = img.width * scale;
+                    canvas.height = img.height * scale;
+                    canvas.getContext('2d').drawImage(img, 0, 0, canvas.width, canvas.height);
+                    callback(canvas.toDataURL('image/jpeg', 0.65));
+                };
+                img.src = e.target.result;
+            };
+            reader.readAsDataURL(file);
+        }
+
+        function renderPreview() {
+            els.preview.innerHTML = '';
+            pendingMedia.forEach((m, i) => {
+                const div = document.createElement('div');
+                div.className = 'preview-item';
+                let content = '';
+                if (m.type === 'image') content = `<img src="${m.src}">`;
+                else if (m.type === 'video') content = `<video src="${m.src}"></video>`;
+                else content = `<audio src="${m.src}"></audio>`;
+                div.innerHTML = `${content}<button class="remove-preview" data-idx="${i}">✕</button>`;
+                els.preview.appendChild(div);
+            });
+        }
+
+        function addMediaItem(src, type) {
+            pendingMedia.push({ src, type });
+            renderPreview();
+        }
+
+        // Кнопки медиа
+        els.btnPhoto.addEventListener('click', () => { els.fileInput.accept = 'image/*'; els.fileInput.click(); });
+        els.btnVideo.addEventListener('click', () => { els.fileInput.accept = 'video/*'; els.fileInput.click(); });
+
+        els.fileInput.addEventListener('change', (e) => {
+            const file = e.target.files[0];
+            if (!file) return;
+
+            if (file.type.startsWith('image/')) {
+                compressImage(file, (base64) => addMediaItem(base64, 'image'));
+            } else if (file.type.startsWith('video/')) {
+                if (file.size > 1.5 * 1024 * 1024) {
+                    alert('📹 Видео слишком большое (>1.5МБ). Используйте фото для экономии места.');
+                    e.target.value = '';
+                    return;
+                }
+                const reader = new FileReader();
+                reader.onload = (ev) => addMediaItem(ev.target.result, 'video');
+                reader.readAsDataURL(file);
+            }
+            e.target.value = '';
+        });
+
+        // Запись аудио
+        els.btnAudio.addEventListener('click', async () => {
+            if (!isRecording) {
+                try {
+                    if (!navigator.mediaDevices || !navigator.mediaDevices.getUserMedia) {
+                        throw new Error('MediaDevices не поддерживается');
+                    }
+                    const stream = await navigator.mediaDevices.getUserMedia({ audio: true });
+                    mediaRecorder = new MediaRecorder(stream);
+                    audioChunks = [];
+                    mediaRecorder.ondataavailable = e => { if (e.data.size > 0) audioChunks.push(e.data); };
+                    mediaRecorder.onstop = () => {
+                        const blob = new Blob(audioChunks, { type: 'audio/webm' });
+                        const reader = new FileReader();
+                        reader.onload = (ev) => addMediaItem(ev.target.result, 'audio');
+                        reader.readAsDataURL(blob);
+                        stream.getTracks().forEach(t => t.stop());
+                        isRecording = false;
+                        els.btnAudio.classList.remove('recording');
+                        els.btnAudio.textContent = '🎤 Голос';
+                    };
+                    mediaRecorder.start();
+                    isRecording = true;
+                    els.btnAudio.classList.add('recording');
+                    els.btnAudio.textContent = '⏹ Остановить';
+                } catch (err) {
+                    alert('🎤 Нет доступа к микрофону. Требуется HTTPS или localhost.');
+                }
+            } else {
+                if (mediaRecorder && mediaRecorder.state !== 'inactive') {
+                    mediaRecorder.stop();
+                }
+            }
+        });
+
+        els.preview.addEventListener('click', (e) => {
+            if (e.target.classList.contains('remove-preview')) {
+                const idx = parseInt(e.target.dataset.idx);
+                pendingMedia.splice(idx, 1);
+                renderPreview();
+            }
+        });
+
+        // Рендер календаря
+        function renderCalendar() {
+            els.calMonth.textContent = new Intl.DateTimeFormat('ru-RU', { month: 'long', year: 'numeric' }).format(viewDate);
+            const year = viewDate.getFullYear();
+            const month = viewDate.getMonth();
+            const firstDayOfWeek = (new Date(year, month, 1).getDay() + 6) % 7;
+            const daysInMonth = new Date(year, month + 1, 0).getDate();
+            const todayStr = toLocalStr(new Date());
+
+            els.calGrid.innerHTML = '';
+
+            for (let i = 0; i < firstDayOfWeek; i++) {
+                els.calGrid.appendChild(document.createElement('div')).className = 'cal-day cal-day--empty';
+            }
+
+            for (let d = 1; d <= daysInMonth; d++) {
+                const dateStr = `${year}-${String(month + 1).padStart(2, '0')}-${String(d).padStart(2, '0')}`;
+                const isToday = dateStr === todayStr;
+                const note = notes.find(n => n.date === dateStr);
+
+                const dayEl = document.createElement('div');
+                dayEl.className = `cal-day${isToday ? ' cal-day--today' : ''}`;
+                
+                let mediaContent = '';
+                if (note && note.media && note.media.length > 0) {
+                    const firstMedia = note.media[0];
+                    if (firstMedia.type === 'image') {
+                        mediaContent = `<div class="cal-day__media"><img src="${firstMedia.src}" alt=""></div>`;
+                    } else if (firstMedia.type === 'video') {
+                        mediaContent = `<div class="cal-day__media"><span class="cal-day__icon">🎥</span></div>`;
+                    } else {
+                        mediaContent = `<div class="cal-day__media"><span class="cal-day__icon">🎤</span></div>`;
+                    }
+                }
+
+                dayEl.innerHTML = `
+                    <span class="cal-day__num">${d}</span>
+                    ${mediaContent}
+                `;
+                dayEl.addEventListener('click', () => openEditor(dateStr));
+                els.calGrid.appendChild(dayEl);
+            }
+        }
+
+        // Рендер списка записей
+        function renderNotesList() {
+            els.notesList.innerHTML = '';
+            const sorted = [...notes].sort((a, b) => new Date(a.date) - new Date(b.date)); // Старые снизу
+            
+            if (sorted.length === 0) {
+                els.notesEmpty.style.display = 'block';
+                return;
+            }
+            els.notesEmpty.style.display = 'none';
+
+            sorted.forEach(note => {
+                const card = document.createElement('div');
+                card.className = 'note-card';
+                
+                const dateObj = new Date(note.date + 'T00:00:00');
+                const dateStr = dateObj.toLocaleDateString('ru-RU', { day: 'numeric', month: 'long', year: 'numeric' });
+                
+                let mediaHtml = '';
+                if (note.media && note.media.length > 0) {
+                    mediaHtml = '<div class="note-card__media">' + 
+                        note.media.map(m => {
+                            if (m.type === 'image') return `<div class="note-media-item"><img src="${m.src}" loading="lazy"></div>`;
+                            if (m.type === 'video') return `<div class="note-media-item"><video controls src="${m.src}"></video></div>`;
+                            return `<div class="note-media-item"><audio controls src="${m.src}"></audio><span class="note-media-item__badge">🎤</span></div>`;
+                        }).join('') + '</div>';
+                }
+
+                card.innerHTML = `
+                    <div class="note-card__header">
+                        <span class="note-card__date">${dateStr}</span>
+                        <span class="note-card__mood">${note.mood || ''}</span>
+                    </div>
+                    ${note.text ? `<div class="note-card__text">${escapeHtml(note.text)}</div>` : ''}
+                    ${mediaHtml}
+                    <button class="note-card__delete" data-date="${note.date}">🗑 Удалить запись</button>
+                `;
+                els.notesList.appendChild(card);
+            });
+        }
+
+        function escapeHtml(str) {
+            const div = document.createElement('div'); div.textContent = str; return div.innerHTML;
+        }
+
+        // Открытие редактора
+        function openEditor(dateStr) {
+            selectedDate = dateStr;
+            const existing = notes.find(n => n.date === dateStr);
+            const dateObj = new Date(dateStr + 'T00:00:00');
+            els.editorDate.textContent = dateObj.toLocaleDateString('ru-RU', { day: 'numeric', month: 'long' });
+            els.noteText.value = existing ? existing.text : '';
+            currentMood = existing ? existing.mood : '';
+            pendingMedia = existing && existing.media ? [...existing.media] : [];
+
+            els.moodBtns.forEach(btn => btn.classList.toggle('selected', btn.dataset.mood === currentMood));
+            renderPreview();
+            
+            els.overlay.classList.add('active');
+            els.panel.classList.add('open');
+            setTimeout(() => els.noteText.focus(), 100);
+        }
+
+        function closeEditor() {
+            els.panel.classList.remove('open');
+            els.overlay.classList.remove('active');
+            selectedDate = null;
+            pendingMedia = [];
+            renderPreview();
+        }
+
+        els.moodBtns.forEach(btn => {
+            btn.addEventListener('click', () => {
+                currentMood = btn.dataset.mood;
+                els.moodBtns.forEach(b => b.classList.remove('selected'));
+                btn.classList.add('selected');
+            });
+        });
+
+        els.saveBtn.addEventListener('click', () => {
+            if (!selectedDate) return;
+            const text = els.noteText.value.trim();
+            if (!text && !currentMood && pendingMedia.length === 0) { closeEditor(); return; }
+
+            const idx = notes.findIndex(n => n.date === selectedDate);
+            const newNote = { date: selectedDate, mood: currentMood, text, media: [...pendingMedia] };
+            
+            if (idx !== -1) notes[idx] = newNote;
+            else notes.push(newNote);
+
+            if (saveData()) {
+                renderCalendar();
+                renderNotesList();
+                closeEditor();
+            }
+        });
+
+        els.closeBtn.addEventListener('click', closeEditor);
+        els.overlay.addEventListener('click', closeEditor);
+
+        // Удаление записи из списка
+        els.notesList.addEventListener('click', (e) => {
+            const btn = e.target.closest('.note-card__delete');
+            if (btn) {
+                if (confirm('Удалить эту запись?')) {
+                    const date = btn.dataset.date;
+                    notes = notes.filter(n => n.date !== date);
+                    saveData();
+                    renderCalendar();
+                    renderNotesList();
+                }
+            }
+        });
+
+        // Инициализация
+        renderCalendar();
+        renderNotesList();
+    })();
+</script>
+</body>
+</html>

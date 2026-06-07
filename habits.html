@@ -1,0 +1,228 @@
+<!-- habits.html -->
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>Life Dashboard — Привычки</title>
+    <link rel="stylesheet" href="styles.css">
+    <style>
+        /* === МОДУЛЬ ПРИВЫЧЕК === */
+        .habits-input-row { display: flex; gap: 10px; margin-bottom: 24px; }
+        .habits-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fill, minmax(135px, 1fr));
+            gap: 14px;
+            margin-bottom: 24px;
+        }
+        .habit-card {
+            aspect-ratio: 1/1;
+            background: var(--bg-input);
+            border: 2px solid var(--border-color);
+            border-radius: var(--radius-md);
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            padding: 14px;
+            cursor: pointer;
+            transition: var(--transition);
+            position: relative;
+            user-select: none;
+            overflow: hidden;
+        }
+        .habit-card:hover { border-color: var(--text-muted); transform: translateY(-3px); }
+        .habit-card:active { transform: scale(0.97); }
+        
+        .habit-card--done {
+            background: rgba(52, 211, 153, 0.12);
+            border-color: var(--success);
+            box-shadow: 0 0 16px rgba(52, 211, 153, 0.2);
+        }
+        .habit-card--done .habit-card__name { color: var(--success); }
+        
+        .habit-card__check { font-size: 2.2rem; margin-bottom: 8px; transition: var(--transition); }
+        .habit-card--done .habit-card__check { transform: scale(1.15) rotate(10deg); }
+        
+        .habit-card__name {
+            font-size: 0.9rem; font-weight: 600; text-align: center;
+            line-height: 1.3; word-break: break-word; margin-bottom: 4px;
+        }
+        .habit-card__streak {
+            position: absolute; top: 8px; right: 8px;
+            font-size: 0.75rem; font-weight: 700;
+            background: rgba(255,255,255,0.08); padding: 3px 7px;
+            border-radius: var(--radius-sm); color: var(--text-secondary);
+        }
+        .habit-card--done .habit-card__streak { color: #fff; background: rgba(52, 211, 153, 0.3); }
+        
+        .habit-card__delete {
+            position: absolute; bottom: 8px; right: 8px;
+            background: none; border: none; color: var(--text-muted);
+            cursor: pointer; font-size: 1rem; opacity: 0.4;
+            transition: var(--transition); padding: 4px;
+        }
+        .habit-card__delete:hover { opacity: 1; color: var(--danger); }
+        
+        .habits-stats {
+            text-align: center; font-size: 0.85rem; color: var(--text-secondary);
+            padding: 12px; background: var(--bg-card); border-radius: var(--radius-sm);
+            border: 1px solid var(--border-color);
+        }
+    </style>
+</head>
+<body>
+
+<div class="app-container">
+    <header class="header">
+        <div class="header__title">🎯 Привычки</div>
+        <div class="header__date" id="headerDate"></div>
+    </header>
+
+    <main class="main">
+        <div class="habits-input-row">
+            <input type="text" id="habitInput" class="input" placeholder="Новая привычка..." maxlength="40" autocomplete="off">
+            <button id="habitAddBtn" class="btn btn--primary">+</button>
+        </div>
+
+        <div class="habits-grid" id="habitsGrid"></div>
+        <div class="empty-state" id="habitEmpty" style="display: none;">
+            <span class="empty-state__icon">🌱</span>
+            <p>Добавьте привычку для отслеживания</p>
+        </div>
+        <div class="habits-stats" id="habitStats"></div>
+    </main>
+
+    <nav class="bottom-nav">
+        <a href="tasks.html" class="nav-btn"><span class="nav-btn__icon">📋</span><span class="nav-btn__label">Задачи</span></a>
+        <a href="journal.html" class="nav-btn"><span class="nav-btn__icon">📖</span><span class="nav-btn__label">Дневник</span></a>
+        <a href="habits.html" class="nav-btn active"><span class="nav-btn__icon">🎯</span><span class="nav-btn__label">Привычки</span></a>
+        <a href="finance.html" class="nav-btn"><span class="nav-btn__icon">💰</span><span class="nav-btn__label">Финансы</span></a>
+        <a href="health.html" class="nav-btn"><span class="nav-btn__icon">❤️</span><span class="nav-btn__label">Здоровье</span></a>
+    </nav>
+</div>
+
+<script>
+    (function() {
+        const STORAGE_KEY = 'ld_habits';
+        let data = JSON.parse(localStorage.getItem(STORAGE_KEY)) || { habits: [] };
+        let habits = data.habits;
+
+        function getTodayStr() { return new Date().toISOString().split('T')[0]; }
+
+        function calculateStreak(dates) {
+            if (!dates || dates.length === 0) return 0;
+            const today = new Date(); today.setHours(0,0,0,0);
+            const todayStr = today.toISOString().split('T')[0];
+            const sorted = dates.map(d => d.split('T')[0]).sort().reverse();
+            
+            let streak = 0;
+            let checkDate = new Date(today);
+            
+            // Если сегодня выполнено, стартуем с сегодняшнего дня
+            if (sorted.includes(todayStr)) {
+                streak = 1;
+                checkDate.setDate(checkDate.getDate() - 1);
+            }
+            
+            // Идём назад по дням
+            for (const d of sorted) {
+                const expected = checkDate.toISOString().split('T')[0];
+                if (d === expected) {
+                    streak++;
+                    checkDate.setDate(checkDate.getDate() - 1);
+                } else if (new Date(d) < checkDate) {
+                    break; // Разрыв в серии
+                }
+            }
+            return streak;
+        }
+
+        function save() {
+            localStorage.setItem(STORAGE_KEY, JSON.stringify({ habits }));
+        }
+
+        function render() {
+            const grid = document.getElementById('habitsGrid');
+            const empty = document.getElementById('habitEmpty');
+            const stats = document.getElementById('habitStats');
+            grid.innerHTML = '';
+
+            const today = getTodayStr();
+            let completedCount = 0;
+
+            habits.forEach(h => {
+                const isDone = h.completedDates.includes(today);
+                const streak = calculateStreak(h.completedDates);
+                if (isDone) completedCount++;
+
+                const card = document.createElement('div');
+                card.className = `habit-card${isDone ? ' habit-card--done' : ''}`;
+                card.innerHTML = `
+                    <span class="habit-card__streak">${streak > 0 ? '🔥 ' + streak : ''}</span>
+                    <span class="habit-card__check">${isDone ? '✅' : '⬜'}</span>
+                    <span class="habit-card__name">${h.name}</span>
+                    <button class="habit-card__delete" data-id="${h.id}" title="Удалить привычку">✕</button>
+                `;
+                
+                card.addEventListener('click', (e) => {
+                    if (e.target.classList.contains('habit-card__delete')) return;
+                    toggleHabit(h.id);
+                });
+                grid.appendChild(card);
+            });
+
+            empty.style.display = habits.length === 0 ? 'block' : 'none';
+            stats.textContent = habits.length > 0 
+                ? `Выполнено сегодня: ${completedCount} из ${habits.length}` 
+                : '';
+        }
+
+        function toggleHabit(id) {
+            const today = getTodayStr();
+            const h = habits.find(x => x.id === id);
+            if (!h) return;
+
+            const idx = h.completedDates.indexOf(today);
+            if (idx === -1) h.completedDates.push(today);
+            else h.completedDates.splice(idx, 1);
+            
+            save();
+            render();
+        }
+
+        // Добавление привычки
+        document.getElementById('habitAddBtn').addEventListener('click', () => {
+            const input = document.getElementById('habitInput');
+            const name = input.value.trim();
+            if (!name) { input.focus(); return; }
+            
+            habits.push({ id: Date.now(), name, completedDates: [] });
+            save();
+            input.value = '';
+            render();
+            input.focus();
+        });
+        document.getElementById('habitInput').addEventListener('keypress', (e) => {
+            if (e.key === 'Enter') document.getElementById('habitAddBtn').click();
+        });
+
+        // Удаление привычки
+        document.getElementById('habitsGrid').addEventListener('click', (e) => {
+            if (e.target.classList.contains('habit-card__delete')) {
+                if (confirm('Удалить эту привычку?')) {
+                    const id = Number(e.target.dataset.id);
+                    habits = habits.filter(h => h.id !== id);
+                    save(); render();
+                }
+            }
+        });
+
+        // Дата в хедере
+        document.getElementById('headerDate').textContent = new Date().toLocaleDateString('ru-RU', { weekday: 'short', day: 'numeric', month: 'long' });
+
+        render();
+    })();
+</script>
+</body>
+</html>

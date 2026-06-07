@@ -1,0 +1,50 @@
+<!-- index.html -->
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>Life Dashboard</title>
+    <link rel="stylesheet" href="styles.css">
+</head>
+<body>
+<div class="app-container">
+    <header class="header">
+        <div class="header__title">Life Dashboard</div>
+        <div class="header__date" id="headerDate"></div>
+    </header>
+    <main class="main">
+        <div class="empty-state">
+            <span class="empty-state__icon">📱</span>
+            <p>Выберите раздел в меню снизу</p>
+        </div>
+    </main>
+    <nav class="bottom-nav">
+        <a href="tasks.html" class="nav-btn">
+            <span class="nav-btn__icon">📋</span>
+            <span class="nav-btn__label">Задачи</span>
+        </a>
+        <a href="journal.html" class="nav-btn">
+            <span class="nav-btn__icon">📖</span>
+            <span class="nav-btn__label">Дневник</span>
+        </a>
+        <a href="habits.html" class="nav-btn">
+            <span class="nav-btn__icon">🎯</span>
+            <span class="nav-btn__label">Привычки</span>
+        </a>
+        <a href="finance.html" class="nav-btn">
+            <span class="nav-btn__icon">💰</span>
+            <span class="nav-btn__label">Финансы</span>
+        </a>
+        <a href="health.html" class="nav-btn">
+            <span class="nav-btn__icon">❤️</span>
+            <span class="nav-btn__label">Здоровье</span>
+        </a>
+    </nav>
+</div>
+<script src="app.js"></script>
+<script>
+document.getElementById('headerDate').textContent = new Date().toLocaleDateString('ru-RU', { weekday: 'short', day: 'numeric', month: 'long' });
+</script>
+</body>
+</html>
