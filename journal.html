@@ -1,492 +1,1229 @@
-<!-- journal.html -->
 <!DOCTYPE html>
 <html lang="ru">
 <head>
-    <link rel="manifest" href="manifest.json">
+   <link rel="manifest" href="manifest.json">
 <meta name="theme-color" content="#07070f">
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>Life Dashboard — Дневник</title>
-    <link rel="stylesheet" href="styles.css">
-    <style>
-        /* === МОДУЛЬ ДНЕВНИКА === */
-        .calendar-container { margin-bottom: 24px; background: var(--bg-card); padding: 16px; border-radius: var(--radius-lg); box-shadow: var(--shadow-card); }
-        .calendar-month { text-align: center; font-size: 1.1rem; font-weight: 700; margin-bottom: 14px; text-transform: capitalize; }
-        
-        .calendar-weekdays { display: grid; grid-template-columns: repeat(7, 1fr); gap: 4px; margin-bottom: 8px; }
-        .calendar-weekdays span { text-align: center; font-size: 0.7rem; font-weight: 600; color: var(--text-muted); }
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover" />
+  <meta name="theme-color" content="#07070f" />
+  <meta name="apple-mobile-web-app-capable" content="yes" />
+  <title>Life Dashboard — Дневник</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+  <link href="https://fonts.googleapis.com/css2?family=Sora:wght@300;400;500;600;700&display=swap" rel="stylesheet" />
+  <style>
+    /* ========================================
+       COSMOS THEME — VARIABLES
+    ======================================== */
+    :root {
+      --bg-base:        #07070f;
+      --bg-surface:     rgba(255,255,255,0.035);
+      --bg-surface-md:  rgba(255,255,255,0.058);
+      --bg-input:       rgba(255,255,255,0.05);
+      --border:         rgba(255,255,255,0.08);
+      --border-md:      rgba(255,255,255,0.14);
+      --text-primary:   #f0ebff;
+      --text-secondary: rgba(255,255,255,0.46);
+      --text-muted:     rgba(255,255,255,0.22);
+      --accent:         #7c3aed;
+      --accent-light:   #c4b5fd;
+      --accent-glow:    rgba(124,58,237,0.35);
+      --success:        #34d399;  --success-bg: rgba(52,211,153,0.12);
+      --danger:         #f87171;  --danger-bg:  rgba(248,113,113,0.12);
+      --warning:        #fbbf24;  --warning-bg: rgba(251,191,36,0.1);
+      --orb-1:          #831843;
+      --orb-2:          #1e3a5f;
+      --radius-sm:  10px; --radius-md: 16px;
+      --radius-lg:  22px; --radius-xl: 28px;
+      --blur-md:    blur(20px);
+      --blur-lg:    blur(40px);
+      --transition: all 0.25s cubic-bezier(0.4,0,0.2,1);
+      --safe-bottom: env(safe-area-inset-bottom, 20px);
+    }
 
-        .calendar-grid { display: grid; grid-template-columns: repeat(7, 1fr); gap: 6px; }
-        .cal-day {
-            aspect-ratio: 1/1; background: var(--bg-input); border-radius: var(--radius-sm);
-            display: flex; flex-direction: column; align-items: center; justify-content: center;
-            cursor: pointer; position: relative; transition: var(--transition); border: 1px solid transparent;
-            overflow: hidden;
-        }
-        .cal-day:hover { border-color: var(--accent); background: var(--bg-card); }
-        .cal-day--today { background: rgba(108, 99, 255, 0.2); border-color: var(--accent); color: var(--accent); font-weight: 700; }
-        .cal-day--empty { background: transparent; cursor: default; border-color: transparent; }
-        .cal-day__num { font-size: 0.85rem; z-index: 2; }
-        .cal-day__media { position: absolute; inset: 0; display: flex; align-items: center; justify-content: center; font-size: 1.2rem; }
-        .cal-day__media img { width: 100%; height: 100%; object-fit: cover; opacity: 0.7; }
-        .cal-day__icon { font-size: 1rem; z-index: 2; }
+    /* ========================================
+       RESET & BASE
+    ======================================== */
+    *,*::before,*::after { box-sizing:border-box; margin:0; padding:0; -webkit-tap-highlight-color:transparent; }
+    html { font-size:16px; scroll-behavior:smooth; }
+    body {
+      font-family:'Sora',-apple-system,BlinkMacSystemFont,sans-serif;
+      background:var(--bg-base);
+      color:var(--text-primary);
+      min-height:100vh;
+      padding-bottom:calc(76px + var(--safe-bottom));
+      overflow-x:hidden;
+      line-height:1.5;
+    }
 
-        /* NOTES LIST */
-        .notes-section-title { font-size: 1.1rem; font-weight: 700; margin: 24px 0 12px; display: flex; align-items: center; gap: 8px; }
-        .notes-list { display: flex; flex-direction: column; gap: 12px; margin-bottom: 80px; }
-        .note-card {
-            background: var(--bg-card); border-radius: var(--radius-md); padding: 14px;
-            border: 1px solid var(--border-color); animation: slideIn 0.25s ease;
-        }
-        .note-card__header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 8px; }
-        .note-card__date { font-size: 0.9rem; font-weight: 700; color: var(--accent); }
-        .note-card__mood { font-size: 1.3rem; }
-        .note-card__text { font-size: 0.9rem; color: var(--text-secondary); margin-bottom: 10px; white-space: pre-wrap; line-height: 1.5; }
-        .note-card__media { display: grid; grid-template-columns: repeat(auto-fill, minmax(80px, 1fr)); gap: 6px; margin-top: 8px; }
-        .note-media-item { aspect-ratio: 1/1; border-radius: var(--radius-sm); overflow: hidden; background: #000; position: relative; }
-        .note-media-item img, .note-media-item video { width: 100%; height: 100%; object-fit: cover; display: block; }
-        .note-media-item audio { width: 100%; height: 32px; }
-        .note-media-item__badge { position: absolute; bottom: 4px; left: 4px; background: rgba(0,0,0,0.7); color: #fff; padding: 2px 5px; border-radius: 3px; font-size: 0.65rem; }
-        .note-card__delete { margin-top: 10px; background: none; border: none; color: var(--text-muted); font-size: 0.8rem; cursor: pointer; padding: 6px 10px; border-radius: var(--radius-sm); transition: var(--transition); }
-        .note-card__delete:hover { background: rgba(248, 113, 113, 0.1); color: var(--danger); }
+    /* ========================================
+       COSMOS BACKGROUND
+    ======================================== */
+    .orb-container { position:fixed; inset:0; pointer-events:none; z-index:0; overflow:hidden; }
+    .orb { position:absolute; border-radius:50%; filter:blur(65px); animation:floatOrb 20s ease-in-out infinite alternate; }
+    .orb--1 { width:380px; height:380px; background:var(--orb-1); opacity:.38; top:-14%; left:-10%; animation-delay:-5s; }
+    .orb--2 { width:300px; height:300px; background:var(--orb-2); opacity:.34; bottom:8%;  right:-10%; animation-delay:-11s; }
+    .orb--3 { width:200px; height:200px; background:var(--accent); opacity:.16; top:42%; left:46%; animation:pulseOrb 14s ease-in-out infinite; }
+    @keyframes floatOrb  { 0%{transform:translate(0,0) scale(1)} 100%{transform:translate(22px,-32px) scale(1.07)} }
+    @keyframes pulseOrb  { 0%,100%{opacity:.16;transform:scale(1)} 50%{opacity:.28;transform:scale(1.12)} }
+    .stars {
+      position:absolute; inset:0;
+      background-image:
+        radial-gradient(1px   1px   at 14% 11%, rgba(255,255,255,.4),transparent),
+        radial-gradient(1px   1px   at 79%  8%, rgba(255,255,255,.3),transparent),
+        radial-gradient(1.5px 1.5px at 51% 29%, rgba(255,255,255,.25),transparent),
+        radial-gradient(1px   1px   at  7% 59%, rgba(255,255,255,.2),transparent),
+        radial-gradient(1px   1px   at 89% 44%, rgba(255,255,255,.28),transparent),
+        radial-gradient(1.5px 1.5px at 34% 76%, rgba(255,255,255,.2),transparent),
+        radial-gradient(1px   1px   at 62% 89%, rgba(255,255,255,.22),transparent);
+    }
 
-        /* SLIDE-UP EDITOR */
-        .editor-overlay { position: fixed; inset: 0; background: rgba(0,0,0,0.6); z-index: 140; opacity: 0; pointer-events: none; transition: opacity 0.3s ease; }
-        .editor-overlay.active { opacity: 1; pointer-events: auto; }
+    /* ========================================
+       LAYOUT
+    ======================================== */
+    .container { position:relative; z-index:1; max-width:480px; margin:0 auto; padding:0 16px; }
 
-        .editor-panel {
-            position: fixed; bottom: 0; left: 0; right: 0; background: var(--bg-secondary);
-            border-radius: var(--radius-lg) var(--radius-lg) 0 0; padding: 24px 16px 32px;
-            transform: translateY(100%); transition: transform 0.35s cubic-bezier(0.2, 0.8, 0.2, 1);
-            z-index: 150; box-shadow: 0 -6px 24px rgba(0,0,0,0.5); max-height: 90vh; overflow-y: auto;
-        }
-        .editor-panel.open { transform: translateY(0); }
-        .editor-content { max-width: 500px; margin: 0 auto; }
-        
-        .editor-header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 18px; }
-        .editor-date { font-size: 1.15rem; font-weight: 700; }
-        .editor-close { background: var(--bg-input); border: none; color: var(--text-secondary); width: 36px; height: 36px; border-radius: 50%; cursor: pointer; font-size: 1.2rem; transition: var(--transition); }
-        .editor-close:hover { background: var(--danger); color: #fff; }
+    /* ========================================
+       GLASS CARD
+    ======================================== */
+    .glass-card {
+      background:var(--bg-surface);
+      backdrop-filter:var(--blur-md);
+      -webkit-backdrop-filter:var(--blur-md);
+      border:1px solid var(--border);
+      border-radius:var(--radius-lg);
+      padding:18px;
+      margin-bottom:12px;
+      transition:var(--transition);
+      position:relative;
+      overflow:hidden;
+    }
+    .glass-card::before {
+      content:''; position:absolute; top:0; left:0; right:0; height:1px;
+      background:linear-gradient(90deg,transparent,rgba(255,255,255,.07),transparent);
+      pointer-events:none;
+    }
 
-        .mood-selector { display: flex; justify-content: space-between; margin-bottom: 16px; }
-        .mood-btn {
-            font-size: 2rem; background: transparent; border: 2px solid transparent;
-            width: 50px; height: 50px; border-radius: 50%; cursor: pointer;
-            transition: var(--transition); display: flex; align-items: center; justify-content: center;
-        }
-        .mood-btn:hover { background: var(--bg-card); }
-        .mood-btn.selected { border-color: var(--accent); background: rgba(108, 99, 255, 0.15); transform: scale(1.15); }
+    /* ========================================
+       TYPOGRAPHY
+    ======================================== */
+    .page-title {
+      font-size:30px; font-weight:700; letter-spacing:-.5px;
+      background:linear-gradient(135deg,var(--text-primary),var(--accent-light));
+      -webkit-background-clip:text; -webkit-text-fill-color:transparent;
+      margin-bottom:2px;
+    }
+    .page-subtitle { color:var(--text-secondary); font-size:13px; margin-bottom:18px; }
 
-        .media-toolbar { display: flex; gap: 8px; margin-bottom: 12px; flex-wrap: wrap; }
-        .media-btn {
-            flex: 1; min-width: 85px; padding: 10px; background: var(--bg-input);
-            border: 1px solid var(--border-color); color: var(--text-secondary);
-            border-radius: var(--radius-sm); font-size: 0.85rem; cursor: pointer;
-            display: flex; align-items: center; justify-content: center; gap: 6px;
-            transition: var(--transition);
-        }
-        .media-btn:hover { border-color: var(--accent); color: var(--accent); }
-        .media-btn.recording { background: var(--danger); border-color: var(--danger); color: #fff; animation: pulse 1.5s infinite; }
-        @keyframes pulse { 0%, 100% { transform: scale(1); } 50% { transform: scale(1.05); } }
+    /* ========================================
+       BUTTONS
+    ======================================== */
+    .btn {
+      display:inline-flex; align-items:center; justify-content:center; gap:6px;
+      border:none; cursor:pointer; font-family:inherit; font-weight:500;
+      transition:var(--transition); border-radius:var(--radius-md);
+      padding:12px 18px; font-size:14px; color:var(--text-primary);
+    }
+    .btn:active { transform:scale(0.97); }
+    .btn--primary { background:linear-gradient(135deg,var(--accent),#6d28d9); color:#fff; box-shadow:0 4px 18px var(--accent-glow); border:none; }
+    .btn--primary:hover { box-shadow:0 6px 26px var(--accent-glow); }
+    .btn--ghost  { background:var(--bg-surface); border:1px solid var(--border); color:var(--text-secondary); }
+    .btn--ghost:hover  { border-color:var(--border-md); color:var(--text-primary); }
+    .btn--danger { background:var(--danger-bg); border:1px solid rgba(248,113,113,.2); color:var(--danger); }
+    .btn--danger:hover { background:rgba(248,113,113,.18); }
+    .btn--icon   { width:34px; height:34px; padding:0; border-radius:var(--radius-sm); font-size:15px; }
+    .btn--full   { width:100%; }
 
-        .media-preview { display: flex; gap: 6px; flex-wrap: wrap; margin-bottom: 12px; }
-        .preview-item { width: 60px; height: 60px; border-radius: var(--radius-sm); overflow: hidden; background: var(--bg-input); position: relative; border: 1px solid var(--border-color); }
-        .preview-item img, .preview-item video, .preview-item audio { width: 100%; height: 100%; object-fit: cover; display: block; }
-        .preview-item audio { object-fit: contain; background: #000; height: 100%; }
-        .preview-item .remove-preview { position: absolute; top: 2px; right: 2px; width: 18px; height: 18px; background: rgba(0,0,0,0.8); color: #fff; border: none; border-radius: 50%; cursor: pointer; font-size: 0.65rem; display: flex; align-items: center; justify-content: center; z-index: 2; }
+    /* ========================================
+       FORMS
+    ======================================== */
+    .input,.select,.textarea {
+      width:100%; padding:13px 15px;
+      background:var(--bg-input); border:1px solid var(--border);
+      border-radius:var(--radius-md); color:var(--text-primary);
+      font-size:15px; font-family:inherit; transition:var(--transition); outline:none;
+    }
+    .input:focus,.select:focus,.textarea:focus { border-color:var(--accent); box-shadow:0 0 0 3px var(--accent-glow); }
+    .input::placeholder,.textarea::placeholder { color:var(--text-muted); }
+    .textarea { min-height:110px; resize:none; line-height:1.65; }
+    .form-group { margin-bottom:14px; }
+    .form-label { display:block; font-size:13px; color:var(--text-secondary); margin-bottom:7px; font-weight:500; }
 
-        .note-textarea {
-            width: 100%; min-height: 100px; background: var(--bg-input); border: 1px solid var(--border-color);
-            color: var(--text-primary); padding: 12px; border-radius: var(--radius-md); font-size: 0.95rem;
-            resize: none; margin-bottom: 14px; font-family: inherit; transition: var(--transition);
-        }
-        .note-textarea:focus { border-color: var(--accent); outline: none; box-shadow: 0 0 0 3px rgba(108, 99, 255, 0.2); }
+    /* ========================================
+       CALENDAR
+    ======================================== */
+    .cal-header { display:flex; justify-content:space-between; align-items:center; margin-bottom:14px; }
+    .cal-title  { font-size:14px; font-weight:600; text-transform:capitalize; }
+    .cal-nav {
+      width:32px; height:32px; border-radius:var(--radius-sm);
+      background:var(--bg-surface); border:1px solid var(--border);
+      color:var(--text-primary); font-size:13px; cursor:pointer;
+      display:flex; align-items:center; justify-content:center;
+      transition:var(--transition); font-family:inherit;
+    }
+    .cal-nav:hover { border-color:var(--border-md); background:var(--bg-surface-md); }
 
-        .btn--full { width: 100%; height: 46px; font-size: 1rem; letter-spacing: 0.3px; }
-    </style>
+    .cal-weekdays { display:grid; grid-template-columns:repeat(7,1fr); gap:2px; margin-bottom:5px; }
+    .cal-wd { text-align:center; font-size:10px; font-weight:600; color:var(--text-muted); padding:3px 0; }
+    .cal-wd--weekend { color:rgba(248,113,113,.5); }
+
+    .cal-grid { display:grid; grid-template-columns:repeat(7,1fr); gap:3px; }
+    .cal-cell {
+      aspect-ratio:1; border-radius:8px;
+      display:flex; flex-direction:column; align-items:center; justify-content:center;
+      padding:2px; cursor:pointer; transition:var(--transition);
+      border:1px solid transparent; position:relative;
+    }
+    .cal-cell:hover { background:var(--bg-surface-md); border-color:var(--border); }
+    .cal-cell--empty   { cursor:default; pointer-events:none; }
+    .cal-cell--today   { background:rgba(124,58,237,.12); border-color:rgba(124,58,237,.28); }
+    .cal-cell--selected { background:rgba(124,58,237,.3); border-color:var(--accent); box-shadow:0 0 0 1px rgba(124,58,237,.5); }
+    .cal-cell--today.cal-cell--selected { background:rgba(124,58,237,.42); }
+
+    .cal-num { font-size:12px; font-weight:500; color:var(--text-primary); line-height:1.2; }
+    .cal-cell--today    .cal-num { color:var(--accent-light); font-weight:700; }
+    .cal-cell--selected .cal-num { color:#fff; font-weight:700; }
+
+    /* Indicator dots */
+    .cal-dots { display:flex; gap:2px; margin-top:2px; justify-content:center; }
+    .cal-dot  { width:4px; height:4px; border-radius:50%; flex-shrink:0; }
+    .cal-dot--text  { background:var(--accent-light); }
+    .cal-dot--photo { background:var(--success); }
+    .cal-dot--audio { background:var(--warning); }
+
+    /* Legend row */
+    .cal-legend { display:flex; gap:14px; margin-top:10px; justify-content:center; }
+    .cal-legend-item { display:flex; align-items:center; gap:5px; font-size:10px; color:var(--text-muted); }
+    .cal-legend-dot { width:7px; height:7px; border-radius:50%; }
+
+    /* ========================================
+       ENTRIES SECTION
+    ======================================== */
+    .day-header { margin:4px 0 10px; }
+    .day-title  { font-size:16px; font-weight:600; color:var(--accent-light); margin-bottom:2px; }
+    .day-count  { font-size:12px; color:var(--text-muted); }
+
+    /* Entry card */
+    .entry-header { display:flex; gap:10px; align-items:flex-start; margin-bottom:10px; }
+    .entry-mood   { font-size:28px; flex-shrink:0; line-height:1; margin-top:1px; }
+    .entry-meta   { flex:1; min-width:0; }
+    .entry-title  { font-size:14px; font-weight:600; color:var(--text-primary); margin-bottom:2px; word-break:break-word; }
+    .entry-time   { font-size:11px; color:var(--text-muted); }
+
+    .entry-text { font-size:13px; color:var(--text-secondary); line-height:1.7; margin-bottom:10px; word-break:break-word; }
+    .entry-text.collapsed { overflow:hidden; display:-webkit-box; -webkit-line-clamp:3; -webkit-box-orient:vertical; }
+
+    .entry-readmore {
+      background:none; border:none; color:var(--accent-light); font-size:12px;
+      cursor:pointer; padding:0 0 8px; font-family:inherit; font-weight:500;
+      display:block; transition:var(--transition);
+    }
+    .entry-readmore:hover { color:#fff; }
+
+    .entry-tags { display:flex; flex-wrap:wrap; gap:5px; margin-bottom:10px; }
+    .entry-tag  {
+      padding:2px 8px; border-radius:20px;
+      background:rgba(124,58,237,.14); border:1px solid rgba(124,58,237,.22);
+      color:var(--accent-light); font-size:11px;
+    }
+
+    /* Photo thumbnails */
+    .entry-photos { display:flex; flex-wrap:wrap; gap:6px; margin-bottom:10px; }
+    .entry-thumb  {
+      width:60px; height:60px; border-radius:8px; overflow:hidden;
+      cursor:pointer; position:relative; border:1px solid var(--border);
+      flex-shrink:0; background:var(--bg-surface); transition:var(--transition);
+    }
+    .entry-thumb:hover { border-color:var(--accent-light); transform:scale(1.06); }
+    .entry-thumb img,
+    .entry-thumb video { width:100%; height:100%; object-fit:cover; display:block; pointer-events:none; }
+    .entry-thumb__overlay {
+      position:absolute; inset:0; display:flex; align-items:center; justify-content:center;
+      background:rgba(0,0,0,.32); font-size:18px;
+    }
+
+    /* Audio player */
+    .audio-player {
+      display:flex; align-items:center; gap:10px; margin-bottom:10px;
+      background:rgba(251,191,36,.06); border:1px solid rgba(251,191,36,.14);
+      border-radius:var(--radius-md); padding:10px 14px;
+    }
+    .audio-icon { font-size:15px; flex-shrink:0; }
+    .audio-play {
+      width:30px; height:30px; border-radius:50%;
+      background:linear-gradient(135deg,var(--accent),#6d28d9);
+      border:none; color:#fff; font-size:10px; cursor:pointer;
+      flex-shrink:0; display:flex; align-items:center; justify-content:center;
+      transition:var(--transition); font-family:inherit;
+    }
+    .audio-play:hover { transform:scale(1.12); }
+    .audio-body { flex:1; min-width:0; }
+    .audio-track {
+      height:3px; background:rgba(255,255,255,.1); border-radius:3px;
+      cursor:pointer; position:relative; margin-bottom:4px; overflow:hidden;
+    }
+    .audio-fill {
+      height:100%; background:linear-gradient(90deg,var(--accent),var(--accent-light));
+      border-radius:3px; width:0%; transition:width .1s linear; pointer-events:none;
+    }
+    .audio-time { font-size:10px; color:var(--text-muted); }
+
+    /* Delete btn accent */
+    .entry-del { flex-shrink:0; }
+
+    /* ========================================
+       EMPTY STATE
+    ======================================== */
+    .empty-state { text-align:center; padding:36px 20px; color:var(--text-muted); }
+    .empty-icon  { font-size:44px; display:block; margin-bottom:12px; opacity:.4; }
+    .empty-title { font-size:15px; font-weight:600; color:var(--text-secondary); margin-bottom:5px; }
+    .empty-sub   { font-size:13px; }
+
+    /* ========================================
+       FAB
+    ======================================== */
+    .fab {
+      position:fixed; right:18px;
+      bottom:calc(72px + var(--safe-bottom) + 18px);
+      width:52px; height:52px; border-radius:50%;
+      background:linear-gradient(135deg,var(--accent),#6d28d9);
+      border:none; color:#fff; font-size:21px; cursor:pointer;
+      z-index:50; box-shadow:0 6px 28px var(--accent-glow);
+      transition:var(--transition);
+      display:flex; align-items:center; justify-content:center;
+    }
+    .fab:hover  { transform:scale(1.1); box-shadow:0 10px 36px var(--accent-glow); }
+    .fab:active { transform:scale(0.94); }
+
+    /* ========================================
+       MOOD SELECTOR
+    ======================================== */
+    .mood-row { display:flex; justify-content:space-around; padding:2px 0; }
+    .mood-opt {
+      font-size:24px; background:none; border:2px solid transparent;
+      width:44px; height:44px; border-radius:50%; cursor:pointer;
+      transition:var(--transition); display:flex; align-items:center; justify-content:center;
+      font-family:inherit;
+    }
+    .mood-opt:hover { background:var(--bg-surface-md); }
+    .mood-opt.sel   { border-color:var(--accent); background:rgba(124,58,237,.16); transform:scale(1.2); }
+
+    /* ========================================
+       TAGS FIELD
+    ======================================== */
+    .tags-field {
+      display:flex; flex-wrap:wrap; gap:5px; align-items:center;
+      padding:8px 12px; background:var(--bg-input);
+      border:1px solid var(--border); border-radius:var(--radius-md);
+      cursor:text; transition:var(--transition); min-height:46px;
+    }
+    .tags-field:focus-within { border-color:var(--accent); box-shadow:0 0 0 3px var(--accent-glow); }
+    .tag-chip {
+      display:flex; align-items:center; gap:3px;
+      padding:2px 7px 2px 9px; border-radius:20px;
+      background:rgba(124,58,237,.18); border:1px solid rgba(124,58,237,.28);
+      color:var(--accent-light); font-size:12px; white-space:nowrap;
+    }
+    .tag-rm { background:none; border:none; color:var(--accent-light); cursor:pointer; font-size:14px; line-height:1; padding:0; opacity:.7; }
+    .tag-rm:hover { opacity:1; }
+    .tag-input {
+      border:none; background:none; color:var(--text-primary);
+      font-size:13px; font-family:inherit; outline:none; min-width:70px; flex:1; padding:2px 0;
+    }
+    .tag-input::placeholder { color:var(--text-muted); }
+
+    /* ========================================
+       MEDIA TOOLBAR
+    ======================================== */
+    .media-row { display:flex; gap:8px; margin-bottom:10px; }
+    .media-btn {
+      flex:1; padding:10px 6px; background:var(--bg-input);
+      border:1px solid var(--border); color:var(--text-secondary);
+      border-radius:var(--radius-md); font-size:12px; cursor:pointer;
+      display:flex; align-items:center; justify-content:center; gap:5px;
+      transition:var(--transition); font-family:inherit; font-weight:500;
+    }
+    .media-btn:hover { border-color:var(--accent); color:var(--accent-light); }
+    .media-btn.rec {
+      background:rgba(248,113,113,.1); border-color:rgba(248,113,113,.35);
+      color:var(--danger); animation:recPulse 1.5s ease-in-out infinite;
+    }
+    @keyframes recPulse { 0%,100%{opacity:1} 50%{opacity:.55} }
+
+    /* Media preview */
+    .preview-row  { display:flex; gap:8px; flex-wrap:wrap; }
+    .preview-item {
+      width:60px; height:60px; border-radius:8px; overflow:hidden;
+      background:var(--bg-input); border:1px solid var(--border);
+      position:relative; flex-shrink:0;
+    }
+    .preview-item img,
+    .preview-item video { width:100%; height:100%; object-fit:cover; display:block; }
+    .preview-item__icon {
+      position:absolute; inset:0; display:flex; align-items:center;
+      justify-content:center; font-size:22px; background:rgba(0,0,0,.28);
+    }
+    .preview-item__rm {
+      position:absolute; top:2px; right:2px; width:18px; height:18px;
+      background:rgba(0,0,0,.78); border:none; color:#fff; border-radius:50%;
+      font-size:10px; cursor:pointer; display:flex; align-items:center;
+      justify-content:center; z-index:2;
+    }
+
+    /* ========================================
+       MODAL
+    ======================================== */
+    .modal-overlay {
+      position:fixed; inset:0;
+      background:rgba(7,7,15,.88); backdrop-filter:var(--blur-lg);
+      -webkit-backdrop-filter:var(--blur-lg); z-index:500;
+      display:none; align-items:flex-end; justify-content:center;
+    }
+    .modal-overlay.active { display:flex; }
+    .modal {
+      background:linear-gradient(180deg,rgba(255,255,255,.06) 0%,var(--bg-base) 100%);
+      border:1px solid var(--border-md);
+      border-radius:var(--radius-xl) var(--radius-xl) 0 0;
+      padding:22px 20px calc(22px + var(--safe-bottom));
+      width:100%; max-width:480px; max-height:92vh; overflow-y:auto;
+      animation:slideUp .3s cubic-bezier(.2,.8,.2,1);
+    }
+    @keyframes slideUp { from{transform:translateY(100%)} to{transform:translateY(0)} }
+    .modal__header { display:flex; justify-content:space-between; align-items:center; margin-bottom:18px; }
+    .modal__title  { font-size:18px; font-weight:700; }
+    .modal__close  {
+      width:34px; height:34px; border-radius:var(--radius-sm);
+      background:var(--bg-surface); border:1px solid var(--border);
+      color:var(--text-secondary); font-size:16px; cursor:pointer;
+      display:flex; align-items:center; justify-content:center;
+      transition:var(--transition);
+    }
+    .modal__close:hover { border-color:rgba(248,113,113,.35); color:var(--danger); }
+
+    /* ========================================
+       LIGHTBOX
+    ======================================== */
+    .lightbox {
+      position:fixed; inset:0; background:rgba(0,0,0,.95);
+      z-index:900; display:none; align-items:center; justify-content:center;
+      animation:fadeIn .2s ease;
+    }
+    .lightbox.active { display:flex; }
+    @keyframes fadeIn { from{opacity:0} to{opacity:1} }
+    .lightbox img {
+      max-width:94vw; max-height:88vh; object-fit:contain;
+      border-radius:var(--radius-md);
+      animation:scaleIn .25s cubic-bezier(.2,.8,.2,1);
+    }
+    @keyframes scaleIn { from{transform:scale(.9);opacity:0} to{transform:scale(1);opacity:1} }
+    .lightbox-x {
+      position:absolute; top:16px; right:16px; width:42px; height:42px;
+      background:rgba(255,255,255,.1); border:1px solid rgba(255,255,255,.15);
+      border-radius:50%; color:#fff; font-size:18px; cursor:pointer;
+      display:flex; align-items:center; justify-content:center;
+      transition:var(--transition);
+    }
+    .lightbox-x:hover { background:var(--danger-bg); border-color:rgba(248,113,113,.4); }
+
+    /* ========================================
+       NOTIFICATION
+    ======================================== */
+    .notification {
+      position:fixed; top:16px; left:50%;
+      transform:translateX(-50%) translateY(-120px);
+      background:linear-gradient(135deg,var(--accent),#6d28d9);
+      color:#fff; padding:11px 22px; border-radius:var(--radius-lg);
+      font-weight:600; font-size:13px; z-index:2000;
+      transition:transform .3s cubic-bezier(.4,0,.2,1);
+      box-shadow:0 8px 28px var(--accent-glow); white-space:nowrap;
+    }
+    .notification.show { transform:translateX(-50%) translateY(0); }
+    .notification--success { background:linear-gradient(135deg,#10b981,var(--success)); box-shadow:0 8px 28px rgba(52,211,153,.35); }
+    .notification--danger  { background:linear-gradient(135deg,#ef4444,var(--danger));  box-shadow:0 8px 28px rgba(248,113,113,.35); }
+
+    /* ========================================
+       BOTTOM NAV
+    ======================================== */
+    .bottom-nav {
+      position:fixed; bottom:0; left:0; right:0;
+      background:rgba(7,7,15,.92); backdrop-filter:var(--blur-md);
+      -webkit-backdrop-filter:var(--blur-md); border-top:1px solid var(--border);
+      display:flex; justify-content:space-around; align-items:center;
+      padding:10px 0 calc(10px + var(--safe-bottom)); z-index:100;
+    }
+    .nav-btn {
+      display:flex; flex-direction:column; align-items:center; gap:3px;
+      text-decoration:none; color:var(--text-muted); padding:6px 10px;
+      border-radius:var(--radius-sm); transition:var(--transition);
+      font-size:10px; font-weight:600; background:transparent; border:none; cursor:pointer;
+    }
+    .nav-btn svg { width:22px; height:22px; stroke:currentColor; stroke-width:2; fill:none; }
+    .nav-btn.active { color:var(--accent-light); }
+    .nav-btn.active svg { stroke-width:2.5; filter:drop-shadow(0 0 6px var(--accent-glow)); }
+
+    /* ========================================
+       MISC
+    ======================================== */
+    .divider { height:1px; background:var(--border); margin:12px 0; }
+
+    @media (min-width:481px) { .container { max-width:480px; margin:0 auto; } }
+    @media (prefers-reduced-motion:reduce) {
+      *,*::before,*::after { animation-duration:.01ms !important; transition-duration:.01ms !important; }
+    }
+  </style>
 </head>
 <body>
 
-<div class="app-container">
-    <header class="header">
-        <div class="header__title">📖 Дневник</div>
-        <div class="header__date" id="headerDate"></div>
-    </header>
+  <!-- BG -->
+  <div class="orb-container">
+    <div class="orb orb--1"></div>
+    <div class="orb orb--2"></div>
+    <div class="orb orb--3"></div>
+    <div class="stars"></div>
+  </div>
 
-    <main class="main">
-        <div class="calendar-container">
-            <div class="calendar-month" id="calendarMonth"></div>
-            <div class="calendar-weekdays">
-                <span>Пн</span><span>Вт</span><span>Ср</span><span>Чт</span><span>Пт</span><span>Сб</span><span>Вс</span>
-            </div>
-            <div class="calendar-grid" id="calendarGrid"></div>
+  <div class="notification" id="notification"></div>
+
+  <!-- HEADER -->
+  <div class="container" style="padding-top:24px;padding-bottom:4px;">
+    <h1 class="page-title">Дневник</h1>
+    <p class="page-subtitle" id="headerDate">Личный журнал</p>
+  </div>
+
+  <!-- MAIN -->
+  <main class="container" style="padding-bottom:24px;">
+
+    <!-- CALENDAR -->
+    <div class="glass-card" style="padding:14px 12px;">
+      <div class="cal-header">
+        <button class="cal-nav" id="calPrev">◀</button>
+        <div class="cal-title" id="calTitle"></div>
+        <button class="cal-nav" id="calNext">▶</button>
+      </div>
+
+      <div class="cal-weekdays">
+        <div class="cal-wd">Пн</div>
+        <div class="cal-wd">Вт</div>
+        <div class="cal-wd">Ср</div>
+        <div class="cal-wd">Чт</div>
+        <div class="cal-wd">Пт</div>
+        <div class="cal-wd cal-wd--weekend">Сб</div>
+        <div class="cal-wd cal-wd--weekend">Вс</div>
+      </div>
+
+      <div class="cal-grid" id="calGrid"></div>
+
+      <!-- Legend -->
+      <div class="cal-legend">
+        <div class="cal-legend-item">
+          <span class="cal-legend-dot" style="background:var(--accent-light)"></span>Текст
         </div>
-
-        <h2 class="notes-section-title">📝 Записи</h2>
-        <div class="notes-list" id="notesList"></div>
-        <div class="empty-state" id="notesEmpty" style="display: none;">
-            <span class="empty-state__icon">✍️</span>
-            <p>Записей пока нет. Выберите дату в календаре!</p>
+        <div class="cal-legend-item">
+          <span class="cal-legend-dot" style="background:var(--success)"></span>Фото/Видео
         </div>
-    </main>
-
-    <nav class="bottom-nav">
-        <a href="tasks.html" class="nav-btn"><span class="nav-btn__icon">📋</span><span class="nav-btn__label">Задачи</span></a>
-        <a href="journal.html" class="nav-btn active"><span class="nav-btn__icon">📖</span><span class="nav-btn__label">Дневник</span></a>
-        <a href="habits.html" class="nav-btn"><span class="nav-btn__icon">🎯</span><span class="nav-btn__label">Привычки</span></a>
-        <a href="finance.html" class="nav-btn"><span class="nav-btn__icon">💰</span><span class="nav-btn__label">Финансы</span></a>
-        <a href="health.html" class="nav-btn"><span class="nav-btn__icon">❤️</span><span class="nav-btn__label">Здоровье</span></a>
-    </nav>
-
-    <!-- Редактор заметки -->
-    <div class="editor-overlay" id="editorOverlay"></div>
-    <div class="editor-panel" id="editorPanel">
-        <div class="editor-content">
-            <div class="editor-header">
-                <span class="editor-date" id="editorDate"></span>
-                <button class="editor-close" id="editorClose">✕</button>
-            </div>
-            <div class="mood-selector">
-                <button class="mood-btn" data-mood="😊">😊</button>
-                <button class="mood-btn" data-mood="😐">😐</button>
-                <button class="mood-btn" data-mood="😢">😢</button>
-                <button class="mood-btn" data-mood="😡">😡</button>
-                <button class="mood-btn" data-mood="🤩">🤩</button>
-            </div>
-            <div class="media-toolbar">
-                <button class="media-btn" id="btnPhoto">📷 Фото</button>
-                <button class="media-btn" id="btnVideo">🎥 Видео</button>
-                <button class="media-btn" id="btnAudio">🎤 Голос</button>
-            </div>
-            <div class="media-preview" id="mediaPreview"></div>
-            <textarea id="noteText" class="note-textarea" placeholder="Запишите, как прошёл этот день..."></textarea>
-            <button id="saveNoteBtn" class="btn btn--primary btn--full">Сохранить</button>
+        <div class="cal-legend-item">
+          <span class="cal-legend-dot" style="background:var(--warning)"></span>Голос
         </div>
+      </div>
     </div>
 
-    <input type="file" id="fileInput" accept="image/*,video/*" hidden>
-</div>
+    <!-- DAY ENTRIES -->
+    <div class="day-header">
+      <div class="day-title" id="dayLabel"></div>
+      <div class="day-count" id="dayCount"></div>
+    </div>
+    <div id="entriesList"></div>
 
-<script>
-    (function() {
-        const STORAGE_KEY = 'ld_notes';
-        let data = JSON.parse(localStorage.getItem(STORAGE_KEY)) || { notes: [] };
-        let notes = data.notes;
-        let viewDate = new Date();
-        let selectedDate = null;
-        let currentMood = '';
-        let pendingMedia = [];
-        let mediaRecorder = null;
-        let audioChunks = [];
-        let isRecording = false;
+  </main>
 
-        const els = {
-            headerDate: document.getElementById('headerDate'),
-            calMonth: document.getElementById('calendarMonth'),
-            calGrid: document.getElementById('calendarGrid'),
-            notesList: document.getElementById('notesList'),
-            notesEmpty: document.getElementById('notesEmpty'),
-            overlay: document.getElementById('editorOverlay'),
-            panel: document.getElementById('editorPanel'),
-            editorDate: document.getElementById('editorDate'),
-            noteText: document.getElementById('noteText'),
-            saveBtn: document.getElementById('saveNoteBtn'),
-            closeBtn: document.getElementById('editorClose'),
-            moodBtns: document.querySelectorAll('.mood-btn'),
-            preview: document.getElementById('mediaPreview'),
-            fileInput: document.getElementById('fileInput'),
-            btnPhoto: document.getElementById('btnPhoto'),
-            btnVideo: document.getElementById('btnVideo'),
-            btnAudio: document.getElementById('btnAudio')
-        };
+  <!-- FAB -->
+  <button class="fab" id="fabBtn" title="Новая запись">✏️</button>
 
-        els.headerDate.textContent = new Date().toLocaleDateString('ru-RU', { weekday: 'short', day: 'numeric', month: 'long' });
+  <!-- MODAL: entry editor -->
+  <div class="modal-overlay" id="modalEntry">
+    <div class="modal">
+      <div class="modal__header">
+        <h2 class="modal__title" id="modalTitle">Новая запись</h2>
+        <button class="modal__close" onclick="window.closeModal('modalEntry')">✕</button>
+      </div>
 
-        function toLocalStr(date) {
-            const y = date.getFullYear();
-            const m = String(date.getMonth() + 1).padStart(2, '0');
-            const d = String(date.getDate()).padStart(2, '0');
-            return `${y}-${m}-${d}`;
+      <div class="form-group">
+        <label class="form-label">Заголовок</label>
+        <input class="input" type="text" id="fTitle" placeholder="Название записи..." maxlength="80" autocomplete="off">
+      </div>
+
+      <div class="form-group">
+        <label class="form-label">Настроение</label>
+        <div class="mood-row">
+          <button class="mood-opt" data-mood="🤩" title="Отлично">🤩</button>
+          <button class="mood-opt" data-mood="😊" title="Хорошо">😊</button>
+          <button class="mood-opt" data-mood="😐" title="Нейтрально">😐</button>
+          <button class="mood-opt" data-mood="😢" title="Грустно">😢</button>
+          <button class="mood-opt" data-mood="😡" title="Злость">😡</button>
+          <button class="mood-opt" data-mood="😰" title="Тревога">😰</button>
+        </div>
+      </div>
+
+      <div class="form-group">
+        <label class="form-label">Запись</label>
+        <textarea class="textarea" id="fText" placeholder="Как прошёл день..."></textarea>
+      </div>
+
+      <div class="form-group">
+        <label class="form-label">
+          Теги
+          <span style="color:var(--text-muted);font-size:11px;font-weight:400;margin-left:6px;">Enter или запятая — добавить</span>
+        </label>
+        <div class="tags-field" id="tagsField">
+          <input class="tag-input" id="tagInput" placeholder="добавить тег...">
+        </div>
+      </div>
+
+      <div class="form-group">
+        <label class="form-label">Медиа</label>
+        <div class="media-row">
+          <button class="media-btn" id="btnPhoto">📷 Фото</button>
+          <button class="media-btn" id="btnVideo">🎥 Видео</button>
+          <button class="media-btn" id="btnAudio">🎤 Голос</button>
+        </div>
+        <div class="preview-row" id="previewRow"></div>
+      </div>
+
+      <div class="form-group">
+        <label class="form-label">Дата</label>
+        <input class="input" type="date" id="fDate">
+      </div>
+
+      <button class="btn btn--primary btn--full" id="saveBtn" style="margin-top:4px;">💾 Сохранить запись</button>
+    </div>
+  </div>
+
+  <!-- LIGHTBOX -->
+  <div class="lightbox" id="lightbox">
+    <button class="lightbox-x" onclick="window.closeLightbox()">✕</button>
+    <img id="lightboxImg" src="" alt="" onclick="event.stopPropagation()">
+  </div>
+
+  <input type="file" id="fileInput" hidden>
+
+  <!-- NAV -->
+  <nav class="bottom-nav">
+    <a href="tasks.html" class="nav-btn">
+      <svg viewBox="0 0 24 24"><path d="M9 11l3 3L22 4"/><path d="M21 12v7a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h11"/></svg>
+      <span>Задачи</span>
+    </a>
+    <a href="journal.html" class="nav-btn active">
+      <svg viewBox="0 0 24 24"><path d="M4 19.5A2.5 2.5 0 0 1 6.5 17H20"/><path d="M6.5 2H20v20H6.5A2.5 2.5 0 0 1 4 19.5v-15A2.5 2.5 0 0 1 6.5 2z"/></svg>
+      <span>Дневник</span>
+    </a>
+    <a href="habits.html" class="nav-btn">
+      <svg viewBox="0 0 24 24"><circle cx="12" cy="12" r="10"/><polyline points="12 6 12 12 16 14"/></svg>
+      <span>Привычки</span>
+    </a>
+    <a href="finance.html" class="nav-btn">
+      <svg viewBox="0 0 24 24"><line x1="12" y1="1" x2="12" y2="23"/><path d="M17 5H9.5a3.5 3.5 0 0 0 0 7h5a3.5 3.5 0 0 1 0 7H6"/></svg>
+      <span>Финансы</span>
+    </a>
+    <a href="health.html" class="nav-btn">
+      <svg viewBox="0 0 24 24"><path d="M20.84 4.61a5.5 5.5 0 0 0-7.78 0L12 5.67l-1.06-1.06a5.5 5.5 0 0 0-7.78 7.78l1.06 1.06L12 21.23l7.78-7.78 1.06-1.06a5.5 5.5 0 0 0 0-7.78z"/></svg>
+      <span>Здоровье</span>
+    </a>
+  </nav>
+
+  <script>
+  (function () {
+    'use strict';
+
+    /* ── utils ─────────────────────────────── */
+    const $  = s => document.querySelector(s);
+    const $$ = s => document.querySelectorAll(s);
+    const esc = s => String(s).replace(/[&<>"']/g, c =>
+      ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#039;'}[c]));
+
+    const STORE = 'ld_journal_v2';
+
+    function persist(data) {
+      try { localStorage.setItem(STORE, JSON.stringify(data)); return true; }
+      catch (e) {
+        if (e.name === 'QuotaExceededError') notify('⚠️ Хранилище заполнено', 'danger');
+        return false;
+      }
+    }
+    function loadData() {
+      try { return JSON.parse(localStorage.getItem(STORE)) || []; } catch { return []; }
+    }
+
+    let notify_t;
+    function notify(msg, type = '') {
+      const el = $('#notification'); if (!el) return;
+      el.textContent = msg;
+      el.className = 'notification' + (type ? ` notification--${type}` : '');
+      el.classList.add('show');
+      clearTimeout(notify_t);
+      notify_t = setTimeout(() => el.classList.remove('show'), 2700);
+    }
+
+    function toStr(d) {
+      return `${d.getFullYear()}-${String(d.getMonth()+1).padStart(2,'0')}-${String(d.getDate()).padStart(2,'0')}`;
+    }
+
+    function pluralRu(n, one, few, many) {
+      const m = n % 100, m10 = n % 10;
+      if (m >= 11 && m <= 14) return many;
+      if (m10 === 1) return one;
+      if (m10 >= 2 && m10 <= 4) return few;
+      return many;
+    }
+
+    /* ── state ─────────────────────────────── */
+    let notes = loadData();
+
+    /* Migrate from old ld_notes format */
+    (function migrate() {
+      try {
+        const old = JSON.parse(localStorage.getItem('ld_notes'));
+        if (old && old.notes && old.notes.length > 0 && notes.length === 0) {
+          notes = old.notes.map(n => ({
+            id:        'migr-' + n.date + '-' + Math.random().toString(36).slice(2,6),
+            date:      n.date,
+            title:     '',
+            mood:      n.mood || '',
+            text:      n.text || '',
+            tags:      [],
+            media:     n.media || [],
+            createdAt: n.date + 'T12:00:00.000Z'
+          }));
+          persist(notes);
         }
-
-        function saveData() {
-            try {
-                localStorage.setItem(STORAGE_KEY, JSON.stringify({ notes }));
-                return true;
-            } catch (e) {
-                if (e.name === 'QuotaExceededError') {
-                    alert('⚠️ Хранилище заполнено. Удалите старые записи или уменьшите размер медиа.');
-                }
-                return false;
-            }
-        }
-
-        // Сжатие изображения
-        function compressImage(file, callback) {
-            const reader = new FileReader();
-            reader.onload = function(e) {
-                const img = new Image();
-                img.onload = function() {
-                    const canvas = document.createElement('canvas');
-                    const MAX = 600;
-                    const scale = Math.min(1, MAX / img.width, MAX / img.height);
-                    canvas.width = img.width * scale;
-                    canvas.height = img.height * scale;
-                    canvas.getContext('2d').drawImage(img, 0, 0, canvas.width, canvas.height);
-                    callback(canvas.toDataURL('image/jpeg', 0.65));
-                };
-                img.src = e.target.result;
-            };
-            reader.readAsDataURL(file);
-        }
-
-        function renderPreview() {
-            els.preview.innerHTML = '';
-            pendingMedia.forEach((m, i) => {
-                const div = document.createElement('div');
-                div.className = 'preview-item';
-                let content = '';
-                if (m.type === 'image') content = `<img src="${m.src}">`;
-                else if (m.type === 'video') content = `<video src="${m.src}"></video>`;
-                else content = `<audio src="${m.src}"></audio>`;
-                div.innerHTML = `${content}<button class="remove-preview" data-idx="${i}">✕</button>`;
-                els.preview.appendChild(div);
-            });
-        }
-
-        function addMediaItem(src, type) {
-            pendingMedia.push({ src, type });
-            renderPreview();
-        }
-
-        // Кнопки медиа
-        els.btnPhoto.addEventListener('click', () => { els.fileInput.accept = 'image/*'; els.fileInput.click(); });
-        els.btnVideo.addEventListener('click', () => { els.fileInput.accept = 'video/*'; els.fileInput.click(); });
-
-        els.fileInput.addEventListener('change', (e) => {
-            const file = e.target.files[0];
-            if (!file) return;
-
-            if (file.type.startsWith('image/')) {
-                compressImage(file, (base64) => addMediaItem(base64, 'image'));
-            } else if (file.type.startsWith('video/')) {
-                if (file.size > 1.5 * 1024 * 1024) {
-                    alert('📹 Видео слишком большое (>1.5МБ). Используйте фото для экономии места.');
-                    e.target.value = '';
-                    return;
-                }
-                const reader = new FileReader();
-                reader.onload = (ev) => addMediaItem(ev.target.result, 'video');
-                reader.readAsDataURL(file);
-            }
-            e.target.value = '';
-        });
-
-        // Запись аудио
-        els.btnAudio.addEventListener('click', async () => {
-            if (!isRecording) {
-                try {
-                    if (!navigator.mediaDevices || !navigator.mediaDevices.getUserMedia) {
-                        throw new Error('MediaDevices не поддерживается');
-                    }
-                    const stream = await navigator.mediaDevices.getUserMedia({ audio: true });
-                    mediaRecorder = new MediaRecorder(stream);
-                    audioChunks = [];
-                    mediaRecorder.ondataavailable = e => { if (e.data.size > 0) audioChunks.push(e.data); };
-                    mediaRecorder.onstop = () => {
-                        const blob = new Blob(audioChunks, { type: 'audio/webm' });
-                        const reader = new FileReader();
-                        reader.onload = (ev) => addMediaItem(ev.target.result, 'audio');
-                        reader.readAsDataURL(blob);
-                        stream.getTracks().forEach(t => t.stop());
-                        isRecording = false;
-                        els.btnAudio.classList.remove('recording');
-                        els.btnAudio.textContent = '🎤 Голос';
-                    };
-                    mediaRecorder.start();
-                    isRecording = true;
-                    els.btnAudio.classList.add('recording');
-                    els.btnAudio.textContent = '⏹ Остановить';
-                } catch (err) {
-                    alert('🎤 Нет доступа к микрофону. Требуется HTTPS или localhost.');
-                }
-            } else {
-                if (mediaRecorder && mediaRecorder.state !== 'inactive') {
-                    mediaRecorder.stop();
-                }
-            }
-        });
-
-        els.preview.addEventListener('click', (e) => {
-            if (e.target.classList.contains('remove-preview')) {
-                const idx = parseInt(e.target.dataset.idx);
-                pendingMedia.splice(idx, 1);
-                renderPreview();
-            }
-        });
-
-        // Рендер календаря
-        function renderCalendar() {
-            els.calMonth.textContent = new Intl.DateTimeFormat('ru-RU', { month: 'long', year: 'numeric' }).format(viewDate);
-            const year = viewDate.getFullYear();
-            const month = viewDate.getMonth();
-            const firstDayOfWeek = (new Date(year, month, 1).getDay() + 6) % 7;
-            const daysInMonth = new Date(year, month + 1, 0).getDate();
-            const todayStr = toLocalStr(new Date());
-
-            els.calGrid.innerHTML = '';
-
-            for (let i = 0; i < firstDayOfWeek; i++) {
-                els.calGrid.appendChild(document.createElement('div')).className = 'cal-day cal-day--empty';
-            }
-
-            for (let d = 1; d <= daysInMonth; d++) {
-                const dateStr = `${year}-${String(month + 1).padStart(2, '0')}-${String(d).padStart(2, '0')}`;
-                const isToday = dateStr === todayStr;
-                const note = notes.find(n => n.date === dateStr);
-
-                const dayEl = document.createElement('div');
-                dayEl.className = `cal-day${isToday ? ' cal-day--today' : ''}`;
-                
-                let mediaContent = '';
-                if (note && note.media && note.media.length > 0) {
-                    const firstMedia = note.media[0];
-                    if (firstMedia.type === 'image') {
-                        mediaContent = `<div class="cal-day__media"><img src="${firstMedia.src}" alt=""></div>`;
-                    } else if (firstMedia.type === 'video') {
-                        mediaContent = `<div class="cal-day__media"><span class="cal-day__icon">🎥</span></div>`;
-                    } else {
-                        mediaContent = `<div class="cal-day__media"><span class="cal-day__icon">🎤</span></div>`;
-                    }
-                }
-
-                dayEl.innerHTML = `
-                    <span class="cal-day__num">${d}</span>
-                    ${mediaContent}
-                `;
-                dayEl.addEventListener('click', () => openEditor(dateStr));
-                els.calGrid.appendChild(dayEl);
-            }
-        }
-
-        // Рендер списка записей
-        function renderNotesList() {
-            els.notesList.innerHTML = '';
-            const sorted = [...notes].sort((a, b) => new Date(a.date) - new Date(b.date)); // Старые снизу
-            
-            if (sorted.length === 0) {
-                els.notesEmpty.style.display = 'block';
-                return;
-            }
-            els.notesEmpty.style.display = 'none';
-
-            sorted.forEach(note => {
-                const card = document.createElement('div');
-                card.className = 'note-card';
-                
-                const dateObj = new Date(note.date + 'T00:00:00');
-                const dateStr = dateObj.toLocaleDateString('ru-RU', { day: 'numeric', month: 'long', year: 'numeric' });
-                
-                let mediaHtml = '';
-                if (note.media && note.media.length > 0) {
-                    mediaHtml = '<div class="note-card__media">' + 
-                        note.media.map(m => {
-                            if (m.type === 'image') return `<div class="note-media-item"><img src="${m.src}" loading="lazy"></div>`;
-                            if (m.type === 'video') return `<div class="note-media-item"><video controls src="${m.src}"></video></div>`;
-                            return `<div class="note-media-item"><audio controls src="${m.src}"></audio><span class="note-media-item__badge">🎤</span></div>`;
-                        }).join('') + '</div>';
-                }
-
-                card.innerHTML = `
-                    <div class="note-card__header">
-                        <span class="note-card__date">${dateStr}</span>
-                        <span class="note-card__mood">${note.mood || ''}</span>
-                    </div>
-                    ${note.text ? `<div class="note-card__text">${escapeHtml(note.text)}</div>` : ''}
-                    ${mediaHtml}
-                    <button class="note-card__delete" data-date="${note.date}">🗑 Удалить запись</button>
-                `;
-                els.notesList.appendChild(card);
-            });
-        }
-
-        function escapeHtml(str) {
-            const div = document.createElement('div'); div.textContent = str; return div.innerHTML;
-        }
-
-        // Открытие редактора
-        function openEditor(dateStr) {
-            selectedDate = dateStr;
-            const existing = notes.find(n => n.date === dateStr);
-            const dateObj = new Date(dateStr + 'T00:00:00');
-            els.editorDate.textContent = dateObj.toLocaleDateString('ru-RU', { day: 'numeric', month: 'long' });
-            els.noteText.value = existing ? existing.text : '';
-            currentMood = existing ? existing.mood : '';
-            pendingMedia = existing && existing.media ? [...existing.media] : [];
-
-            els.moodBtns.forEach(btn => btn.classList.toggle('selected', btn.dataset.mood === currentMood));
-            renderPreview();
-            
-            els.overlay.classList.add('active');
-            els.panel.classList.add('open');
-            setTimeout(() => els.noteText.focus(), 100);
-        }
-
-        function closeEditor() {
-            els.panel.classList.remove('open');
-            els.overlay.classList.remove('active');
-            selectedDate = null;
-            pendingMedia = [];
-            renderPreview();
-        }
-
-        els.moodBtns.forEach(btn => {
-            btn.addEventListener('click', () => {
-                currentMood = btn.dataset.mood;
-                els.moodBtns.forEach(b => b.classList.remove('selected'));
-                btn.classList.add('selected');
-            });
-        });
-
-        els.saveBtn.addEventListener('click', () => {
-            if (!selectedDate) return;
-            const text = els.noteText.value.trim();
-            if (!text && !currentMood && pendingMedia.length === 0) { closeEditor(); return; }
-
-            const idx = notes.findIndex(n => n.date === selectedDate);
-            const newNote = { date: selectedDate, mood: currentMood, text, media: [...pendingMedia] };
-            
-            if (idx !== -1) notes[idx] = newNote;
-            else notes.push(newNote);
-
-            if (saveData()) {
-                renderCalendar();
-                renderNotesList();
-                closeEditor();
-            }
-        });
-
-        els.closeBtn.addEventListener('click', closeEditor);
-        els.overlay.addEventListener('click', closeEditor);
-
-        // Удаление записи из списка
-        els.notesList.addEventListener('click', (e) => {
-            const btn = e.target.closest('.note-card__delete');
-            if (btn) {
-                if (confirm('Удалить эту запись?')) {
-                    const date = btn.dataset.date;
-                    notes = notes.filter(n => n.date !== date);
-                    saveData();
-                    renderCalendar();
-                    renderNotesList();
-                }
-            }
-        });
-
-        // Инициализация
-        renderCalendar();
-        renderNotesList();
+      } catch {}
     })();
-</script>
+
+    let calDate = new Date();         // month currently visible
+    let selDate = toStr(new Date());  // selected day
+    let curMood = '';
+    let pendingMedia = [];
+    let pendingTags  = [];
+    let recorder     = null;
+    let audioChunks  = [];
+    let isRecording  = false;
+    let editId       = null;
+
+    /* ── CALENDAR ───────────────────────────── */
+    function buildDayMap() {
+      const map = {};
+      notes.forEach(n => {
+        if (!map[n.date]) map[n.date] = { text:false, photo:false, audio:false };
+        const d = map[n.date];
+        if (n.text && n.text.trim()) d.text = true;
+        (n.media || []).forEach(m => {
+          if (m.type === 'image' || m.type === 'video') d.photo = true;
+          if (m.type === 'audio')                       d.audio = true;
+        });
+      });
+      return map;
+    }
+
+    function renderCalendar() {
+      const grid = $('#calGrid'), titleEl = $('#calTitle');
+      if (!grid) return;
+
+      const y  = calDate.getFullYear();
+      const mo = calDate.getMonth();
+      if (titleEl) titleEl.textContent =
+        new Date(y, mo).toLocaleDateString('ru-RU', { month:'long', year:'numeric' });
+
+      const dayMap    = buildDayMap();
+      const todayStr  = toStr(new Date());
+      const firstDOW  = (new Date(y, mo, 1).getDay() + 6) % 7; // Mon=0
+      const totalDays = new Date(y, mo + 1, 0).getDate();
+
+      grid.innerHTML = '';
+
+      /* empty cells before 1st */
+      for (let i = 0; i < firstDOW; i++) {
+        const el = document.createElement('div');
+        el.className = 'cal-cell cal-cell--empty';
+        grid.appendChild(el);
+      }
+
+      /* day cells */
+      for (let d = 1; d <= totalDays; d++) {
+        const ds = `${y}-${String(mo+1).padStart(2,'0')}-${String(d).padStart(2,'0')}`;
+        const info = dayMap[ds] || {};
+
+        const el = document.createElement('div');
+        el.className = 'cal-cell';
+        if (ds === todayStr) el.classList.add('cal-cell--today');
+        if (ds === selDate)  el.classList.add('cal-cell--selected');
+
+        const dots =
+          (info.text  ? '<span class="cal-dot cal-dot--text"></span>'  : '') +
+          (info.photo ? '<span class="cal-dot cal-dot--photo"></span>' : '') +
+          (info.audio ? '<span class="cal-dot cal-dot--audio"></span>' : '');
+
+        el.innerHTML = `<span class="cal-num">${d}</span><div class="cal-dots">${dots}</div>`;
+        el.addEventListener('click', () => selectDate(ds));
+        grid.appendChild(el);
+      }
+    }
+
+    function selectDate(ds) {
+      selDate = ds;
+      renderCalendar();
+      renderEntries();
+    }
+
+    /* ── ENTRIES ────────────────────────────── */
+    function renderEntries() {
+      const list = $('#entriesList'), lbl = $('#dayLabel'), cnt = $('#dayCount');
+      if (!list) return;
+
+      /* Format date label */
+      const today     = toStr(new Date());
+      const yesterday = toStr(new Date(Date.now() - 86400000));
+      const dayObj    = new Date(selDate + 'T00:00:00');
+      let label =
+        selDate === today     ? 'Сегодня' :
+        selDate === yesterday ? 'Вчера'   :
+        dayObj.toLocaleDateString('ru-RU', { weekday:'long', day:'numeric', month:'long' });
+      label = label.charAt(0).toUpperCase() + label.slice(1);
+
+      if (lbl) lbl.textContent = label;
+
+      const dayNotes = notes
+        .filter(n => n.date === selDate)
+        .sort((a, b) => (b.createdAt || '') > (a.createdAt || '') ? 1 : -1);
+
+      if (cnt) cnt.textContent = dayNotes.length === 0
+        ? 'Нет записей'
+        : `${dayNotes.length} ${pluralRu(dayNotes.length, 'запись', 'записи', 'записей')}`;
+
+      if (!dayNotes.length) {
+        list.innerHTML = `
+          <div class="empty-state">
+            <span class="empty-icon">✍️</span>
+            <div class="empty-title">Записей пока нет</div>
+            <div class="empty-sub">Нажмите ✏️ чтобы добавить запись</div>
+          </div>`;
+        return;
+      }
+
+      list.innerHTML = '';
+      dayNotes.forEach(note => list.appendChild(makeCard(note)));
+    }
+
+    function makeCard(note) {
+      const card = document.createElement('div');
+      card.className = 'glass-card';
+
+      const photos = (note.media || []).filter(m => m.type === 'image' || m.type === 'video');
+      const audios  = (note.media || []).filter(m => m.type === 'audio');
+
+      /* Time string */
+      let timeStr = '';
+      try { timeStr = new Date(note.createdAt).toLocaleTimeString('ru-RU', { hour:'2-digit', minute:'2-digit' }); } catch {}
+
+      /* Title fallback */
+      const titleText = note.title ||
+        new Date(note.date + 'T00:00:00').toLocaleDateString('ru-RU', { day:'numeric', month:'long', year:'numeric' });
+
+      /* Text – clamp if long */
+      const hasText    = note.text && note.text.trim().length > 0;
+      const needsClamp = hasText && (note.text.split('\n').length > 3 || note.text.length > 180);
+      const textBlock  = hasText ? `
+        <div class="entry-text${needsClamp ? ' collapsed' : ''}" id="et-${note.id}">
+          ${esc(note.text).replace(/\n/g, '<br>')}
+        </div>
+        ${needsClamp ? `<button class="entry-readmore" id="rm-${note.id}" onclick="window.toggleText('${note.id}')">читать далее ▾</button>` : ''}` : '';
+
+      /* Tags */
+      const tagsBlock = (note.tags || []).length ? `
+        <div class="entry-tags">
+          ${note.tags.map(t => `<span class="entry-tag">#${esc(t)}</span>`).join('')}
+        </div>` : '';
+
+      /* Photos */
+      const photosBlock = photos.length ? `
+        <div class="entry-photos">
+          ${photos.map(m => m.type === 'image'
+            ? `<div class="entry-thumb" data-src="${esc(m.src)}" onclick="window.openLightbox(this)" title="Открыть">
+                 <img src="${esc(m.src)}" alt="" loading="lazy">
+               </div>`
+            : `<div class="entry-thumb" title="Видео">
+                 <video src="${esc(m.src)}" muted playsinline></video>
+                 <div class="entry-thumb__overlay">▶</div>
+               </div>`
+          ).join('')}
+        </div>` : '';
+
+      /* Audios */
+      const audiosBlock = audios.map((m, i) => {
+        const pid = `ap-${note.id.replace(/[^a-z0-9]/gi,'-')}-${i}`;
+        return `
+          <div class="audio-player">
+            <span class="audio-icon">🎤</span>
+            <button class="audio-play" data-pid="${pid}" onclick="window.toggleAudio(this)">▶</button>
+            <div class="audio-body">
+              <div class="audio-track" data-pid="${pid}" onclick="window.seekAudio(event,this)">
+                <div class="audio-fill" id="fill-${pid}"></div>
+              </div>
+              <div class="audio-time" id="atime-${pid}">0:00</div>
+            </div>
+            <audio id="${pid}" src="${esc(m.src)}" preload="metadata"></audio>
+          </div>`;
+      }).join('');
+
+      card.innerHTML = `
+        <div class="entry-header">
+          <div class="entry-mood">${note.mood || '📖'}</div>
+          <div class="entry-meta">
+            <div class="entry-title">${esc(titleText)}</div>
+            <div class="entry-time">${timeStr}${note.mood ? ' · ' + note.mood : ''}</div>
+          </div>
+          <button class="btn btn--danger btn--icon entry-del"
+            onclick="window.deleteEntry('${note.id}')" title="Удалить запись">
+            <svg width="13" height="13" viewBox="0 0 24 24" fill="none"
+                 stroke="currentColor" stroke-width="2.5">
+              <polyline points="3 6 5 6 21 6"/>
+              <path d="M19 6l-1 14H6L5 6"/>
+              <path d="M10 11v6M14 11v6M9 6V4h6v2"/>
+            </svg>
+          </button>
+        </div>
+        ${textBlock}${tagsBlock}${photosBlock}${audiosBlock}
+      `;
+      return card;
+    }
+
+    /* ── MODAL ──────────────────────────────── */
+    function openModal(id)  { const m = $(`#${id}`); if (m) m.classList.add('active'); }
+    function closeModal(id) {
+      const m = $(`#${id}`);
+      if (m) { m.classList.remove('active'); if (id === 'modalEntry') resetEditor(); }
+    }
+
+    function resetEditor() {
+      $('#fTitle').value = '';
+      $('#fText').value  = '';
+      $('#fDate').value  = selDate;
+      curMood      = '';
+      pendingMedia = [];
+      pendingTags  = [];
+      editId       = null;
+      $$('.mood-opt').forEach(b => b.classList.remove('sel'));
+      renderPreviewRow();
+      renderTagChips();
+      if (isRecording && recorder) { try { recorder.stop(); } catch {} isRecording = false; }
+      const bAudio = $('#btnAudio');
+      if (bAudio) { bAudio.classList.remove('rec'); bAudio.textContent = '🎤 Голос'; }
+    }
+
+    function openEditor() {
+      $('#modalTitle').textContent = 'Новая запись';
+      resetEditor();
+      openModal('modalEntry');
+      setTimeout(() => $('#fTitle').focus(), 150);
+    }
+
+    function saveEntry() {
+      const title = $('#fTitle').value.trim();
+      const text  = $('#fText').value.trim();
+      const date  = $('#fDate').value || selDate;
+
+      if (!title && !text && !curMood && pendingMedia.length === 0) {
+        notify('Добавьте хотя бы заголовок, текст или медиа');
+        return;
+      }
+
+      const now = new Date().toISOString();
+      const entry = {
+        id:        editId || String(Date.now()) + Math.random().toString(36).slice(2,5),
+        date,
+        title,
+        mood:      curMood,
+        text,
+        tags:      [...pendingTags],
+        media:     [...pendingMedia],
+        createdAt: editId
+          ? (notes.find(n => n.id === editId)?.createdAt || now)
+          : now
+      };
+
+      if (editId) {
+        const i = notes.findIndex(n => n.id === editId);
+        if (i >= 0) notes[i] = entry; else notes.push(entry);
+      } else {
+        notes.push(entry);
+      }
+
+      if (!persist(notes)) return;
+
+      closeModal('modalEntry');
+      selDate = date;
+      renderCalendar();
+      renderEntries();
+      notify('Запись сохранена', 'success');
+    }
+
+    /* ── ACTIONS ────────────────────────────── */
+    function deleteEntry(id) {
+      if (!confirm('Удалить эту запись?')) return;
+      notes = notes.filter(n => n.id !== id);
+      persist(notes);
+      renderCalendar();
+      renderEntries();
+      notify('Запись удалена', 'danger');
+    }
+
+    function toggleText(id) {
+      const el  = $(`#et-${id}`);
+      const btn = $(`#rm-${id}`);
+      if (!el || !btn) return;
+      const col = el.classList.toggle('collapsed');
+      btn.textContent = col ? 'читать далее ▾' : 'свернуть ▴';
+    }
+
+    function openLightbox(thumb) {
+      const src = thumb.dataset.src || (thumb.querySelector('img') || {}).src;
+      if (!src) return;
+      $('#lightboxImg').src = src;
+      $('#lightbox').classList.add('active');
+      document.body.style.overflow = 'hidden';
+    }
+
+    function closeLightbox() {
+      $('#lightbox').classList.remove('active');
+      document.body.style.overflow = '';
+      setTimeout(() => { $('#lightboxImg').src = ''; }, 300);
+    }
+
+    /* ── AUDIO PLAYER ───────────────────────── */
+    function toggleAudio(btn) {
+      const pid   = btn.dataset.pid;
+      const audio = $(`#${pid}`);
+      if (!audio) return;
+
+      /* pause all others */
+      $$('.audio-play').forEach(b => {
+        if (b !== btn && b.textContent === '⏸') {
+          b.textContent = '▶';
+          const a = $(`#${b.dataset.pid}`);
+          if (a) a.pause();
+        }
+      });
+
+      if (btn.textContent === '⏸') {
+        audio.pause();
+        btn.textContent = '▶';
+      } else {
+        audio.play().catch(() => {});
+        btn.textContent = '⏸';
+
+        audio.ontimeupdate = () => {
+          const pct  = audio.duration ? audio.currentTime / audio.duration * 100 : 0;
+          const fill = $(`#fill-${pid}`);
+          const time = $(`#atime-${pid}`);
+          if (fill) fill.style.width = pct + '%';
+          if (time) {
+            const s = Math.floor(audio.currentTime);
+            time.textContent = `${Math.floor(s / 60)}:${String(s % 60).padStart(2,'0')}`;
+          }
+        };
+        audio.onended = () => {
+          btn.textContent = '▶';
+          const fill = $(`#fill-${pid}`);
+          if (fill) fill.style.width = '0%';
+        };
+      }
+    }
+
+    function seekAudio(e, track) {
+      const pid   = track.dataset.pid;
+      const audio = $(`#${pid}`);
+      if (!audio || !audio.duration) return;
+      const rect = track.getBoundingClientRect();
+      const pct  = Math.max(0, Math.min(1, (e.clientX - rect.left) / rect.width));
+      audio.currentTime = pct * audio.duration;
+    }
+
+    /* ── MOOD ───────────────────────────────── */
+    $$('.mood-opt').forEach(btn => {
+      btn.addEventListener('click', () => {
+        const m = btn.dataset.mood;
+        curMood = (m === curMood) ? '' : m;
+        $$('.mood-opt').forEach(b => b.classList.remove('sel'));
+        if (curMood) btn.classList.add('sel');
+      });
+    });
+
+    /* ── TAGS ───────────────────────────────── */
+    function renderTagChips() {
+      const field = $('#tagsField');
+      const input = $('#tagInput');
+      if (!field || !input) return;
+      field.querySelectorAll('.tag-chip').forEach(c => c.remove());
+      pendingTags.forEach((t, i) => {
+        const chip = document.createElement('span');
+        chip.className = 'tag-chip';
+        chip.innerHTML = `${esc(t)}<button class="tag-rm" data-i="${i}">×</button>`;
+        field.insertBefore(chip, input);
+      });
+    }
+
+    $('#tagInput')?.addEventListener('keydown', e => {
+      const raw = e.target.value.trim().replace(/[,#]/g, '');
+      if ((e.key === 'Enter' || e.key === ',') && raw) {
+        e.preventDefault();
+        if (!pendingTags.includes(raw)) { pendingTags.push(raw); renderTagChips(); }
+        e.target.value = '';
+      } else if (e.key === 'Backspace' && !e.target.value && pendingTags.length) {
+        pendingTags.pop(); renderTagChips();
+      }
+    });
+
+    $('#tagsField')?.addEventListener('click', e => {
+      if (e.target.classList.contains('tag-rm')) {
+        pendingTags.splice(+e.target.dataset.i, 1); renderTagChips();
+      }
+      $('#tagInput')?.focus();
+    });
+
+    /* ── MEDIA ──────────────────────────────── */
+    function renderPreviewRow() {
+      const row = $('#previewRow'); if (!row) return;
+      row.innerHTML = '';
+      pendingMedia.forEach((m, i) => {
+        const div = document.createElement('div');
+        div.className = 'preview-item';
+        if (m.type === 'image') {
+          div.innerHTML = `<img src="${m.src}" alt="">`;
+        } else if (m.type === 'video') {
+          div.innerHTML = `<video src="${m.src}" muted playsinline></video>
+                           <div class="preview-item__icon">🎥</div>`;
+        } else {
+          div.innerHTML = `<div class="preview-item__icon">🎤</div>`;
+        }
+        div.innerHTML += `<button class="preview-item__rm" data-i="${i}">×</button>`;
+        row.appendChild(div);
+      });
+    }
+
+    $('#previewRow')?.addEventListener('click', e => {
+      if (e.target.classList.contains('preview-item__rm')) {
+        pendingMedia.splice(+e.target.dataset.i, 1); renderPreviewRow();
+      }
+    });
+
+    function compressImg(file, cb) {
+      const reader = new FileReader();
+      reader.onload = ev => {
+        const img = new Image();
+        img.onload = () => {
+          const canvas = document.createElement('canvas');
+          const MAX = 900;
+          const scale = Math.min(1, MAX / img.width, MAX / img.height);
+          canvas.width  = img.width  * scale;
+          canvas.height = img.height * scale;
+          canvas.getContext('2d').drawImage(img, 0, 0, canvas.width, canvas.height);
+          cb(canvas.toDataURL('image/jpeg', 0.72));
+        };
+        img.src = ev.target.result;
+      };
+      reader.readAsDataURL(file);
+    }
+
+    $('#btnPhoto')?.addEventListener('click', () => {
+      $('#fileInput').accept = 'image/*'; $('#fileInput').click();
+    });
+    $('#btnVideo')?.addEventListener('click', () => {
+      $('#fileInput').accept = 'video/*'; $('#fileInput').click();
+    });
+
+    $('#fileInput')?.addEventListener('change', e => {
+      const file = e.target.files[0]; if (!file) return;
+      if (file.type.startsWith('image/')) {
+        compressImg(file, src => { pendingMedia.push({ type:'image', src }); renderPreviewRow(); });
+      } else if (file.type.startsWith('video/')) {
+        if (file.size > 2.5 * 1024 * 1024) {
+          notify('Видео слишком большое (>2.5 МБ)', 'danger');
+          e.target.value = ''; return;
+        }
+        const r = new FileReader();
+        r.onload = ev => { pendingMedia.push({ type:'video', src:ev.target.result }); renderPreviewRow(); };
+        r.readAsDataURL(file);
+      }
+      e.target.value = '';
+    });
+
+    $('#btnAudio')?.addEventListener('click', async () => {
+      if (!isRecording) {
+        try {
+          const stream = await navigator.mediaDevices.getUserMedia({ audio:true });
+          recorder    = new MediaRecorder(stream);
+          audioChunks = [];
+          recorder.ondataavailable = ev => { if (ev.data.size > 0) audioChunks.push(ev.data); };
+          recorder.onstop = () => {
+            const blob = new Blob(audioChunks, { type:'audio/webm' });
+            const r = new FileReader();
+            r.onload = ev => { pendingMedia.push({ type:'audio', src:ev.target.result }); renderPreviewRow(); };
+            r.readAsDataURL(blob);
+            stream.getTracks().forEach(t => t.stop());
+            isRecording = false;
+            $('#btnAudio').classList.remove('rec');
+            $('#btnAudio').textContent = '🎤 Голос';
+          };
+          recorder.start();
+          isRecording = true;
+          $('#btnAudio').classList.add('rec');
+          $('#btnAudio').textContent = '⏹ Стоп';
+        } catch {
+          notify('Нет доступа к микрофону (нужен HTTPS)', 'danger');
+        }
+      } else {
+        try { recorder?.stop(); } catch {}
+      }
+    });
+
+    /* ── LIGHTBOX click-outside ─────────────── */
+    $('#lightbox')?.addEventListener('click', e => {
+      if (e.target === $('#lightbox')) closeLightbox();
+    });
+
+    /* ── MODAL click-outside ────────────────── */
+    $$('.modal-overlay').forEach(ov =>
+      ov.addEventListener('click', e => { if (e.target === ov) closeModal(ov.id); })
+    );
+
+    /* ── BINDINGS ───────────────────────────── */
+    $('#calPrev')?.addEventListener('click', () => {
+      calDate.setMonth(calDate.getMonth() - 1); renderCalendar();
+    });
+    $('#calNext')?.addEventListener('click', () => {
+      calDate.setMonth(calDate.getMonth() + 1); renderCalendar();
+    });
+    $('#fabBtn')?.addEventListener('click', openEditor);
+    $('#saveBtn')?.addEventListener('click', saveEntry);
+
+    /* Header date */
+    const hd = $('#headerDate');
+    if (hd) hd.textContent = new Date().toLocaleDateString('ru-RU',
+      { weekday:'long', day:'numeric', month:'long', year:'numeric' });
+
+    /* ── GLOBAL EXPORTS ─────────────────────── */
+    window.closeModal    = closeModal;
+    window.deleteEntry   = deleteEntry;
+    window.toggleText    = toggleText;
+    window.openLightbox  = openLightbox;
+    window.closeLightbox = closeLightbox;
+    window.toggleAudio   = toggleAudio;
+    window.seekAudio     = seekAudio;
+
+    /* ── INIT ───────────────────────────────── */
+    renderCalendar();
+    renderEntries();
+
+    console.log('📖 Journal Module v2 ready');
+  })();
+  </script>
 </body>
 </html>
