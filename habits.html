@@ -1,9 +1,4 @@
-<head>
-    <script src="auth.js"></script>  <!-- ← добавить эту строку -->
-    <meta charset="UTF-8">
-    ...
-</head>
- <!--
+<!--
   ✅ Визуал: Cosmos Theme (орбы #065f46/#4a1d96, glass-card, Sora font)
   ✅ Календарная сетка: дни месяца × привычки, цветовая индикация, sticky первая колонка
   ✅ Список на сегодня: эмодзи, текст, чекбокс, зачёркивание, стрик
@@ -17,6 +12,11 @@
 <head>
     <link rel="manifest" href="manifest.json">
 <meta name="theme-color" content="#07070f">
+    <head>
+    <script src="auth.js"></script>  <!-- ← добавить эту строку -->
+    <meta charset="UTF-8">
+    ...
+</head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover" />
   <meta name="theme-color" content="#07070f" />
@@ -180,37 +180,44 @@
     .nav-btn.active svg { filter: drop-shadow(0 0 7px var(--accent-glow)); stroke-width: 2.5; }
 
     /* =========================================
-       CALENDAR MATRIX
+       CALENDAR MATRIX (flexbox, no sticky hacks)
     ========================================= */
     .month-nav { display: flex; justify-content: space-between; align-items: center; margin-bottom: 14px; }
     .month-nav-title { font-size: 15px; font-weight: 600; text-transform: capitalize; }
 
-    .matrix-scroll { overflow-x: auto; -webkit-overflow-scrolling: touch; padding-bottom: 6px; margin: 0 -4px; scrollbar-width: thin; scrollbar-color: var(--border-md) transparent; }
-    .matrix-scroll::-webkit-scrollbar { height: 3px; }
-    .matrix-scroll::-webkit-scrollbar-thumb { background: var(--border-md); border-radius: 3px; }
+    /* Two-column layout: fixed labels + scrollable days */
+    .matrix-wrap { display: flex; overflow: hidden; gap: 0; }
 
-    .habits-matrix { border-collapse: separate; border-spacing: 0; }
-    .habits-matrix thead tr th { position: sticky; top: 0; }
+    /* Labels column — no background override needed, sits naturally on glass-card */
+    .matrix-labels-col { flex-shrink: 0; width: 108px; border-right: 1px solid var(--border); }
+    .mlabel-hdr  { height: 28px; display: flex; align-items: flex-end; padding: 0 8px 6px 0; justify-content: flex-end; font-size: 10px; color: var(--text-muted); font-weight: 500; letter-spacing: .04em; }
+    .mlabel-row  { height: 32px; display: flex; align-items: center; justify-content: flex-end; gap: 5px; padding: 0 8px 0 0; }
+    .mlabel-row.mlabel-alt { background: rgba(255,255,255,.018); border-radius: 6px 0 0 6px; }
+    .mlabel-name { font-size: 11px; font-weight: 500; color: var(--text-secondary); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; max-width: 68px; }
+    .mlabel-emoji { font-size: 14px; flex-shrink: 0; }
 
-    .col-label-th { position: sticky; left: 0; z-index: 20; min-width: 110px; width: 110px; background: rgba(7,7,15,.98); padding: 0 8px 8px 0; text-align: right; font-size: 11px; color: var(--text-muted); font-weight: 400; }
-    .col-day-th { min-width: 30px; width: 30px; text-align: center; font-size: 10px; color: var(--text-muted); font-weight: 500; padding-bottom: 8px; padding-left: 2px; padding-right: 2px; white-space: nowrap; }
-    .col-day-th.today-col { color: var(--accent); font-weight: 700; }
+    /* Days scrollable column */
+    .matrix-days-col { flex: 1; overflow-x: auto; -webkit-overflow-scrolling: touch; scrollbar-width: thin; scrollbar-color: var(--border-md) transparent; }
+    .matrix-days-col::-webkit-scrollbar { height: 3px; }
+    .matrix-days-col::-webkit-scrollbar-thumb { background: var(--border-md); border-radius: 3px; }
 
-    .row-label-td { position: sticky; left: 0; z-index: 10; background: rgba(7,7,15,.98); min-width: 110px; width: 110px; padding: 3px 8px 3px 0; }
-    .row-label-inner { display: flex; align-items: center; justify-content: flex-end; gap: 5px; }
-    .row-label-emoji { font-size: 15px; flex-shrink: 0; }
-    .row-label-text { font-size: 11px; font-weight: 500; color: var(--text-secondary); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; max-width: 74px; }
+    .mdays-inner { display: inline-flex; flex-direction: column; min-width: 100%; }
+    .mdays-hdr-row { display: flex; }
+    .mday-hdr { min-width: 30px; width: 30px; height: 28px; text-align: center; font-size: 10px; color: var(--text-muted); font-weight: 500; display: flex; align-items: flex-end; justify-content: center; padding-bottom: 6px; flex-shrink: 0; }
+    .mday-hdr.today-col { color: var(--accent); font-weight: 700; }
 
-    .cell-td { min-width: 30px; width: 30px; height: 30px; padding: 1px; text-align: center; }
-    .cell-inner { width: 26px; height: 26px; border-radius: 5px; margin: 0 auto; display: flex; align-items: center; justify-content: center; font-size: 11px; font-weight: 700; transition: var(--transition); }
-    .cell-done { background: rgba(52,211,153,.22); border: 1px solid rgba(52,211,153,.5); color: var(--success); }
-    .cell-missed { background: rgba(248,113,113,.12); border: 1px solid rgba(248,113,113,.2); color: rgba(248,113,113,.6); }
-    .cell-future { background: rgba(255,255,255,.035); border: 1px solid rgba(255,255,255,.05); color: transparent; }
-    .cell-na { background: transparent; border: 1px solid transparent; }
+    .mdays-habit-row { display: flex; height: 32px; align-items: center; }
+    .mdays-habit-row.mdays-alt { background: rgba(255,255,255,.018); border-radius: 0 6px 6px 0; }
+
+    .mday-cell { min-width: 30px; width: 30px; height: 32px; display: flex; align-items: center; justify-content: center; padding: 2px; flex-shrink: 0; }
+
+    .cell-inner { width: 24px; height: 24px; border-radius: 5px; display: flex; align-items: center; justify-content: center; font-size: 11px; font-weight: 700; transition: var(--transition); }
+    .cell-done   { background: rgba(52,211,153,.22); border: 1px solid rgba(52,211,153,.5); color: var(--success); }
+    .cell-missed { background: rgba(248,113,113,.1);  border: 1px solid rgba(248,113,113,.2); color: rgba(248,113,113,.55); }
+    .cell-future { background: rgba(255,255,255,.03); border: 1px solid rgba(255,255,255,.05); color: transparent; }
+    .cell-na     { background: transparent; border: 1px solid transparent; }
     .cell-today-ring { box-shadow: 0 0 0 2px var(--accent); }
-    .cell-today-done { box-shadow: 0 0 0 2px var(--success), 0 0 10px rgba(52,211,153,.3); }
-
-    .row-alt { background: rgba(255,255,255,.012); }
+    .cell-today-done { box-shadow: 0 0 0 2px var(--success), 0 0 10px rgba(52,211,153,.25); }
 
     /* =========================================
        TODAY LIST
@@ -246,9 +253,9 @@
        COLOR PICKER
     ========================================= */
     .color-row { display: flex; gap: 9px; flex-wrap: wrap; margin-top: 6px; }
-    .color-dot { width: 28px; height: 28px; border-radius: 50%; cursor: pointer; border: 3px solid transparent; transition: var(--transition); flex-shrink: 0; }
-    .color-dot:hover { transform: scale(1.15); }
-    .color-dot.selected { border-color: #fff; transform: scale(1.2); box-shadow: 0 0 12px currentColor; }
+    .color-dot { width: 28px; height: 28px; border-radius: 50%; cursor: pointer; border: 3px solid transparent; transition: var(--transition); flex-shrink: 0; outline: 3px solid transparent; outline-offset: 2px; }
+    .color-dot:hover { transform: scale(1.12); outline-color: rgba(255,255,255,.2); }
+    .color-dot.selected { border-color: rgba(255,255,255,.95) !important; transform: scale(1.24); outline-color: rgba(255,255,255,.35); box-shadow: 0 0 14px rgba(255,255,255,.5); }
 
     /* =========================================
        DAY CHIPS
@@ -346,7 +353,10 @@
         <span class="month-nav-title" id="monthLabel"></span>
         <button class="btn btn--ghost btn--icon" onclick="window.changeMonth(1)">▶</button>
       </div>
-      <div class="matrix-scroll" id="matrixScroll"></div>
+      <div class="matrix-wrap">
+        <div class="matrix-labels-col" id="matrixLabels"></div>
+        <div class="matrix-days-col" id="matrixDays"></div>
+      </div>
       <div id="monthStatsEl"></div>
     </div>
 
@@ -572,9 +582,9 @@
       return (habit.daysOfWeek || [1,2,3,4,5,6,7]).includes(jsWeekday(ds));
     }
     function isActive(habit, ds) {
-      const created = new Date(habit.createdAt);
-      const target  = new Date(ds + 'T00:00:00');
-      return target >= created && isScheduled(habit, ds);
+      const c = new Date(habit.createdAt);
+      const createdDs = `${c.getFullYear()}-${pad(c.getMonth()+1)}-${pad(c.getDate())}`;
+      return ds >= createdDs && isScheduled(habit, ds);
     }
 
     /* ===== COMPLETIONS ===== */
@@ -642,42 +652,46 @@
       $('monthLabel').textContent = new Date(y, m - 1).toLocaleDateString('ru-RU', { month: 'long', year: 'numeric' });
 
       const habits = S.habits;
+      const labelsEl = $('matrixLabels');
+      const daysEl   = $('matrixDays');
+
       if (!habits.length) {
-        $('matrixScroll').innerHTML = `<div class="empty-block"><div class="empty-icon">📅</div><div class="empty-title">Нет привычек</div><div class="empty-hint">Нажмите ＋ чтобы добавить</div></div>`;
+        labelsEl.innerHTML = '';
+        daysEl.innerHTML = `<div class="empty-block"><div class="empty-icon">📅</div><div class="empty-title">Нет привычек</div><div class="empty-hint">Нажмите ＋ чтобы добавить</div></div>`;
         $('monthStatsEl').innerHTML = '';
         return;
       }
 
-      // Build day headers
-      let html = '<table class="habits-matrix" cellspacing="0" cellpadding="0"><thead><tr>';
-      html += '<th class="col-label-th">Привычка</th>';
+      /* ── Labels column ── */
+      let lblHtml = `<div class="mlabel-hdr">Привычка</div>`;
+      habits.forEach((h, idx) => {
+        const alt = idx % 2 === 1 ? ' mlabel-alt' : '';
+        lblHtml += `<div class="mlabel-row${alt}">
+          <span class="mlabel-name">${esc(h.name)}</span>
+          <span class="mlabel-emoji">${h.emoji || '✅'}</span>
+        </div>`;
+      });
+      labelsEl.innerHTML = lblHtml;
+
+      /* ── Days column ── */
+      let dHtml = '<div class="mdays-inner"><div class="mdays-hdr-row">';
       for (let d = 1; d <= daysInMonth; d++) {
         const ds = mkDate(y, m, d);
-        const isT = ds === today;
-        html += `<th class="col-day-th${isT ? ' today-col' : ''}">${d}</th>`;
+        dHtml += `<div class="mday-hdr${ds === today ? ' today-col' : ''}">${d}</div>`;
       }
-      html += '</tr></thead><tbody>';
+      dHtml += '</div>';
 
       let totalSched = 0, totalDone = 0;
-
       habits.forEach((h, idx) => {
-        const rowClass = idx % 2 === 1 ? ' row-alt' : '';
-        html += `<tr class="${rowClass}">`;
-        html += `<td class="row-label-td">
-          <div class="row-label-inner">
-            <span class="row-label-text">${esc(h.name)}</span>
-            <span class="row-label-emoji">${h.emoji || '✅'}</span>
-          </div>
-        </td>`;
-
+        const alt = idx % 2 === 1 ? ' mdays-alt' : '';
+        dHtml += `<div class="mdays-habit-row${alt}">`;
         for (let d = 1; d <= daysInMonth; d++) {
-          const ds = mkDate(y, m, d);
-          const isT = ds === today;
+          const ds   = mkDate(y, m, d);
+          const isT  = ds === today;
           const past = ds < today;
-          const active = isActive(h, ds);
 
-          if (!active) {
-            html += '<td class="cell-td"><div class="cell-inner cell-na"></div></td>';
+          if (!isActive(h, ds)) {
+            dHtml += '<div class="mday-cell"><div class="cell-inner cell-na"></div></div>';
             continue;
           }
 
@@ -685,16 +699,19 @@
           if (past || isT) { totalSched++; if (done) totalDone++; }
 
           let cls = 'cell-inner ';
-          if (done) cls += isT ? 'cell-done cell-today-done' : 'cell-done';
-          else if (past || isT) cls += (isT ? 'cell-missed cell-today-ring' : 'cell-missed');
-          else cls += 'cell-future';
+          if (done)            cls += isT ? 'cell-done cell-today-done' : 'cell-done';
+          else if (past || isT) cls += isT ? 'cell-missed cell-today-ring' : 'cell-missed';
+          else                  cls += 'cell-future';
 
-          html += `<td class="cell-td"><div class="${cls}">${done ? '✓' : (past ? '·' : '')}</div></td>`;
+          dHtml += `<div class="mday-cell"><div class="${cls}">${done ? '✓' : (past ? '·' : '')}</div></div>`;
         }
-        html += '</tr>';
+        dHtml += '</div>';
       });
-      html += '</tbody></table>';
-      $('matrixScroll').innerHTML = html;
+      dHtml += '</div>';
+      daysEl.innerHTML = dHtml;
+
+      // Scroll so today is visible (centered) on initial render of current month
+      scrollToToday();
 
       // Month stats bar
       const pct = totalSched > 0 ? Math.round((totalDone / totalSched) * 100) : 0;
@@ -704,6 +721,18 @@
           <span style="color:var(--accent-light);font-weight:700;">${pct}%</span>
         </div>
         <div class="progress-bar"><div class="progress-fill" style="width:${pct}%"></div></div>`;
+    }
+
+    /* Scroll the days column so today is centred (only if viewing current month) */
+    function scrollToToday() {
+      const daysEl = $('matrixDays');
+      if (!daysEl) return;
+      const now = new Date();
+      if (calMonth.getFullYear() === now.getFullYear() && calMonth.getMonth() === now.getMonth()) {
+        const cellW = 30;
+        const target = (now.getDate() - 1) * cellW - (daysEl.clientWidth / 2) + cellW / 2;
+        daysEl.scrollLeft = Math.max(0, target);
+      }
     }
 
     /* ===== RENDER TODAY LIST ===== */
@@ -792,7 +821,7 @@
     }
     function buildColors() {
       $('colorRow').innerHTML = COLORS.map(c =>
-        `<div class="color-dot${c === selColor ? ' selected' : ''}" style="background:${c};" onclick="window.pickColor('${c}')"></div>`
+        `<div class="color-dot${c === selColor ? ' selected' : ''}" style="background:${c};" data-color="${c}" onclick="window.pickColor('${c}')"></div>`
       ).join('');
     }
     function pickEmoji(e) {
@@ -801,10 +830,9 @@
     }
     function pickColor(c) {
       selColor = c;
-      document.querySelectorAll('.color-dot').forEach(el => {
-        const bg = el.style.background;
-        el.classList.toggle('selected', bg === c || bg.replace(/ /g,'') === c);
-      });
+      document.querySelectorAll('.color-dot').forEach(el =>
+        el.classList.toggle('selected', el.dataset.color === c)
+      );
     }
 
     /* ===== DAY CHIPS ===== */
@@ -1186,6 +1214,7 @@
     window.onFreqChange     = onFreqChange;
     window.pickEmoji        = pickEmoji;
     window.pickColor        = pickColor;
+    window.scrollToToday    = scrollToToday;
 
     /* ===== INIT ===== */
     document.addEventListener('DOMContentLoaded', () => {
@@ -1194,6 +1223,8 @@
         m.addEventListener('click', e => { if (e.target === m) closeModal(m.id); });
       });
       renderAll();
+      // Ensure scroll-to-today fires after layout paint
+      requestAnimationFrame(() => requestAnimationFrame(scrollToToday));
     });
 
     // Inline @keyframes for fadeUp used in all-done banner
