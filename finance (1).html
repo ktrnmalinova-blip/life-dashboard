@@ -1,0 +1,1385 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover" />
+  <meta name="theme-color" content="#07070f" />
+  <meta name="apple-mobile-web-app-capable" content="yes" />
+  <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent" />
+  <title>Life Dashboard — Финансы</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+  <link href="https://fonts.googleapis.com/css2?family=Sora:wght@300;400;500;600;700&display=swap" rel="stylesheet" />
+  <style>
+    :root {
+      --bg-base: #07070f;
+      --bg-surface: rgba(255,255,255,0.035);
+      --bg-surface-md: rgba(255,255,255,0.055);
+      --bg-input: rgba(255,255,255,0.05);
+      --border: rgba(255,255,255,0.08);
+      --border-md: rgba(255,255,255,0.13);
+      --text-primary: #f0ebff;
+      --text-secondary: rgba(255,255,255,0.45);
+      --text-muted: rgba(255,255,255,0.22);
+      --accent: #7c3aed;
+      --accent-light: #c4b5fd;
+      --accent-glow: rgba(124,58,237,0.35);
+      --success: #34d399; --success-bg: rgba(52,211,153,0.12);
+      --danger: #f87171;  --danger-bg: rgba(248,113,113,0.12);
+      --warning: #fbbf24; --warning-bg: rgba(245,158,11,0.12);
+      --orb-finance-1: #92400e; --orb-finance-2: #7c3aed;
+      --radius-sm: 10px; --radius-md: 16px; --radius-lg: 22px; --radius-xl: 28px;
+      --blur-md: blur(20px); --blur-lg: blur(40px);
+      --transition: all 0.25s cubic-bezier(0.4,0,0.2,1);
+      --safe-bottom: env(safe-area-inset-bottom, 20px);
+      --font-main: 'Sora', -apple-system, BlinkMacSystemFont, sans-serif;
+    }
+    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; -webkit-tap-highlight-color: transparent; }
+    html { font-size: 16px; scroll-behavior: smooth; }
+    body { font-family: var(--font-main); background: var(--bg-base); color: var(--text-primary); min-height: 100vh; padding-bottom: calc(80px + var(--safe-bottom)); overflow-x: hidden; line-height: 1.5; }
+
+    /* ── Background ── */
+    .orb-container { position: fixed; inset: 0; pointer-events: none; z-index: 0; overflow: hidden; }
+    .orb { position: absolute; border-radius: 50%; filter: blur(60px); opacity: 0.35; animation: floatOrb 18s ease-in-out infinite alternate; }
+    .orb--1 { width: 320px; height: 320px; background: var(--orb-finance-1); top: -10%; left: -5%; animation-delay: -3s; }
+    .orb--2 { width: 280px; height: 280px; background: var(--orb-finance-2); bottom: 15%; right: -8%; animation-delay: -8s; }
+    .orb--3 { width: 200px; height: 200px; background: var(--accent); top: 40%; left: 50%; transform: translateX(-50%); opacity: 0.2; animation: pulseOrb 12s ease-in-out infinite; }
+    @keyframes floatOrb { 0% { transform: translate(0,0) scale(1); } 100% { transform: translate(25px,-35px) scale(1.08); } }
+    @keyframes pulseOrb { 0%,100% { opacity:.2; transform:translateX(-50%) scale(1); } 50% { opacity:.35; transform:translateX(-50%) scale(1.12); } }
+    .stars { position: absolute; inset: 0; background-image: radial-gradient(1px 1px at 20px 30px,rgba(255,255,255,.3),transparent), radial-gradient(1px 1px at 80px 120px,rgba(255,255,255,.2),transparent), radial-gradient(1px 1px at 150px 60px,rgba(255,255,255,.25),transparent), radial-gradient(1px 1px at 220px 180px,rgba(255,255,255,.3),transparent); background-size: 300px 300px; animation: twinkle 20s linear infinite; }
+    @keyframes twinkle { 0% { opacity:.6; } 50% { opacity:1; } 100% { opacity:.6; } }
+
+    /* ── Glass Card ── */
+    .glass-card { background: var(--bg-surface); backdrop-filter: var(--blur-md); -webkit-backdrop-filter: var(--blur-md); border: 1px solid var(--border); border-radius: var(--radius-lg); padding: 20px; margin-bottom: 16px; transition: var(--transition); }
+    .glass-card:hover { border-color: var(--border-md); transform: translateY(-1px); }
+    .glass-card--accent { border-color: var(--accent); box-shadow: 0 0 25px var(--accent-glow); }
+    .glass-card--success { border-color: var(--success); background: var(--success-bg); }
+    .glass-card--danger  { border-color: var(--danger);  background: var(--danger-bg);  }
+
+    /* ── Typography ── */
+    .page-title { font-size: 32px; font-weight: 700; letter-spacing: -.5px; background: linear-gradient(135deg,var(--text-primary),var(--accent-light)); -webkit-background-clip: text; -webkit-text-fill-color: transparent; margin-bottom: 4px; }
+    .page-subtitle { color: var(--text-secondary); font-size: 14px; }
+    .section-title { font-size: 18px; font-weight: 600; margin-bottom: 16px; display: flex; align-items: center; gap: 10px; }
+    .metric-value { font-size: 36px; font-weight: 700; letter-spacing: -1px; }
+    .metric-value--positive { color: var(--success); }
+    .metric-value--negative { color: var(--danger); }
+    .text-success { color: var(--success); }
+    .text-danger  { color: var(--danger); }
+    .text-muted   { color: var(--text-muted); }
+
+    /* ── Buttons ── */
+    .btn { display: inline-flex; align-items: center; justify-content: center; gap: 8px; padding: 14px 20px; border: 1px solid var(--border); border-radius: var(--radius-md); font-size: 15px; font-weight: 600; cursor: pointer; transition: var(--transition); background: var(--bg-surface-md); color: var(--text-primary); font-family: var(--font-main); }
+    .btn:hover  { border-color: var(--border-md); }
+    .btn:active { transform: scale(0.97); }
+    .btn--primary { background: linear-gradient(135deg,var(--accent),#6d28d9); border-color: var(--accent); box-shadow: 0 4px 20px var(--accent-glow); }
+    .btn--primary:hover { box-shadow: 0 6px 28px var(--accent-glow); }
+    .btn--ghost   { background: transparent; border-color: var(--border); color: var(--text-secondary); }
+    .btn--ghost:hover { background: var(--bg-surface); color: var(--text-primary); }
+    .btn--success { background: var(--success); color: #07070f; border: none; box-shadow: 0 4px 20px rgba(52,211,153,.3); }
+    .btn--danger  { background: var(--danger);  color: #07070f; border: none; box-shadow: 0 4px 20px rgba(248,113,113,.3); }
+    .btn--icon    { width: 40px; height: 40px; padding: 0; border-radius: var(--radius-sm); font-size: 18px; }
+    .btn--full    { width: 100%; }
+    .btn--sm      { padding: 8px 14px; font-size: 13px; }
+
+    /* ── Forms ── */
+    .input, .select, .textarea { width: 100%; padding: 14px 16px; background: var(--bg-input); border: 1px solid var(--border); border-radius: var(--radius-md); color: var(--text-primary); font-size: 16px; font-family: var(--font-main); transition: var(--transition); }
+    .input:focus, .select:focus, .textarea:focus { outline: none; border-color: var(--accent); box-shadow: 0 0 0 3px var(--accent-glow); }
+    .input::placeholder { color: var(--text-muted); }
+    .select { appearance: none; background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='16' height='16' viewBox='0 0 24 24' fill='none' stroke='%239ca3af' stroke-width='2'%3E%3Cpolyline points='6 9 12 15 18 9'/%3E%3C/svg%3E"); background-repeat: no-repeat; background-position: right 14px center; }
+    .select option { background: var(--bg-base); color: var(--text-primary); }
+    .textarea { min-height: 70px; resize: vertical; }
+    .form-group  { margin-bottom: 16px; }
+    .form-label  { display: block; font-size: 14px; color: var(--text-secondary); margin-bottom: 8px; font-weight: 500; }
+
+    /* ── Transaction list ── */
+    .transaction-item { display: flex; align-items: center; gap: 12px; padding: 14px 0; border-bottom: 1px solid var(--border); }
+    .transaction-item:last-child { border-bottom: none; }
+    .transaction-icon { width: 40px; height: 40px; border-radius: var(--radius-md); background: var(--bg-surface); display: flex; align-items: center; justify-content: center; font-size: 18px; flex-shrink: 0; }
+    .transaction-icon.income { background: var(--success-bg); }
+    .transaction-icon.expense { background: var(--danger-bg); }
+    .transaction-info { flex: 1; min-width: 0; }
+    .transaction-title { font-weight: 600; font-size: 15px; margin-bottom: 2px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+    .transaction-meta  { font-size: 12px; color: var(--text-muted); }
+    .transaction-amount { font-weight: 700; font-size: 16px; white-space: nowrap; }
+    .transaction-amount.income { color: var(--success); }
+    .transaction-amount.expense { color: var(--danger); }
+
+    /* ── Stats grid ── */
+    .stats-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; }
+    .stat-card   { text-align: center; padding: 16px; }
+    .stat-label  { font-size: 12px; color: var(--text-secondary); margin-bottom: 6px; }
+    .stat-value  { font-size: 24px; font-weight: 700; }
+
+    /* ── Empty state ── */
+    .empty-state       { text-align: center; padding: 40px 20px; color: var(--text-muted); }
+    .empty-state-icon  { font-size: 48px; margin-bottom: 12px; opacity: .4; }
+    .empty-state-title { font-size: 16px; font-weight: 600; color: var(--text-secondary); margin-bottom: 4px; }
+
+    /* ── Modals ── */
+    .modal-overlay { position: fixed; inset: 0; background: rgba(7,7,15,.85); backdrop-filter: var(--blur-lg); -webkit-backdrop-filter: var(--blur-lg); z-index: 1000; display: none; align-items: flex-end; justify-content: center; }
+    .modal-overlay.active { display: flex; }
+    .modal { background: linear-gradient(180deg,var(--bg-surface-md) 0%,var(--bg-base) 100%); border: 1px solid var(--border-md); border-radius: var(--radius-xl) var(--radius-xl) 0 0; padding: 24px; width: 100%; max-width: 480px; max-height: 92vh; overflow-y: auto; animation: slideUp .3s ease; }
+    @keyframes slideUp { from { transform: translateY(100%); } to { transform: translateY(0); } }
+    .modal__header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 20px; }
+    .modal__title  { font-size: 20px; font-weight: 700; }
+    .modal__close  { width: 36px; height: 36px; border-radius: var(--radius-sm); background: var(--bg-surface); border: 1px solid var(--border); color: var(--text-secondary); font-size: 20px; cursor: pointer; display: flex; align-items: center; justify-content: center; transition: var(--transition); }
+    .modal__close:hover { color: var(--text-primary); border-color: var(--border-md); }
+
+    /* ── Bottom nav ── */
+    .bottom-nav { position: fixed; bottom: 0; left: 0; right: 0; background: rgba(7,7,15,.9); backdrop-filter: var(--blur-md); border-top: 1px solid var(--border); display: flex; justify-content: space-around; align-items: center; padding: 10px 0 calc(10px + var(--safe-bottom)); z-index: 100; }
+    .nav-btn { display: flex; flex-direction: column; align-items: center; gap: 4px; text-decoration: none; color: var(--text-muted); padding: 8px 12px; border-radius: var(--radius-md); transition: var(--transition); font-size: 10px; font-weight: 600; background: transparent; border: none; cursor: pointer; }
+    .nav-btn svg { width: 22px; height: 22px; stroke: currentColor; stroke-width: 2; fill: none; }
+    .nav-btn.active { color: var(--accent); }
+    .nav-btn.active svg { stroke-width: 2.5; filter: drop-shadow(0 0 8px var(--accent-glow)); }
+
+    /* ── Notification ── */
+    .notification { position: fixed; top: 20px; left: 50%; transform: translateX(-50%) translateY(-100px); background: linear-gradient(135deg,var(--accent),#6d28d9); color: #fff; padding: 12px 24px; border-radius: var(--radius-lg); font-weight: 600; font-size: 14px; z-index: 2000; transition: transform .3s cubic-bezier(.4,0,.2,1); box-shadow: 0 8px 30px var(--accent-glow); white-space: nowrap; }
+    .notification.show { transform: translateX(-50%) translateY(0); }
+    .notification--success { background: linear-gradient(135deg,var(--success),#10b981); box-shadow: 0 8px 30px rgba(52,211,153,.3); }
+    .notification--danger  { background: linear-gradient(135deg,var(--danger),#ef4444);  box-shadow: 0 8px 30px rgba(248,113,113,.3); }
+
+    .divider { height: 1px; background: var(--border); margin: 16px 0; }
+
+    /* ============================================================
+       WISHLIST — HEADER ENTRY BUTTON
+       ============================================================ */
+    .wl-open-btn {
+      position: relative;
+      width: 44px; height: 44px;
+      background: var(--bg-surface); border: 1px solid var(--border);
+      border-radius: var(--radius-sm); font-size: 22px; cursor: pointer;
+      display: flex; align-items: center; justify-content: center;
+      transition: var(--transition); flex-shrink: 0; color: var(--text-primary);
+    }
+    .wl-open-btn:hover { border-color: var(--accent); box-shadow: 0 0 16px var(--accent-glow); }
+    .wl-open-btn:active { transform: scale(0.95); }
+    /* Red dot if list has items */
+    .wl-open-btn .wl-dot {
+      position: absolute; top: 7px; right: 7px;
+      width: 8px; height: 8px; border-radius: 50%;
+      background: var(--danger); border: 2px solid var(--bg-base);
+      display: none;
+    }
+    .wl-open-btn .wl-dot.visible { display: block; }
+
+    /* ============================================================
+       WISHLIST — FULL-SCREEN SLIDE PANEL
+       ============================================================ */
+    #wishlist-panel {
+      position: fixed; inset: 0; z-index: 500;
+      background: var(--bg-base);
+      transform: translateX(102%);
+      transition: transform .38s cubic-bezier(0.2,0.8,0.2,1);
+      overflow-y: auto; overflow-x: hidden;
+      padding-bottom: calc(80px + var(--safe-bottom));
+    }
+    #wishlist-panel.open { transform: translateX(0); }
+
+    /* Ambient orbs inside panel */
+    .wl-orb { position: fixed; border-radius: 50%; filter: blur(80px); pointer-events: none; }
+    .wl-orb-1 { width: 280px; height: 280px; background: #92400e; opacity: .22; top: -80px; left: -60px; }
+    .wl-orb-2 { width: 240px; height: 240px; background: #7c3aed; opacity: .18; bottom: 120px; right: -60px; }
+
+    /* Sticky header */
+    .wl-header {
+      position: sticky; top: 0; z-index: 10;
+      background: rgba(7,7,15,.92);
+      backdrop-filter: blur(24px); -webkit-backdrop-filter: blur(24px);
+      border-bottom: 1px solid var(--border);
+    }
+    .wl-header-row {
+      display: flex; align-items: center; gap: 12px;
+      padding: 20px 20px 14px;
+    }
+    .wl-back {
+      width: 38px; height: 38px; border-radius: var(--radius-sm);
+      background: var(--bg-surface); border: 1px solid var(--border);
+      color: var(--text-primary); font-size: 20px; cursor: pointer;
+      display: flex; align-items: center; justify-content: center;
+      flex-shrink: 0; transition: var(--transition);
+    }
+    .wl-back:hover { border-color: var(--border-md); }
+    .wl-title { font-size: 22px; font-weight: 700; flex: 1; }
+    .wl-badge {
+      background: var(--accent); color: #fff;
+      padding: 4px 12px; border-radius: 20px;
+      font-size: 13px; font-weight: 700; min-width: 28px; text-align: center;
+    }
+
+    /* Filter pills */
+    .wl-filters { display: flex; gap: 8px; overflow-x: auto; scrollbar-width: none; padding: 0 20px 14px; }
+    .wl-filters::-webkit-scrollbar { display: none; }
+    .fp {
+      flex: 0 0 auto; padding: 7px 14px;
+      background: var(--bg-surface); border: 1px solid var(--border);
+      color: var(--text-muted); border-radius: 20px; font-size: 13px;
+      font-weight: 600; cursor: pointer; white-space: nowrap;
+      transition: var(--transition); font-family: var(--font-main);
+    }
+    .fp:hover { border-color: var(--border-md); color: var(--text-secondary); }
+    .fp.fp-all.active  { background: rgba(124,58,237,.2); border-color: var(--accent);       color: var(--accent-light); }
+    .fp.fp-need.active { background: var(--danger-bg);   border-color: var(--danger);        color: var(--danger);       }
+    .fp.fp-want.active { background: var(--warning-bg);  border-color: var(--warning);       color: var(--warning);      }
+    .fp.fp-like.active { background: rgba(124,58,237,.15); border-color: var(--accent-light); color: var(--accent-light); }
+
+    /* Stats strip */
+    .wl-stats { display: flex; gap: 10px; padding: 14px 16px 4px; }
+    .wl-stat  { flex: 1; background: var(--bg-surface); border: 1px solid var(--border); border-radius: var(--radius-md); padding: 12px 8px; text-align: center; }
+    .wl-stat__label { font-size: 10px; color: var(--text-muted); margin-bottom: 4px; line-height: 1.3; }
+    .wl-stat__value { font-size: 18px; font-weight: 700; }
+
+    /* Product grid — 2 columns */
+    .wl-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; padding: 12px 16px 24px; }
+
+    /* Product card */
+    .wish-card {
+      background: var(--bg-surface); border: 1px solid var(--border);
+      border-radius: var(--radius-lg); overflow: hidden;
+      cursor: pointer; transition: var(--transition);
+      display: flex; flex-direction: column;
+    }
+    .wish-card:hover  { border-color: var(--border-md); transform: translateY(-3px); box-shadow: 0 10px 28px rgba(0,0,0,.35); }
+    .wish-card:active { transform: scale(0.97); }
+
+    .wish-card__img {
+      aspect-ratio: 3/4; background: var(--bg-surface-md);
+      position: relative; overflow: hidden;
+      display: flex; align-items: center; justify-content: center;
+    }
+    .wish-card__img img { width: 100%; height: 100%; object-fit: cover; display: block; }
+    .wish-card__ph { font-size: 3.2rem; opacity: .22; }
+
+    /* Priority badge overlay */
+    .wish-card__pri {
+      position: absolute; top: 8px; left: 8px;
+      padding: 3px 8px; border-radius: 8px;
+      font-size: 10px; font-weight: 700; letter-spacing: .04em; text-transform: uppercase;
+      backdrop-filter: blur(6px); -webkit-backdrop-filter: blur(6px);
+    }
+    .wish-card__pri--need { background: rgba(248,113,113,.88); color: #fff; }
+    .wish-card__pri--want { background: rgba(251,191,36,.88);  color: #1a1200; }
+    .wish-card__pri--like { background: rgba(124,58,237,.85);  color: #fff; }
+
+    .wish-card__del {
+      position: absolute; top: 8px; right: 8px;
+      width: 26px; height: 26px; border-radius: 50%;
+      background: rgba(7,7,15,.72); backdrop-filter: blur(4px);
+      border: none; color: var(--text-secondary); font-size: 11px;
+      cursor: pointer; display: flex; align-items: center; justify-content: center;
+      transition: var(--transition); z-index: 2;
+    }
+    .wish-card__del:hover { background: var(--danger); color: #fff; }
+
+    .wish-card__link {
+      position: absolute; bottom: 8px; right: 8px;
+      width: 26px; height: 26px; border-radius: 50%;
+      background: rgba(7,7,15,.72); backdrop-filter: blur(4px);
+      color: var(--accent-light); font-size: 13px;
+      display: flex; align-items: center; justify-content: center;
+      text-decoration: none; z-index: 2; transition: var(--transition);
+    }
+    .wish-card__link:hover { background: var(--accent); color: #fff; }
+
+    .wish-card__body { padding: 10px; flex: 1; display: flex; flex-direction: column; gap: 3px; }
+    .wish-card__name  { font-size: 12px; font-weight: 600; color: var(--text-primary); line-height: 1.35; overflow: hidden; display: -webkit-box; -webkit-line-clamp: 2; -webkit-box-orient: vertical; }
+    .wish-card__desc  { font-size: 10px; color: var(--text-muted); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+    .wish-card__price { font-size: 15px; font-weight: 700; color: var(--success); margin-top: auto; padding-top: 4px; }
+    .wish-card__no-price { font-size: 11px; color: var(--text-muted); margin-top: auto; padding-top: 4px; }
+
+    /* Edit button on card */
+    .wish-card__edit {
+      position: absolute; bottom: 8px; left: 8px;
+      width: 26px; height: 26px; border-radius: 50%;
+      background: rgba(7,7,15,.72); backdrop-filter: blur(4px);
+      border: none; color: var(--accent-light); font-size: 11px;
+      cursor: pointer; display: flex; align-items: center; justify-content: center;
+      transition: var(--transition); z-index: 2;
+    }
+    .wish-card__edit:hover { background: var(--accent); color: #fff; }
+
+    /* Price row with change indicator */
+    .wish-card__price-row { display: flex; align-items: baseline; gap: 5px; margin-top: auto; padding-top: 4px; flex-wrap: wrap; }
+    .wish-card__price     { font-size: 15px; font-weight: 700; color: var(--success); }
+    .wish-card__price-old { font-size: 11px; color: var(--text-muted); text-decoration: line-through; }
+    .wish-card__price-up   { font-size: 10px; font-weight: 700; color: var(--danger);  background: var(--danger-bg);  padding: 2px 5px; border-radius: 6px; }
+    .wish-card__price-down { font-size: 10px; font-weight: 700; color: var(--success); background: var(--success-bg); padding: 2px 5px; border-radius: 6px; }
+
+    /* Refresh spinner inside card */
+    .wish-card__spin {
+      position: absolute; inset: 0; background: rgba(7,7,15,.55);
+      backdrop-filter: blur(3px); display: flex; align-items: center;
+      justify-content: center; font-size: 22px; z-index: 4;
+      border-radius: var(--radius-lg); animation: spinAnim 1s linear infinite;
+    }
+    @keyframes spinAnim { to { transform: rotate(360deg); } }
+
+    /* Last-updated micro-text */
+    .wish-card__updated { font-size: 9px; color: var(--text-muted); margin-top: 2px; }
+
+    /* Refresh-all button inside panel header */
+    .wl-refresh-btn {
+      width: 34px; height: 34px; border-radius: var(--radius-sm);
+      background: var(--bg-surface); border: 1px solid var(--border);
+      color: var(--text-secondary); font-size: 16px; cursor: pointer;
+      display: flex; align-items: center; justify-content: center;
+      transition: var(--transition); flex-shrink: 0;
+    }
+    .wl-refresh-btn:hover  { border-color: var(--accent); color: var(--accent-light); }
+    .wl-refresh-btn.spinning { animation: spinAnim .9s linear infinite; }
+
+    /* Fetch status under link input */
+    .fetch-status {
+      font-size: 12px; min-height: 18px; margin-top: 5px; padding-left: 2px;
+      transition: opacity .25s;
+    }
+    .fetch-status--loading { color: var(--accent-light); }
+    .fetch-status--ok      { color: var(--success); }
+    .fetch-status--err     { color: var(--danger); }
+
+    /* ── Wishlist FAB ── */
+    #wl-fab {
+      position: fixed; bottom: calc(80px + var(--safe-bottom) + 18px); right: 20px;
+      width: 58px; height: 58px; border-radius: 50%;
+      background: linear-gradient(135deg,var(--accent),#5b21b6);
+      border: none; color: #fff; font-size: 28px;
+      cursor: pointer; box-shadow: 0 6px 24px var(--accent-glow);
+      display: none; align-items: center; justify-content: center;
+      z-index: 510; transition: transform .25s cubic-bezier(.4,0,.2,1), box-shadow .25s;
+    }
+    #wl-fab.visible { display: flex; }
+    #wl-fab:hover  { transform: scale(1.12) rotate(90deg); box-shadow: 0 10px 32px var(--accent-glow); }
+    #wl-fab:active { transform: scale(0.94); }
+
+    /* ============================================================
+       WISHLIST ADD / EDIT MODAL EXTRAS
+       ============================================================ */
+    .img-upload-zone {
+      border: 2px dashed var(--border); border-radius: var(--radius-md);
+      background: var(--bg-input); cursor: pointer; transition: var(--transition);
+      min-height: 110px; display: flex; flex-direction: column;
+      align-items: center; justify-content: center; gap: 8px;
+      overflow: hidden; padding: 18px;
+    }
+    .img-upload-zone:hover { border-color: var(--accent); }
+    .img-upload-zone.has-img { padding: 6px; min-height: unset; }
+    .img-upload-zone img { width: 100%; max-height: 190px; object-fit: contain; border-radius: var(--radius-sm); display: block; }
+    .upload-ico  { font-size: 28px; opacity: .45; }
+    .upload-hint { font-size: 13px; color: var(--text-muted); text-align: center; }
+
+    /* Priority selector */
+    .pri-list { display: flex; flex-direction: column; gap: 8px; }
+    .pri-opt {
+      display: flex; align-items: center; gap: 12px; padding: 13px 14px;
+      background: var(--bg-input); border: 2px solid var(--border);
+      border-radius: var(--radius-md); cursor: pointer; transition: var(--transition);
+    }
+    .pri-opt:hover { border-color: var(--border-md); }
+    .pri-opt.s-need { border-color: var(--danger);       background: var(--danger-bg);        }
+    .pri-opt.s-want { border-color: var(--warning);      background: var(--warning-bg);       }
+    .pri-opt.s-like { border-color: var(--accent-light); background: rgba(124,58,237,.1);     }
+    .pri-opt__ico   { font-size: 22px; flex-shrink: 0; }
+    .pri-opt__lbl   { font-weight: 600; font-size: 14px; }
+    .pri-opt__sub   { font-size: 11px; color: var(--text-muted); margin-top: 1px; }
+
+    @media (min-width: 481px) { .container { max-width: 480px; margin: 0 auto; } }
+    @media (prefers-reduced-motion: reduce) { *, *::before, *::after { animation-duration: .01ms !important; transition-duration: .01ms !important; } }
+  </style>
+</head>
+<body>
+
+<!-- COSMOS BACKGROUND -->
+<div class="orb-container">
+  <div class="orb orb--1"></div>
+  <div class="orb orb--2"></div>
+  <div class="orb orb--3"></div>
+  <div class="stars"></div>
+</div>
+
+<div class="notification" id="notification">Действие выполнено</div>
+
+<!-- HEADER — wishlist 🛍️ icon top-right -->
+<header class="container" style="padding:24px 20px 0;">
+  <div style="display:flex;justify-content:space-between;align-items:flex-start;margin-bottom:4px;">
+    <div>
+      <h1 class="page-title">Финансы</h1>
+      <p class="page-subtitle" style="margin-bottom:24px;">Контроль доходов и расходов</p>
+    </div>
+    <div style="margin-top:6px;">
+      <button class="wl-open-btn" id="openWlBtn" title="Список желаний">
+        🛍️
+        <span class="wl-dot" id="wlDot"></span>
+      </button>
+    </div>
+  </div>
+</header>
+
+<!-- MAIN FINANCE CONTENT -->
+<main class="container" style="padding:0 20px;">
+
+  <!-- Balance -->
+  <div class="glass-card glass-card--accent" style="text-align:center;padding:24px;">
+    <div style="font-size:14px;color:var(--text-secondary);margin-bottom:8px;">Текущий баланс</div>
+    <div class="metric-value" id="balance-value">0 ₽</div>
+    <div style="margin-top:16px;display:flex;gap:12px;justify-content:center;">
+      <button class="btn btn--success" style="flex:1;" onclick="window.openTransactionModal('income')">➕ Доход</button>
+      <button class="btn btn--danger"  style="flex:1;" onclick="window.openTransactionModal('expense')">➖ Расход</button>
+    </div>
+  </div>
+
+  <!-- Calendar -->
+  <div class="glass-card">
+    <div class="section-title">📅 Календарь</div>
+    <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:12px;">
+      <button class="btn btn--ghost btn--sm" id="calPrev">◀</button>
+      <span id="calMonthLabel" style="font-weight:500;font-size:.95rem;"></span>
+      <button class="btn btn--ghost btn--sm" id="calNext">▶</button>
+    </div>
+    <div id="financeCalendar" style="display:grid;grid-template-columns:repeat(7,1fr);gap:4px;"></div>
+    <div id="dayDetails" class="glass-card" style="display:none;margin-top:12px;background:var(--bg-surface-md);">
+      <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:10px;">
+        <span id="dayDetailsTitle" style="font-weight:600;"></span>
+        <button class="btn btn--ghost btn--sm" onclick="window.closeDayDetails()">✕</button>
+      </div>
+      <div id="dayTransactions"></div>
+      <div class="divider"></div>
+      <div style="display:flex;justify-content:space-between;font-size:.9rem;">
+        <span style="color:var(--success);">Доход: <b id="dayIncome">0 ₽</b></span>
+        <span style="color:var(--danger);">Расход: <b id="dayExpense">0 ₽</b></span>
+      </div>
+    </div>
+  </div>
+
+  <!-- Monthly stats -->
+  <div class="stats-grid">
+    <div class="glass-card stat-card glass-card--success">
+      <div class="stat-label">Доход за месяц</div>
+      <div class="stat-value text-success" id="month-income">0 ₽</div>
+    </div>
+    <div class="glass-card stat-card glass-card--danger">
+      <div class="stat-label">Расход за месяц</div>
+      <div class="stat-value text-danger" id="month-expense">0 ₽</div>
+    </div>
+  </div>
+
+  <!-- Analytics -->
+  <div class="glass-card">
+    <div class="section-title">📊 Аналитика</div>
+    <div style="display:flex;gap:8px;margin-bottom:12px;flex-wrap:wrap;">
+      <button class="btn btn--ghost btn--sm" id="analyticsByCategory">По категориям</button>
+      <button class="btn btn--ghost btn--sm" id="analyticsByProduct">По продуктам</button>
+      <button class="btn btn--ghost btn--sm" id="analyticsTop">Топ трат</button>
+    </div>
+    <canvas id="analyticsChart" style="width:100%;height:200px;background:var(--bg-surface);border-radius:var(--radius-md);display:block;"></canvas>
+    <div id="analyticsSummary" style="margin-top:12px;font-size:.85rem;color:var(--text-secondary);"></div>
+    <div id="analyticsList"   style="margin-top:8px;max-height:150px;overflow-y:auto;"></div>
+  </div>
+
+  <!-- Transactions list -->
+  <div class="glass-card">
+    <div class="section-title">📋 Последние операции</div>
+    <div id="transactions-list"></div>
+  </div>
+
+</main>
+
+<!-- ═══════════════════════════════════════════
+     TRANSACTION MODAL
+═══════════════════════════════════════════ -->
+<div class="modal-overlay" id="modal-transaction">
+  <div class="modal">
+    <div class="modal__header">
+      <h2 class="modal__title" id="modal-transaction-title">Новая транзакция</h2>
+      <button class="modal__close" onclick="window.closeModal('modal-transaction')">✕</button>
+    </div>
+    <form id="form-transaction">
+      <input type="hidden" id="tx-type" name="type" value="expense">
+      <div class="form-group">
+        <label class="form-label">Сумма *</label>
+        <input class="input" type="number" id="tx-amount" name="amount" placeholder="0" min="0.01" step="0.01" required>
+      </div>
+      <div class="form-group">
+        <label class="form-label">Категория *</label>
+        <select class="select" id="tx-category" name="category" required>
+          <option value="">Выберите категорию</option>
+        </select>
+      </div>
+      <div class="form-group">
+        <label class="form-label">Заметка</label>
+        <textarea class="textarea" id="tx-note" name="note" placeholder="Комментарий..."></textarea>
+      </div>
+      <div class="form-group">
+        <label class="form-label">Дата *</label>
+        <input class="input" type="date" id="tx-date" name="date" required>
+      </div>
+      <details style="margin-bottom:16px;">
+        <summary style="cursor:pointer;color:var(--accent-light);font-size:.85rem;padding:6px 0;">🛒 Добавить продукты (необязательно)</summary>
+        <div style="margin-top:10px;" id="productsContainer"></div>
+        <button type="button" class="btn btn--ghost btn--sm btn--full" id="addProductBtn" style="margin-top:8px;">+ Продукт</button>
+      </details>
+      <button type="submit" class="btn btn--primary btn--full">💾 Сохранить</button>
+    </form>
+  </div>
+</div>
+
+<!-- ═══════════════════════════════════════════
+     WISHLIST PANEL  (full-screen slide-in)
+═══════════════════════════════════════════ -->
+<div id="wishlist-panel">
+  <div class="wl-orb wl-orb-1"></div>
+  <div class="wl-orb wl-orb-2"></div>
+
+  <div class="wl-header">
+    <div class="wl-header-row">
+      <button class="wl-back" id="closeWlBtn">←</button>
+      <span class="wl-title">🛍️ Список желаний</span>
+      <button class="wl-refresh-btn" id="wlRefreshBtn" title="Обновить цены">↻</button>
+      <span class="wl-badge" id="wlCount">0</span>
+    </div>
+    <div class="wl-filters">
+      <button class="fp fp-all active" data-f="all">Все</button>
+      <button class="fp fp-need"       data-f="need">🔴 Нужен</button>
+      <button class="fp fp-want"       data-f="want">🟡 Желаю</button>
+      <button class="fp fp-like"       data-f="like">💜 Нравится</button>
+    </div>
+  </div>
+
+  <!-- Summary strip -->
+  <div class="wl-stats">
+    <div class="wl-stat">
+      <div class="wl-stat__label">Товаров</div>
+      <div class="wl-stat__value" id="wlStatCount" style="color:var(--accent-light);">0</div>
+    </div>
+    <div class="wl-stat">
+      <div class="wl-stat__label">Итого стоимость</div>
+      <div class="wl-stat__value" id="wlStatTotal" style="color:var(--success);">0 ₽</div>
+    </div>
+    <div class="wl-stat">
+      <div class="wl-stat__label">Нужно срочно</div>
+      <div class="wl-stat__value" id="wlStatNeed" style="color:var(--danger);">0</div>
+    </div>
+  </div>
+
+  <!-- 2-column product grid -->
+  <div class="wl-grid" id="wlGrid"></div>
+
+  <div id="wlEmpty" class="empty-state" style="display:none;">
+    <div class="empty-state-icon">🛍️</div>
+    <div class="empty-state-title">Список желаний пуст</div>
+    <div style="font-size:13px;color:var(--text-muted);margin-top:6px;">Нажмите «+» чтобы добавить товар</div>
+  </div>
+</div>
+
+<!-- WISHLIST FAB -->
+<button id="wl-fab" title="Добавить товар">+</button>
+
+<!-- ═══════════════════════════════════════════
+     WISHLIST ADD / EDIT MODAL
+═══════════════════════════════════════════ -->
+<div class="modal-overlay" id="modal-wl">
+  <div class="modal" style="max-height:93vh;">
+    <div class="modal__header">
+      <h2 class="modal__title" id="wlModalTitle">✨ Добавить товар</h2>
+      <button class="modal__close" onclick="window.closeWlModal()">✕</button>
+    </div>
+
+    <!-- Link (FIRST — auto-fills everything else) -->
+    <div class="form-group">
+      <label class="form-label">🔗 Ссылка на маркетплейс</label>
+      <input class="input" type="url" id="wlLink" placeholder="Вставьте ссылку с Wildberries / Ozon…" autocomplete="off">
+      <div class="fetch-status" id="wlFetchStatus"></div>
+    </div>
+
+    <!-- Photo upload -->
+    <div class="form-group">
+      <label class="form-label">Фото товара <span style="color:var(--text-muted);font-weight:400;">(заполняется автоматически)</span></label>
+      <div class="img-upload-zone" id="imgZone" onclick="document.getElementById('wlImgFile').click()">
+        <div id="imgZoneContent">
+          <div class="upload-ico">📷</div>
+          <div class="upload-hint">Нажмите для загрузки или вставьте ссылку выше</div>
+        </div>
+      </div>
+      <input type="file" id="wlImgFile" accept="image/*" style="display:none;">
+    </div>
+
+    <!-- Name -->
+    <div class="form-group">
+      <label class="form-label">Название *</label>
+      <input class="input" type="text" id="wlName" placeholder="Название товара..." maxlength="120">
+    </div>
+
+    <!-- Price (half-width) -->
+    <div class="form-group" style="max-width:180px;">
+      <label class="form-label">Цена, ₽</label>
+      <input class="input" type="number" id="wlPrice" placeholder="0" min="0" step="0.01">
+    </div>
+
+    <!-- Description -->
+    <div class="form-group">
+      <label class="form-label">Описание</label>
+      <textarea class="textarea" id="wlDesc" placeholder="Заметка о товаре..." style="min-height:60px;"></textarea>
+    </div>
+
+    <!-- Priority -->
+    <div class="form-group">
+      <label class="form-label">Приоритет покупки *</label>
+      <div class="pri-list">
+        <div class="pri-opt" data-p="need">
+          <span class="pri-opt__ico">🔴</span>
+          <div>
+            <div class="pri-opt__lbl">Нужен</div>
+            <div class="pri-opt__sub">Обязательная покупка</div>
+          </div>
+        </div>
+        <div class="pri-opt" data-p="want">
+          <span class="pri-opt__ico">🟡</span>
+          <div>
+            <div class="pri-opt__lbl">Есть желание</div>
+            <div class="pri-opt__sub">Хочу, но не срочно</div>
+          </div>
+        </div>
+        <div class="pri-opt" data-p="like">
+          <span class="pri-opt__ico">💜</span>
+          <div>
+            <div class="pri-opt__lbl">Просто понравилось</div>
+            <div class="pri-opt__sub">На заметку</div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <button class="btn btn--primary btn--full" onclick="window.saveWlItem()" style="margin-top:4px;">💾 Сохранить</button>
+  </div>
+</div>
+
+<!-- BOTTOM NAV -->
+<nav class="bottom-nav">
+  <a href="tasks.html" class="nav-btn">
+    <svg viewBox="0 0 24 24"><path d="M9 11l3 3L22 4"/><path d="M21 12v7a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h11"/></svg>
+    <span>Задачи</span>
+  </a>
+  <a href="journal.html" class="nav-btn">
+    <svg viewBox="0 0 24 24"><path d="M4 19.5A2.5 2.5 0 0 1 6.5 17H20"/><path d="M6.5 2H20v20H6.5A2.5 2.5 0 0 1 4 19.5v-15A2.5 2.5 0 0 1 6.5 2z"/></svg>
+    <span>Дневник</span>
+  </a>
+  <a href="habits.html" class="nav-btn">
+    <svg viewBox="0 0 24 24"><circle cx="12" cy="12" r="10"/><polyline points="12 6 12 12 16 14"/></svg>
+    <span>Привычки</span>
+  </a>
+  <a href="finance.html" class="nav-btn active">
+    <svg viewBox="0 0 24 24"><line x1="12" y1="1" x2="12" y2="23"/><path d="M17 5H9.5a3.5 3.5 0 0 0 0 7h5a3.5 3.5 0 0 1 0 7H6"/></svg>
+    <span>Финансы</span>
+  </a>
+  <a href="health.html" class="nav-btn">
+    <svg viewBox="0 0 24 24"><path d="M20.84 4.61a5.5 5.5 0 0 0-7.78 0L12 5.67l-1.06-1.06a5.5 5.5 0 0 0-7.78 7.78l1.06 1.06L12 21.23l7.78-7.78 1.06-1.06a5.5 5.5 0 0 0 0-7.78z"/></svg>
+    <span>Здоровье</span>
+  </a>
+</nav>
+
+<!-- ═══════════════════════════════════════════
+     SCRIPT
+═══════════════════════════════════════════ -->
+<script>
+(function () {
+  'use strict';
+
+  /* ── Utilities ── */
+  const $  = s => document.querySelector(s);
+  const $$ = s => document.querySelectorAll(s);
+  const esc = s => String(s).replace(/[&<>"']/g, m => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#039;'}[m]));
+  const fmt = n => new Intl.NumberFormat('ru-RU',{style:'currency',currency:'RUB',maximumFractionDigits:0}).format(n);
+  const fmtShort = d => d ? new Date(d).toLocaleDateString('ru-RU',{day:'numeric',month:'short'}) : '';
+  const save = (k,v) => { try { localStorage.setItem(k,JSON.stringify(v)); } catch { notify('Хранилище заполнено!','danger'); } };
+  const load = (k,def) => { try { return JSON.parse(localStorage.getItem(k))||def; } catch { return def; } };
+  const notify = (msg,type='') => {
+    const n = $('#notification'); if(!n) return;
+    n.textContent = msg;
+    n.className = 'notification'+(type?' notification--'+type:'');
+    n.classList.add('show');
+    setTimeout(()=>n.classList.remove('show'), 2600);
+  };
+
+  /* ── Finance state ── */
+  const CATS = {
+    income:  ['Зарплата','Подарок','Подработка','Инвестиции','Другое'],
+    expense: ['Еда','Транспорт','Развлечения','Жильё','Здоровье','Одежда','Другое']
+  };
+  const ICONS = {
+    'Зарплата':'💼','Подарок':'🎁','Подработка':'💻','Инвестиции':'📈','Другое':'🔹',
+    'Еда':'🍽️','Транспорт':'🚗','Развлечения':'🎬','Жильё':'🏠','Здоровье':'🏥','Одежда':'👕'
+  };
+  let state = load('lifeDashboard_finance',{transactions:[]});
+
+  /* ── Finance render ── */
+  function calcBalance() { return state.transactions.reduce((s,t)=>s+(t.type==='income'?t.amount:-t.amount),0); }
+  function calcMonthly(type) {
+    const now=new Date(),m=now.getMonth(),y=now.getFullYear();
+    return state.transactions.filter(t=>{const d=new Date(t.date);return t.type===type&&d.getMonth()===m&&d.getFullYear()===y;}).reduce((s,t)=>s+t.amount,0);
+  }
+  function renderAll() { renderBalance(); renderStats(); renderTx(); }
+  function renderBalance() {
+    const el=$('#balance-value'); if(!el) return;
+    const b=calcBalance(); el.textContent=fmt(b);
+    el.className='metric-value '+(b>=0?'metric-value--positive':'metric-value--negative');
+  }
+  function renderStats() {
+    const i=$('#month-income'),e=$('#month-expense');
+    if(i) i.textContent=fmt(calcMonthly('income'));
+    if(e) e.textContent=fmt(calcMonthly('expense'));
+  }
+  function renderTx() {
+    const list=$('#transactions-list'); if(!list) return;
+    const sorted=[...state.transactions].sort((a,b)=>new Date(b.date)-new Date(a.date));
+    if(!sorted.length){
+      list.innerHTML='<div class="empty-state"><div class="empty-state-icon">💰</div><div class="empty-state-title">Нет операций</div><div class="text-muted" style="font-size:13px;">Добавьте первую транзакцию</div></div>';
+      return;
+    }
+    list.innerHTML = sorted.slice(0,30).map(t=>`
+      <div class="transaction-item">
+        <div class="transaction-icon ${t.type}">${ICONS[t.category]||'🔹'}</div>
+        <div class="transaction-info">
+          <div class="transaction-title">${esc(t.category)}</div>
+          <div class="transaction-meta">${fmtShort(t.date)}${t.note?' · '+esc(t.note):''}${t.products&&t.products.length?' · 🛒 '+t.products.length+' товар(а)':''}</div>
+        </div>
+        <div class="transaction-amount ${t.type}">${t.type==='income'?'+':'−'}${fmt(t.amount)}</div>
+        <button class="btn btn--danger btn--icon btn--sm" onclick="window.deleteTx(${t.id})" style="margin-left:6px;font-size:14px;">🗑</button>
+      </div>`).join('');
+  }
+
+  /* ── Transaction modal ── */
+  function openTransactionModal(type='expense') {
+    const m=$('#modal-transaction'); if(!m) return;
+    $('#tx-type').value=type;
+    $('#modal-transaction-title').textContent=type==='income'?'➕ Новый доход':'➖ Новый расход';
+    const sel=$('#tx-category');
+    sel.innerHTML='<option value="">Выберите категорию</option>'+CATS[type].map(c=>`<option value="${esc(c)}">${esc(c)}</option>`).join('');
+    $('#tx-date').value=new Date().toISOString().split('T')[0];
+    m.classList.add('active');
+  }
+  function closeModal(id) {
+    const m=$(`#${id}`); if(!m) return;
+    m.classList.remove('active');
+    if(id==='modal-transaction'){$('#form-transaction')?.reset();$('#productsContainer').innerHTML='';}
+  }
+  function deleteTx(id) {
+    if(!confirm('Удалить эту операцию?')) return;
+    state.transactions=state.transactions.filter(t=>t.id!==id);
+    save('lifeDashboard_finance',state); renderAll(); notify('Операция удалена','danger');
+  }
+
+  /* ── Calendar ── */
+  let calMonth=new Date();
+  function renderCalendar() {
+    const grid=$('#financeCalendar'),label=$('#calMonthLabel'); if(!grid||!label) return;
+    const y=calMonth.getFullYear(),m=calMonth.getMonth();
+    label.textContent=new Date(y,m).toLocaleDateString('ru-RU',{month:'long',year:'numeric'});
+    grid.innerHTML='';
+    ['Пн','Вт','Ср','Чт','Пт','Сб','Вс'].forEach(d=>{
+      const h=document.createElement('div');
+      h.style.cssText='text-align:center;font-size:11px;color:var(--text-muted);padding:2px 0;';
+      h.textContent=d; grid.appendChild(h);
+    });
+    const first=(new Date(y,m,1).getDay()+6)%7, days=new Date(y,m+1,0).getDate();
+    const todayStr=new Date().toISOString().split('T')[0];
+    for(let i=0;i<first;i++){grid.appendChild(document.createElement('div'));}
+    for(let d=1;d<=days;d++){
+      const ds=`${y}-${String(m+1).padStart(2,'0')}-${String(d).padStart(2,'0')}`;
+      const dayTx=state.transactions.filter(t=>t.date===ds);
+      const inc=dayTx.filter(t=>t.type==='income').reduce((s,t)=>s+t.amount,0);
+      const exp=dayTx.filter(t=>t.type==='expense').reduce((s,t)=>s+t.amount,0);
+      const el=document.createElement('div');
+      el.className='glass-card';
+      el.style.cssText=`padding:5px 3px;text-align:center;cursor:pointer;margin:0;border:1px solid ${ds===todayStr?'var(--accent)':'var(--border)'};`;
+      el.innerHTML=`<div style="font-size:11px;font-weight:500;">${d}</div>${exp>0?`<div style="font-size:9px;color:var(--danger);">−${Math.round(exp)}</div>`:''}${inc>0?`<div style="font-size:9px;color:var(--success);">+${Math.round(inc)}</div>`:''}`;
+      el.onclick=()=>showDay(ds,dayTx,inc,exp);
+      grid.appendChild(el);
+    }
+  }
+  function showDay(date,txList,inc,exp) {
+    const p=$('#dayDetails'); if(!p) return;
+    $('#dayDetailsTitle').textContent=new Date(date).toLocaleDateString('ru-RU',{day:'numeric',month:'long'});
+    $('#dayIncome').textContent=fmt(inc); $('#dayExpense').textContent=fmt(exp);
+    $('#dayTransactions').innerHTML=txList.length
+      ? txList.map(t=>`<div style="padding:10px 0;border-bottom:1px solid var(--border);display:flex;justify-content:space-between;align-items:center;">
+          <div>
+            <div style="font-weight:500;font-size:.9rem;">${esc(t.category)}</div>
+            ${t.note?`<div style="font-size:.75rem;color:var(--text-muted);">${esc(t.note)}</div>`:''}
+            ${t.products&&t.products.length?`<div style="font-size:.75rem;color:var(--accent-light);margin-top:2px;">🛒 ${t.products.map(p=>esc(p.name)+': '+p.price+' ₽').join(', ')}</div>`:''}
+          </div>
+          <div style="font-weight:600;color:${t.type==='income'?'var(--success)':'var(--danger)'};">${t.type==='income'?'+':'−'}${fmt(t.amount)}</div>
+        </div>`).join('')
+      : '<div style="text-align:center;color:var(--text-muted);padding:12px;">Нет операций</div>';
+    p.style.display='block';
+  }
+
+  /* ── Analytics ── */
+  function drawBars(ctx,entries,color,w,h,label) {
+    ctx.clearRect(0,0,w,h);
+    if(!entries.length){ctx.fillStyle='rgba(255,255,255,.3)';ctx.font='13px sans-serif';ctx.textAlign='center';ctx.fillText('Нет данных',w/2,h/2);return;}
+    const max=Math.max(...entries.map(e=>e[1]));
+    const bw=(w-40)/entries.length-6;
+    entries.forEach((e,i)=>{
+      const bh=(e[1]/max)*130,x=20+i*(bw+6),y=152-bh;
+      ctx.fillStyle=color; ctx.fillRect(x,y,bw,bh);
+      ctx.fillStyle='rgba(255,255,255,.85)'; ctx.font='10px sans-serif'; ctx.textAlign='center';
+      ctx.fillText(e[0].slice(0,8),x+bw/2,172);
+      ctx.fillText(Math.round(e[1])+'₽',x+bw/2,y-4);
+    });
+    $('#analyticsSummary').textContent=label;
+  }
+  function initCanvas() {
+    const canvas=$('#analyticsChart'); if(!canvas) return null;
+    const dpr=window.devicePixelRatio||1, cw=canvas.offsetWidth||300, ch=200;
+    canvas.width=cw*dpr; canvas.height=ch*dpr;
+    const ctx=canvas.getContext('2d'); ctx.scale(dpr,dpr);
+    return {ctx,w:cw,h:ch};
+  }
+  function drawCategoryAnalytics() {
+    const r=initCanvas(); if(!r) return;
+    const month=new Date().toISOString().slice(0,7);
+    const byCat={};
+    state.transactions.filter(t=>t.date.startsWith(month)&&t.type==='expense').forEach(t=>{byCat[t.category]=(byCat[t.category]||0)+t.amount;});
+    const entries=Object.entries(byCat).sort((a,b)=>b[1]-a[1]).slice(0,5);
+    drawBars(r.ctx,entries,'rgba(248,113,113,.7)',r.w,r.h,'Топ-5 категорий расходов за текущий месяц');
+    $('#analyticsList').innerHTML=entries.map(e=>`<div style="display:flex;justify-content:space-between;padding:5px 0;border-bottom:1px solid var(--border);font-size:.85rem;"><span>${e[0]}</span><span style="color:var(--danger);font-weight:600;">${fmt(e[1])}</span></div>`).join('');
+  }
+  function drawProductAnalytics() {
+    const r=initCanvas(); if(!r) return;
+    const prod={};
+    state.transactions.filter(t=>t.products&&t.products.length).forEach(t=>t.products.forEach(p=>{prod[p.name]=(prod[p.name]||0)+p.price;}));
+    const entries=Object.entries(prod).sort((a,b)=>b[1]-a[1]).slice(0,5);
+    drawBars(r.ctx,entries,'rgba(196,181,253,.7)',r.w,r.h,'Топ продуктов по сумме трат');
+    $('#analyticsList').innerHTML=entries.map(e=>`<div style="display:flex;justify-content:space-between;padding:5px 0;border-bottom:1px solid var(--border);font-size:.85rem;"><span>${e[0]}</span><span style="color:var(--accent-light);font-weight:600;">${fmt(e[1])}</span></div>`).join('');
+  }
+  function drawTopAnalytics() {
+    const r=initCanvas(); if(!r) return;
+    const month=new Date().toISOString().slice(0,7);
+    const mTx=state.transactions.filter(t=>t.date.startsWith(month)&&t.type==='expense');
+    const mostExp=[...mTx].sort((a,b)=>b.amount-a.amount)[0];
+    const freq={}; mTx.forEach(t=>{freq[t.category]=(freq[t.category]||0)+1;});
+    const mostFreq=Object.entries(freq).sort((a,b)=>b[1]-a[1])[0];
+    r.ctx.fillStyle='rgba(255,255,255,.25)'; r.ctx.font='13px sans-serif'; r.ctx.textAlign='center'; r.ctx.fillText('Топ трат в списке ниже',r.w/2,r.h/2);
+    $('#analyticsSummary').innerHTML=`💸 Крупнейшая трата: <b>${mostExp?fmt(mostExp.amount)+' ('+mostExp.category+')':'—'}</b><br>🔁 Чаще всего: <b>${mostFreq?mostFreq[0]+' ('+mostFreq[1]+' раз)':'—'}</b>`;
+    $('#analyticsList').innerHTML=mTx.slice().sort((a,b)=>b.amount-a.amount).slice(0,10).map(t=>`<div style="display:flex;justify-content:space-between;padding:5px 0;font-size:.85rem;border-bottom:1px solid var(--border);"><span>${esc(t.category)}${t.note?`<small style="color:var(--text-muted)"> · ${esc(t.note)}</small>`:''}</span><span style="color:var(--danger);">−${fmt(t.amount)}</span></div>`).join('');
+  }
+
+  /* ── Forms & Modals init ── */
+  function initForms() {
+    $('#form-transaction')?.addEventListener('submit', e => {
+      e.preventDefault();
+      const fd=new FormData(e.target), d=Object.fromEntries(fd.entries());
+      if(!d.amount||!d.category||!d.date){notify('Заполните обязательные поля','danger');return;}
+      const products=[];
+      $$('#productsContainer .product-row').forEach(row=>{
+        const n=row.querySelector('[name="prod_name"]').value.trim();
+        const p=parseFloat(row.querySelector('[name="prod_price"]').value);
+        if(n&&p) products.push({name:n,price:p});
+      });
+      state.transactions.push({id:Date.now(),type:d.type,amount:parseFloat(d.amount),category:d.category,note:(d.note||'').trim(),date:d.date,products});
+      save('lifeDashboard_finance',state);
+      closeModal('modal-transaction'); renderAll(); notify('Транзакция сохранена','success');
+    });
+    $('#addProductBtn')?.addEventListener('click',()=>{
+      $('#productsContainer').insertAdjacentHTML('beforeend',`<div class="product-row" style="display:grid;grid-template-columns:2fr 1fr auto;gap:8px;margin-bottom:8px;align-items:center;"><input type="text" class="input" name="prod_name" placeholder="Продукт" style="padding:10px;font-size:.9rem;"><input type="number" class="input" name="prod_price" placeholder="₽" step="0.01" style="padding:10px;font-size:.9rem;"><button type="button" class="btn btn--danger btn--icon" onclick="this.closest('.product-row').remove()">✕</button></div>`);
+    });
+  }
+  function initModals() {
+    $$('.modal__close').forEach(b=>b.addEventListener('click',()=>closeModal(b.closest('.modal-overlay')?.id)));
+    $$('.modal-overlay').forEach(m=>m.addEventListener('click',e=>{if(e.target===m)closeModal(m.id);}));
+  }
+
+  /* ════════════════════════════════════════════
+     WISHLIST MODULE
+     ════════════════════════════════════════════ */
+  let wlData           = load('lifeDashboard_wishlist',{items:[]});
+  let wlFilter         = 'all';
+  let wlEditId         = null;
+  let wlImg            = null;   // base64 from user upload
+  let wlImgUrl         = null;   // primary remote URL from marketplace
+  let wlImgUrlFallback = null;   // secondary CDN URL (WB only)
+
+  const PRI_ORDER  = {need:0, want:1, like:2};
+  const PRI_LABELS = {need:'Нужен', want:'Желаю', like:'Нравится'};
+  const REFRESH_TTL = 6 * 60 * 60 * 1000; // 6 hours in ms
+
+  function saveWl() { save('lifeDashboard_wishlist',wlData); }
+
+  /* ─── helpers ─── */
+  function fmtUpdated(ts) {
+    if(!ts) return '';
+    const diff = Date.now()-ts, m=Math.floor(diff/60000), h=Math.floor(diff/3600000);
+    if(diff<60000) return 'только что';
+    if(m<60)  return `${m} мин. назад`;
+    if(h<24)  return `${h} ч. назад`;
+    return new Date(ts).toLocaleDateString('ru-RU',{day:'numeric',month:'short'});
+  }
+  function priceDelta(item) {
+    const hist = item.priceHistory;
+    if(!hist||hist.length<2) return null;
+    const prev = hist[hist.length-2].price;
+    const cur  = hist[hist.length-1].price;
+    if(!prev||!cur) return null;
+    const pct = ((cur-prev)/prev*100).toFixed(1);
+    return {prev, cur, pct: parseFloat(pct), up: cur>prev};
+  }
+  function pushPrice(item, newPrice) {
+    if(!newPrice) return;
+    if(!item.priceHistory) item.priceHistory=[];
+    const last = item.priceHistory[item.priceHistory.length-1];
+    if(last && last.price===newPrice) return; // unchanged
+    item.priceHistory.push({price:newPrice, date:new Date().toISOString().split('T')[0]});
+    if(item.priceHistory.length>20) item.priceHistory=item.priceHistory.slice(-20);
+    item.price = newPrice;
+  }
+
+  /* ─── MARKETPLACE FETCH ENGINE ─── */
+
+  // Safe fetch with manual timeout (AbortSignal.timeout not in all browsers)
+  function fetchTimed(url, ms, opts={}) {
+    const ctrl = new AbortController();
+    const tid  = setTimeout(()=>ctrl.abort(), ms);
+    return fetch(url, {...opts, signal:ctrl.signal}).finally(()=>clearTimeout(tid));
+  }
+
+  // Wildberries basket CDN selector — returns array of URLs to try (wb.ru + wbbasket.ru)
+  function wbImageUrls(id) {
+    const vol = Math.floor(id/100000), part = Math.floor(id/1000);
+    const map = [[143,1],[287,2],[431,3],[575,4],[719,5],[1007,6],[1061,7],[1115,8],
+                 [1169,9],[1313,10],[1601,11],[1655,12],[1919,13],[2045,14],[2189,15],
+                 [2405,16],[2621,17],[2837,18]];
+    let num = 19;
+    for(const [mx,n] of map) if(vol<=mx){ num=n; break; }
+    const n = String(num).padStart(2,'0');
+    const path = `/vol${vol}/part${part}/${id}/images/big/1.jpg`;
+    // Try the newer wbbasket.ru first, then legacy wb.ru
+    return [`https://basket-${n}.wbbasket.ru${path}`, `https://basket-${n}.wb.ru${path}`];
+  }
+
+  async function fetchWildberries(url) {
+    const m = url.match(/wildberries\.ru\/catalog\/(\d+)/);
+    if(!m) throw new Error('not wb');
+    const id = parseInt(m[1]);
+
+    // Try v1 first (most stable), then v2 as fallback
+    let product = null;
+    for(const ver of ['v1','v2']) {
+      try {
+        const apiUrl = `https://card.wb.ru/cards/${ver}/detail?appType=1&curr=rub&dest=-1257786&spp=30&nm=${id}`;
+        const r = await fetchTimed(apiUrl, 8000);
+        if(!r.ok) continue;
+        const d = await r.json();
+        const p = d?.data?.products?.[0];
+        if(p){ product = p; break; }
+      } catch(e){ continue; }
+    }
+    if(!product) throw new Error('WB API: product not found');
+
+    const price = product.salePriceU
+      ? Math.round(product.salePriceU / 100)
+      : (product.priceU ? Math.round(product.priceU / 100) : null);
+
+    const imgUrls = wbImageUrls(id);
+    return {
+      name:     [product.brand, product.name].filter(Boolean).join(' / '),
+      price,
+      imageUrl: imgUrls[0],   // store primary; card will try next on error
+      imageUrlFallback: imgUrls[1],
+      source:   'wb'
+    };
+  }
+
+  // Parse OG / Open Graph tags from raw HTML string
+  function parseOGHtml(html, sourceLabel) {
+    const doc = new DOMParser().parseFromString(html, 'text/html');
+    const og  = (prop) =>
+      doc.querySelector(`meta[property="${prop}"]`)?.content ||
+      doc.querySelector(`meta[name="${prop}"]`)?.content || '';
+    const name     = og('og:title') || doc.title || '';
+    const imageUrl = og('og:image') || '';
+    const priceRaw = og('product:price:amount') || og('og:price:amount') || og('price') || '';
+    const price    = priceRaw ? parseFloat(priceRaw.replace(/[^\d.]/g,'')) || null : null;
+    return { name: name.slice(0,120).trim(), price, imageUrl, source: sourceLabel };
+  }
+
+  // CORS proxy chain: try each proxy in order, return first success
+  async function fetchViaProxy(url) {
+    const PROXIES = [
+      // corsproxy.io — direct text response
+      async () => {
+        const r = await fetchTimed(`https://corsproxy.io/?${encodeURIComponent(url)}`, 10000);
+        if(!r.ok) throw new Error('corsproxy error '+r.status);
+        return parseOGHtml(await r.text(), 'proxy');
+      },
+      // allorigins — returns JSON {contents: html}
+      async () => {
+        const r = await fetchTimed(`https://api.allorigins.win/get?url=${encodeURIComponent(url)}`, 12000);
+        if(!r.ok) throw new Error('allorigins error '+r.status);
+        const j = await r.json();
+        const html = j?.contents || '';
+        if(!html) throw new Error('allorigins empty');
+        return parseOGHtml(html, 'proxy');
+      }
+    ];
+    const errors = [];
+    for(const tryProxy of PROXIES) {
+      try { return await tryProxy(); }
+      catch(e){ errors.push(e.message); }
+    }
+    throw new Error('All proxies failed: ' + errors.join(' | '));
+  }
+
+  // Detect & route to the right fetcher
+  async function fetchProductInfo(url) {
+    if(!url) throw new Error('no url');
+    const u = url.toLowerCase();
+    if(u.includes('wildberries.ru/catalog/')) return fetchWildberries(url);
+    // For Ozon, AliExpress, Lamoda, DNS etc — use CORS proxy OG tags
+    return fetchViaProxy(url);
+  }
+
+  /* ─── PRICE REFRESH ─── */
+  async function refreshItemPrice(item, silent=false) {
+    if(!item.link) return false;
+    try {
+      const info = await fetchProductInfo(item.link);
+      let changed = false;
+      if(info.price && info.price !== item.price) {
+        pushPrice(item, info.price);
+        changed = true;
+      }
+      if(info.imageUrl && !item.image) item.imageUrl = info.imageUrl;
+      item.lastUpdated = Date.now();
+      saveWl();
+      return changed;
+    } catch(e) { return false; }
+  }
+
+  async function refreshAllPrices() {
+    const btn = $('#wlRefreshBtn'); if(btn) btn.classList.add('spinning');
+    const toRefresh = wlData.items.filter(i =>
+      i.link && (!i.lastUpdated || Date.now()-i.lastUpdated > REFRESH_TTL)
+    );
+    if(!toRefresh.length) {
+      if(btn) btn.classList.remove('spinning');
+      notify('Цены актуальны ✓');
+      return;
+    }
+    let changedCount = 0;
+    await Promise.allSettled(toRefresh.map(async item => {
+      if(await refreshItemPrice(item, true)) changedCount++;
+    }));
+    if(btn) btn.classList.remove('spinning');
+    renderWl();
+    notify(changedCount > 0
+      ? `Цены обновлены: ${changedCount} изменилось`
+      : 'Цены без изменений', changedCount>0?'success':'');
+  }
+
+  /* ─── AUTO-FETCH on URL paste ─── */
+  let fetchDebounceTimer = null;
+  function setFetchStatus(msg, type='') {
+    const el=$('#wlFetchStatus'); if(!el) return;
+    el.textContent = msg;
+    el.className = 'fetch-status'+(type?' fetch-status--'+type:'');
+  }
+  async function autoFetchFromLink(url) {
+    if(!url || !url.startsWith('http')) { setFetchStatus(''); return; }
+    setFetchStatus('⏳ Загружаю данные товара…','loading');
+    try {
+      const info = await fetchProductInfo(url);
+      // Fill in fields only if they are empty
+      if(info.name && !$('#wlName').value.trim()) $('#wlName').value = info.name;
+      if(info.price && !$('#wlPrice').value)      $('#wlPrice').value = info.price;
+      if(info.imageUrl) {
+        wlImgUrl         = info.imageUrl;
+        wlImgUrlFallback = info.imageUrlFallback || null;
+        if(!wlImg) { // don't overwrite user-uploaded photo
+          $('#imgZone').classList.add('has-img');
+          $('#imgZoneContent').innerHTML=`<img src="${info.imageUrl}" alt="" onerror="this.closest('.img-upload-zone').classList.remove('has-img');document.getElementById('imgZoneContent').innerHTML='<div class=\\'upload-ico\\'>📷</div><div class=\\'upload-hint\\'>Фото недоступно</div>';">`;
+        }
+      }
+      const filled = [info.name,info.price,info.imageUrl].filter(Boolean).length;
+      setFetchStatus(
+        filled>0 ? `✅ Заполнено автоматически (${info.source==='wb'?'Wildberries':'сайт товара'})` : '⚠️ Данные не найдены — заполните вручную',
+        filled>0 ? 'ok' : 'err'
+      );
+    } catch(e) {
+      setFetchStatus('⚠️ Не удалось загрузить — заполните вручную','err');
+    }
+  }
+
+  /* ─── RENDER ─── */
+  function renderWl() {
+    const grid=$('#wlGrid'), empty=$('#wlEmpty'); if(!grid) return;
+    const all=wlData.items;
+    const total=all.reduce((s,i)=>s+(i.price||0),0);
+    const needN=all.filter(i=>i.priority==='need').length;
+    if($('#wlCount'))     $('#wlCount').textContent=all.length;
+    if($('#wlStatCount')) $('#wlStatCount').textContent=all.length;
+    if($('#wlStatTotal')) $('#wlStatTotal').textContent=total?fmt(total):'0 ₽';
+    if($('#wlStatNeed'))  $('#wlStatNeed').textContent=needN;
+    const dot=$('#wlDot');
+    if(dot) dot.classList.toggle('visible', all.length>0);
+
+    let items = wlFilter==='all' ? [...all] : all.filter(i=>i.priority===wlFilter);
+    items.sort((a,b)=>PRI_ORDER[a.priority]-PRI_ORDER[b.priority]||b.id-a.id);
+    if(!items.length){ grid.innerHTML=''; empty.style.display='block'; return; }
+    empty.style.display='none';
+
+    grid.innerHTML = items.map(item=>{
+      const imgSrc = item.image || item.imageUrl || '';
+      const delta  = priceDelta(item);
+      let priceHtml;
+      if(item.price) {
+        const deltaBadge = delta
+          ? `<span class="wish-card__price-${delta.up?'up':'down'}">${delta.up?'↑':'↓'}${Math.abs(delta.pct)}%</span>`
+          : '';
+        const oldPrice = delta ? `<span class="wish-card__price-old">${fmt(delta.prev)}</span>` : '';
+        priceHtml = `<div class="wish-card__price-row"><span class="wish-card__price">${fmt(item.price)}</span>${oldPrice}${deltaBadge}</div>`;
+      } else {
+        priceHtml = '<div class="wish-card__no-price">Цена не указана</div>';
+      }
+      const cardClick = item.link
+        ? `onclick="window.open('${item.link.replace(/'/g,"\\'")}','_blank')"`
+        : `onclick="window.openWlEdit(${item.id})"`;
+      return `
+      <div class="wish-card" ${cardClick}>
+        <div class="wish-card__img">
+          ${imgSrc
+            ? `<img src="${imgSrc}" alt="${esc(item.name)}" loading="lazy"
+                 onerror="var fb=this.dataset.fb;if(fb){this.src=fb;this.dataset.fb='';}else{this.style.display='none';this.nextElementSibling.style.display='flex';}"
+                 ${item.imageUrlFallback?`data-fb="${item.imageUrlFallback}"`:''}>
+               <span class="wish-card__ph" style="display:none;">🛍️</span>`
+            : '<span class="wish-card__ph">🛍️</span>'}
+          <span class="wish-card__pri wish-card__pri--${item.priority}">${PRI_LABELS[item.priority]}</span>
+          <button class="wish-card__del" onclick="event.stopPropagation();window.deleteWlItem(${item.id})" title="Удалить">✕</button>
+          <button class="wish-card__edit" onclick="event.stopPropagation();window.openWlEdit(${item.id})" title="Редактировать">✏</button>
+        </div>
+        <div class="wish-card__body">
+          <div class="wish-card__name">${esc(item.name)}</div>
+          ${item.description?`<div class="wish-card__desc">${esc(item.description)}</div>`:''}
+          ${priceHtml}
+          ${item.lastUpdated?`<div class="wish-card__updated">обновлено ${fmtUpdated(item.lastUpdated)}</div>`:''}
+        </div>
+      </div>`;
+    }).join('');
+  }
+
+  /* ─── PANEL OPEN / CLOSE ─── */
+  function openWl() {
+    $('#wishlist-panel').classList.add('open');
+    $('#wl-fab').classList.add('visible');
+    renderWl();
+    // Background refresh for stale items
+    const stale = wlData.items.filter(i => i.link && (!i.lastUpdated || Date.now()-i.lastUpdated>REFRESH_TTL));
+    if(stale.length) {
+      setTimeout(async ()=>{
+        let changed=0;
+        await Promise.allSettled(stale.map(async i=>{ if(await refreshItemPrice(i,true)) changed++; }));
+        if(changed>0){ renderWl(); notify(`Обновлено цен: ${changed}`,'success'); }
+      }, 1200);
+    }
+  }
+  function closeWl() {
+    $('#wishlist-panel').classList.remove('open');
+    $('#wl-fab').classList.remove('visible');
+  }
+
+  /* ─── MODAL HELPERS ─── */
+  function resetImgZone() {
+    const z=$('#imgZone'); if(!z) return;
+    z.classList.remove('has-img');
+    $('#imgZoneContent').innerHTML='<div class="upload-ico">📷</div><div class="upload-hint">Нажмите для загрузки или вставьте ссылку выше</div>';
+  }
+
+  function openWlAdd() {
+    wlEditId=null; wlImg=null; wlImgUrl=null; wlImgUrlFallback=null;
+    $('#wlModalTitle').textContent='✨ Добавить товар';
+    $('#wlName').value=''; $('#wlPrice').value=''; $('#wlLink').value=''; $('#wlDesc').value='';
+    setFetchStatus('');
+    resetImgZone();
+    $$('.pri-opt').forEach(o=>o.className='pri-opt');
+    $('#modal-wl').classList.add('active');
+    setTimeout(()=>$('#wlLink').focus(),150);
+  }
+
+  function openWlEdit(id) {
+    const item=wlData.items.find(i=>i.id===id); if(!item) return;
+    wlEditId=id; wlImg=item.image||null; wlImgUrl=item.imageUrl||null; wlImgUrlFallback=item.imageUrlFallback||null;
+    $('#wlModalTitle').textContent='✏️ Редактировать товар';
+    $('#wlName').value=item.name||'';
+    $('#wlPrice').value=item.price||'';
+    $('#wlLink').value=item.link||'';
+    $('#wlDesc').value=item.description||'';
+    setFetchStatus('');
+    const displayImg = item.image || item.imageUrl;
+    if(displayImg){
+      $('#imgZone').classList.add('has-img');
+      $('#imgZoneContent').innerHTML=`<img src="${displayImg}" alt="">`;
+    } else { resetImgZone(); }
+    $$('.pri-opt').forEach(o=>{
+      o.className='pri-opt';
+      if(o.dataset.p===item.priority) o.classList.add('s-'+item.priority);
+    });
+    $('#modal-wl').classList.add('active');
+  }
+
+  function closeWlModal() {
+    $('#modal-wl').classList.remove('active');
+    wlEditId=null; wlImg=null; wlImgUrl=null; wlImgUrlFallback=null;
+  }
+
+  function saveWlItem() {
+    const name=$('#wlName').value.trim();
+    const priceRaw=$('#wlPrice').value;
+    const link=$('#wlLink').value.trim();
+    const desc=$('#wlDesc').value.trim();
+    const priEl=document.querySelector('.pri-opt[class*="s-"]');
+    if(!name){ notify('Введите название товара','danger'); $('#wlName').focus(); return; }
+    if(!priEl){ notify('Выберите приоритет покупки','danger'); return; }
+
+    const newPrice = priceRaw ? parseFloat(priceRaw) : null;
+    // Merge price into history
+    let priceHistory = [];
+    if(wlEditId) {
+      const existing = wlData.items.find(i=>i.id===wlEditId);
+      priceHistory = existing?.priceHistory || [];
+    }
+    if(newPrice) {
+      const last = priceHistory[priceHistory.length-1];
+      if(!last || last.price!==newPrice)
+        priceHistory.push({price:newPrice, date:new Date().toISOString().split('T')[0]});
+    }
+
+    const existingItem = wlEditId ? wlData.items.find(i=>i.id===wlEditId) : null;
+    const item={
+      id: wlEditId||Date.now(),
+      name, price: newPrice,
+      link: link||null, description: desc||null,
+      priority: priEl.dataset.p,
+      image: wlImg||null,
+      imageUrl:         wlImgUrl         || existingItem?.imageUrl         || null,
+      imageUrlFallback: wlImgUrlFallback || existingItem?.imageUrlFallback || null,
+      priceHistory,
+      lastUpdated: existingItem?.lastUpdated||null,
+      addedDate: existingItem?.addedDate||new Date().toISOString().split('T')[0]
+    };
+    if(wlEditId){
+      const idx=wlData.items.findIndex(i=>i.id===wlEditId);
+      if(idx>=0) wlData.items[idx]=item;
+    } else {
+      wlData.items.push(item);
+    }
+    saveWl(); closeWlModal(); renderWl();
+    notify(wlEditId?'Товар обновлён':'Товар добавлен в список желаний','success');
+  }
+
+  function deleteWlItem(id) {
+    if(!confirm('Удалить товар из списка желаний?')) return;
+    wlData.items=wlData.items.filter(i=>i.id!==id);
+    saveWl(); renderWl(); notify('Товар удалён','danger');
+  }
+
+  /* ─── IMAGE COMPRESS ─── */
+  function compressAndStore(file, cb) {
+    const reader=new FileReader();
+    reader.onload=ev=>{
+      const img=new Image();
+      img.onload=()=>{
+        const canvas=document.createElement('canvas');
+        const MAX=720, scale=Math.min(1,MAX/img.width,MAX/img.height);
+        canvas.width=Math.round(img.width*scale); canvas.height=Math.round(img.height*scale);
+        canvas.getContext('2d').drawImage(img,0,0,canvas.width,canvas.height);
+        cb(canvas.toDataURL('image/jpeg',0.78));
+      };
+      img.src=ev.target.result;
+    };
+    reader.readAsDataURL(file);
+  }
+
+  /* ─── INIT EVENTS ─── */
+  function initWishlist() {
+    // Image upload
+    $('#wlImgFile')?.addEventListener('change',e=>{
+      const file=e.target.files[0]; if(!file) return;
+      compressAndStore(file,b64=>{
+        wlImg=b64; wlImgUrl=null;
+        $('#imgZone').classList.add('has-img');
+        $('#imgZoneContent').innerHTML=`<img src="${b64}" alt="">`;
+      });
+      e.target.value='';
+    });
+
+    // Link field auto-fetch (debounced on input + immediate on paste)
+    const wlLinkInput = $('#wlLink');
+    if(wlLinkInput) {
+      const triggerFetch = () => {
+        clearTimeout(fetchDebounceTimer);
+        fetchDebounceTimer = setTimeout(()=>autoFetchFromLink(wlLinkInput.value.trim()), 600);
+      };
+      wlLinkInput.addEventListener('paste', ()=>setTimeout(()=>autoFetchFromLink(wlLinkInput.value.trim()), 80));
+      wlLinkInput.addEventListener('input', triggerFetch);
+    }
+
+    // Filter pills
+    $$('.fp').forEach(btn=>btn.addEventListener('click',()=>{
+      wlFilter=btn.dataset.f;
+      $$('.fp').forEach(b=>b.classList.remove('active'));
+      btn.classList.add('active');
+      renderWl();
+    }));
+
+    // Priority options
+    $$('.pri-opt').forEach(opt=>opt.addEventListener('click',()=>{
+      $$('.pri-opt').forEach(o=>o.className='pri-opt');
+      opt.classList.add('s-'+opt.dataset.p);
+    }));
+
+    // Panel open / close / refresh
+    $('#openWlBtn')?.addEventListener('click', openWl);
+    $('#closeWlBtn')?.addEventListener('click', closeWl);
+    $('#wl-fab')?.addEventListener('click', openWlAdd);
+    $('#wlRefreshBtn')?.addEventListener('click', refreshAllPrices);
+
+    // Modal close on overlay tap
+    $('#modal-wl')?.addEventListener('click',e=>{ if(e.target===$('#modal-wl')) closeWlModal(); });
+  }
+
+  /* ── Global exports ── */
+  window.openTransactionModal = openTransactionModal;
+  window.closeModal    = closeModal;
+  window.deleteTx      = deleteTx;
+  window.closeDayDetails = ()=>{ $('#dayDetails').style.display='none'; };
+  window.drawCategoryAnalytics = drawCategoryAnalytics;
+  window.drawProductAnalytics  = drawProductAnalytics;
+  window.drawTopAnalytics      = drawTopAnalytics;
+  window.openWl        = openWl;
+  window.closeWl       = closeWl;
+  window.openWlAdd     = openWlAdd;
+  window.openWlEdit    = openWlEdit;
+  window.closeWlModal  = closeWlModal;
+  window.saveWlItem    = saveWlItem;
+  window.deleteWlItem  = deleteWlItem;
+
+  /* ── Bootstrap ── */
+  document.addEventListener('DOMContentLoaded',()=>{
+    initForms();
+    initModals();
+    renderAll();
+    renderCalendar();
+
+    // Update wishlist dot on load
+    if(wlData.items.length>0) $('#wlDot')?.classList.add('visible');
+
+    $('#calPrev')?.addEventListener('click',()=>{ calMonth.setMonth(calMonth.getMonth()-1); renderCalendar(); });
+    $('#calNext')?.addEventListener('click',()=>{ calMonth.setMonth(calMonth.getMonth()+1); renderCalendar(); });
+    $('#analyticsByCategory')?.addEventListener('click', drawCategoryAnalytics);
+    $('#analyticsByProduct')?.addEventListener('click',  drawProductAnalytics);
+    $('#analyticsTop')?.addEventListener('click',        drawTopAnalytics);
+
+    initWishlist();
+  });
+
+})();
+</script>
+</body>
+</html>
