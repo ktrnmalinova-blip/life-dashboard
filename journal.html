@@ -686,8 +686,9 @@
       <div class="ai-status" id="aiStatus">● онлайн</div>
     </div>
     <div class="ai-header-actions">
-      <button class="ai-icon-btn danger" id="aiClearBtn" title="Очистить историю" onclick="window.clearAIHistory()">🗑</button>
-    </div>
+  <button class="ai-icon-btn danger" id="aiClearBtn" ...>🗑</button>
+  <button class="ai-icon-btn" id="aiKeyBtn" title="Сменить API-ключ">🔑</button>
+</div>
   </div>
 
   <!-- Messages -->
@@ -795,7 +796,20 @@
   'use strict';
 
   /* ─── CONFIG ─── */
-  const OR_KEY   = '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';
+  // --- API KEY MANAGEMENT ---
+function getApiKey() {
+  let key = localStorage.getItem('openrouter_api_key');
+  if (!key) {
+    key = prompt('Введите ваш API-ключ OpenRouter (начнётся с sk-or-v1-):');
+    if (key && key.trim().startsWith('sk-or-v1-')) {
+      localStorage.setItem('openrouter_api_key', key.trim());
+    } else {
+      alert('Неверный ключ. Попробуйте ещё раз.');
+      return getApiKey(); // рекурсивно запрашиваем
+    }
+  }
+  return key.trim();
+}
   const OR_URL   = 'https://openrouter.ai/api/v1/chat/completions';
   const OR_MODEL = 'anthropic/claude-3.5-sonnet';
 
@@ -1299,23 +1313,28 @@ ${ctx}`;
   }
 
   async function callAI(messages, system) {
-    const res = await fetch(OR_URL, {
-      method: 'POST',
-      headers: {
-        'Content-Type': 'application/json',
-        'Authorization': 'Bearer ' + OR_KEY,
-        'HTTP-Referer': 'https://life-dashboard.app',
-        'X-Title': 'Life Dashboard — Алиса'
-      },
-      body: JSON.stringify({
-        model: OR_MODEL,
-        max_tokens: 1024,
-        messages: [
-          { role:'system', content:system },
-          ...messages
-        ]
-      })
-    });
+  const key = getApiKey();
+  const res = await fetch(OR_URL, {
+    method: 'POST',
+    headers: {
+      'Content-Type': 'application/json',
+      'Authorization': 'Bearer ' + key,
+      'HTTP-Referer': 'https://life-dashboard.app',
+      'X-Title': 'Life Dashboard — Алиса'
+    },
+    body: JSON.stringify({
+      model: OR_MODEL,
+      max_tokens: 1024,
+      messages: [
+        { role: 'system', content: system },
+        ...messages
+      ]
+    })
+  });
+  const data = await res.json();
+  if (!res.ok) throw new Error(data.error?.message || `HTTP ${res.status}`);
+  return data.choices?.[0]?.message?.content || 'Не удалось получить ответ.';
+}
     const data = await res.json();
     if(!res.ok) throw new Error(data.error?.message || `HTTP ${res.status}`);
     return data.choices?.[0]?.message?.content || 'Не удалось получить ответ.';
