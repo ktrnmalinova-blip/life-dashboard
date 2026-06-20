@@ -1,1253 +1,1729 @@
-<head>
-    <script src="auth.js"></script>  <!-- ← добавить эту строку -->
-    <meta charset="UTF-8">
-    ...
-</head>
+cat > /mnt/user-data/outputs/journal.html << 'ENDOFFILE'
 <!DOCTYPE html>
 <html lang="ru">
 <head>
-   <link rel="manifest" href="manifest.json">
-<meta name="theme-color" content="#07070f">
-<!DOCTYPE html>
-<html lang="ru">
-<head>
-    <link rel="manifest" href="manifest.json">
-<meta name="theme-color" content="#07070f">
-<meta charset="UTF-8">
-<meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>Life Dashboard — Дневник</title>
-<style>
-  * { box-sizing: border-box; margin: 0; padding: 0; }
-  body {
-    font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
-    background: linear-gradient(135deg, #f5f7fa 0%, #e8ecf3 100%);
-    color: #2c3e50;
-    min-height: 100vh;
-    padding-bottom: 100px;
-  }
-  header {
-    background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
-    color: white;
-    padding: 20px;
-    text-align: center;
-    box-shadow: 0 2px 10px rgba(0,0,0,0.1);
-  }
-  header h1 { font-size: 24px; margin-bottom: 5px; }
-  nav {
-    display: flex;
-    justify-content: center;
-    gap: 10px;
-    padding: 15px;
-    background: white;
-    box-shadow: 0 2px 5px rgba(0,0,0,0.05);
-    flex-wrap: wrap;
-  }
-  nav a {
-    padding: 8px 16px;
-    border-radius: 20px;
-    text-decoration: none;
-    color: #667eea;
-    font-weight: 500;
-    transition: all 0.3s;
-  }
-  nav a.active, nav a:hover {
-    background: #667eea;
-    color: white;
-  }
-  .container {
-    max-width: 900px;
-    margin: 20px auto;
-    padding: 20px;
-  }
-  .calendar {
-    background: white;
-    border-radius: 15px;
-    padding: 20px;
-    margin-bottom: 20px;
-    box-shadow: 0 2px 10px rgba(0,0,0,0.05);
-  }
-  .calendar-header {
-    display: flex;
-    justify-content: space-between;
-    align-items: center;
-    margin-bottom: 15px;
-  }
-  .calendar-header button {
-    background: #667eea;
-    color: white;
-    border: none;
-    padding: 8px 15px;
-    border-radius: 8px;
-    cursor: pointer;
-    font-size: 16px;
-  }
-  .week-days {
-    display: grid;
-    grid-template-columns: repeat(7, 1fr);
-    gap: 5px;
-    margin-bottom: 10px;
-  }
-  .week-days div {
-    text-align: center;
-    font-weight: 600;
-    color: #667eea;
-    padding: 5px;
-  }
-  .days {
-    display: grid;
-    grid-template-columns: repeat(7, 1fr);
-    gap: 5px;
-  }
-  .day {
-    aspect-ratio: 1;
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    border-radius: 10px;
-    cursor: pointer;
-    background: #f8f9fa;
-    transition: all 0.2s;
-    font-weight: 500;
-    position: relative;
-  }
-  .day:hover { background: #e8ecf3; transform: scale(1.05); }
-  .day.today { background: #667eea; color: white; }
-  .day.selected { background: #764ba2; color: white; }
-  .day.has-entry::after {
-    content: '';
-    position: absolute;
-    bottom: 4px;
-    width: 6px;
-    height: 6px;
-    background: #ff6b6b;
-    border-radius: 50%;
-  }
-  .entry-panel {
-    background: white;
-    border-radius: 15px;
-    padding: 20px;
-    box-shadow: 0 2px 10px rgba(0,0,0,0.05);
-  }
-  .entry-panel h2 {
-    margin-bottom: 15px;
-    color: #667eea;
-  }
-  .mood-selector {
-    display: flex;
-    gap: 10px;
-    margin-bottom: 15px;
-    flex-wrap: wrap;
-  }
-  .mood-btn {
-    font-size: 28px;
-    background: #f8f9fa;
-    border: 2px solid transparent;
-    padding: 8px 12px;
-    border-radius: 10px;
-    cursor: pointer;
-    transition: all 0.2s;
-  }
-  .mood-btn:hover { background: #e8ecf3; }
-  .mood-btn.selected {
-    border-color: #667eea;
-    background: #eef1ff;
-  }
-  textarea {
-    width: 100%;
-    min-height: 150px;
-    padding: 15px;
-    border: 2px solid #e8ecf3;
-    border-radius: 10px;
-    font-size: 15px;
-    font-family: inherit;
-    resize: vertical;
-    margin-bottom: 15px;
-  }
-  textarea:focus { outline: none; border-color: #667eea; }
-  .attachments {
-    display: flex;
-    gap: 10px;
-    margin-bottom: 15px;
-    flex-wrap: wrap;
-  }
-  .attach-btn {
-    background: #f8f9fa;
-    border: none;
-    padding: 10px 15px;
-    border-radius: 10px;
-    cursor: pointer;
-    font-size: 14px;
-    display: flex;
-    align-items: center;
-    gap: 5px;
-  }
-  .attach-btn:hover { background: #e8ecf3; }
-  .save-btn {
-    background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
-    color: white;
-    border: none;
-    padding: 12px 30px;
-    border-radius: 10px;
-    font-size: 16px;
-    cursor: pointer;
-    font-weight: 600;
-  }
-  .save-btn:hover { opacity: 0.9; }
-  .entries-list {
-    margin-top: 20px;
-  }
-  .entry-item {
-    background: #f8f9fa;
-    padding: 15px;
-    border-radius: 10px;
-    margin-bottom: 10px;
-    border-left: 4px solid #667eea;
-  }
-  .entry-item .meta {
-    font-size: 12px;
-    color: #888;
-    margin-bottom: 8px;
-  }
-  .entry-item .text { white-space: pre-wrap; }
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover" />
+  <meta name="theme-color" content="#07070f" />
+  <meta name="apple-mobile-web-app-capable" content="yes" />
+  <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent" />
+  <title>Life Dashboard — Дневник</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+  <link href="https://fonts.googleapis.com/css2?family=Sora:wght@300;400;500;600;700&display=swap" rel="stylesheet" />
+  <style>
+    /* =============================================
+       COSMOS THEME — CSS VARIABLES
+    ============================================= */
+    :root {
+      --bg-base:        #07070f;
+      --bg-surface:     rgba(255,255,255,0.035);
+      --bg-surface-md:  rgba(255,255,255,0.055);
+      --bg-input:       rgba(255,255,255,0.05);
+      --border:         rgba(255,255,255,0.08);
+      --border-md:      rgba(255,255,255,0.13);
+      --text-primary:   #f0ebff;
+      --text-secondary: rgba(255,255,255,0.45);
+      --text-muted:     rgba(255,255,255,0.22);
+      --accent:         #7c3aed;
+      --accent-light:   #c4b5fd;
+      --accent-glow:    rgba(124,58,237,0.35);
+      --success:        #34d399;
+      --success-bg:     rgba(52,211,153,0.12);
+      --success-border: rgba(52,211,153,0.25);
+      --danger:         #f87171;
+      --danger-bg:      rgba(248,113,113,0.12);
+      --danger-border:  rgba(248,113,113,0.25);
+      --warning:        #fbbf24;
+      --warning-bg:     rgba(245,158,11,0.12);
+      --warning-border: rgba(245,158,11,0.25);
+      --info:           #38bdf8;
+      --info-bg:        rgba(56,189,248,0.12);
+      --orb-j1:         #831843;
+      --orb-j2:         #1e3a5f;
+      --radius-sm:  10px;
+      --radius-md:  16px;
+      --radius-lg:  22px;
+      --radius-xl:  28px;
+      --blur-md:    blur(20px);
+      --blur-lg:    blur(40px);
+      --transition: all 0.25s cubic-bezier(0.4,0,0.2,1);
+      --safe-bottom: env(safe-area-inset-bottom, 20px);
+      --font: 'Sora', -apple-system, BlinkMacSystemFont, sans-serif;
+    }
 
-  /* === ИИ-ЧАТ === */
-  .ai-fab {
-    position: fixed;
-    bottom: 25px;
-    right: 25px;
-    width: 60px;
-    height: 60px;
-    border-radius: 50%;
-    background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
-    color: white;
-    border: none;
-    font-size: 28px;
-    cursor: pointer;
-    box-shadow: 0 4px 20px rgba(102, 126, 234, 0.4);
-    z-index: 1000;
-    transition: transform 0.3s;
-  }
-  .ai-fab:hover { transform: scale(1.1); }
-  .ai-fab .badge {
-    position: absolute;
-    top: -5px;
-    right: -5px;
-    background: #ff4757;
-    color: white;
-    border-radius: 50%;
-    width: 22px;
-    height: 22px;
-    font-size: 12px;
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    font-weight: bold;
-    animation: pulse 2s infinite;
-  }
-  @keyframes pulse {
-    0%, 100% { transform: scale(1); }
-    50% { transform: scale(1.15); }
-  }
-  .ai-status {
-    position: fixed;
-    bottom: 95px;
-    right: 25px;
-    background: white;
-    padding: 8px 14px;
-    border-radius: 20px;
-    font-size: 12px;
-    color: #667eea;
-    box-shadow: 0 2px 10px rgba(0,0,0,0.1);
-    z-index: 999;
-    display: flex;
-    align-items: center;
-    gap: 6px;
-  }
-  .ai-status .dot {
-    width: 8px;
-    height: 8px;
-    background: #2ecc71;
-    border-radius: 50%;
-    animation: blink 2s infinite;
-  }
-  @keyframes blink {
-    0%, 100% { opacity: 1; }
-    50% { opacity: 0.4; }
-  }
-  .ai-chat {
-    position: fixed;
-    bottom: 100px;
-    right: 25px;
-    width: 380px;
-    max-width: calc(100vw - 40px);
-    height: 550px;
-    max-height: calc(100vh - 140px);
-    background: white;
-    border-radius: 20px;
-    box-shadow: 0 10px 40px rgba(0,0,0,0.2);
-    z-index: 1001;
-    display: none;
-    flex-direction: column;
-    overflow: hidden;
-  }
-  .ai-chat.open { display: flex; }
-  .ai-chat-header {
-    background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
-    color: white;
-    padding: 15px 20px;
-    display: flex;
-    justify-content: space-between;
-    align-items: center;
-  }
-  .ai-chat-header .title {
-    display: flex;
-    align-items: center;
-    gap: 10px;
-    font-weight: 600;
-  }
-  .ai-chat-header .close {
-    background: none;
-    border: none;
-    color: white;
-    font-size: 22px;
-    cursor: pointer;
-  }
-  .ai-messages {
-    flex: 1;
-    overflow-y: auto;
-    padding: 15px;
-    background: #f8f9fa;
-  }
-  .ai-msg {
-    margin-bottom: 12px;
-    display: flex;
-    gap: 8px;
-    animation: slideIn 0.3s;
-  }
-  @keyframes slideIn {
-    from { opacity: 0; transform: translateY(10px); }
-    to { opacity: 1; transform: translateY(0); }
-  }
-  .ai-msg.user { flex-direction: row-reverse; }
-  .ai-msg .avatar {
-    width: 32px;
-    height: 32px;
-    border-radius: 50%;
-    background: linear-gradient(135deg, #667eea, #764ba2);
-    color: white;
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    font-size: 16px;
-    flex-shrink: 0;
-  }
-  .ai-msg.user .avatar {
-    background: #e8ecf3;
-    color: #667eea;
-  }
-  .ai-msg .bubble {
-    max-width: 75%;
-    padding: 10px 14px;
-    border-radius: 14px;
-    font-size: 14px;
-    line-height: 1.5;
-    white-space: pre-wrap;
-    word-wrap: break-word;
-  }
-  .ai-msg.ai .bubble {
-    background: white;
-    border-bottom-left-radius: 4px;
-    box-shadow: 0 1px 3px rgba(0,0,0,0.08);
-  }
-  .ai-msg.user .bubble {
-    background: linear-gradient(135deg, #667eea, #764ba2);
-    color: white;
-    border-bottom-right-radius: 4px;
-  }
-  .ai-msg .bubble img {
-    max-width: 100%;
-    border-radius: 8px;
-    margin-top: 5px;
-  }
-  .ai-msg .time {
-    font-size: 10px;
-    color: #aaa;
-    margin-top: 4px;
-  }
-  .ai-input-area {
-    padding: 12px;
-    background: white;
-    border-top: 1px solid #eee;
-    display: flex;
-    gap: 8px;
-    align-items: flex-end;
-  }
-  .ai-input-area textarea {
-    flex: 1;
-    min-height: 40px;
-    max-height: 100px;
-    padding: 10px;
-    border: 1px solid #e8ecf3;
-    border-radius: 12px;
-    font-size: 14px;
-    font-family: inherit;
-    resize: none;
-    margin: 0;
-  }
-  .ai-input-area textarea:focus { outline: none; border-color: #667eea; }
-  .ai-input-area button {
-    background: linear-gradient(135deg, #667eea, #764ba2);
-    color: white;
-    border: none;
-    width: 40px;
-    height: 40px;
-    border-radius: 50%;
-    cursor: pointer;
-    font-size: 16px;
-    flex-shrink: 0;
-  }
-  .ai-input-area .attach {
-    background: #f0f2f7;
-    color: #667eea;
-  }
-  .ai-typing {
-    display: flex;
-    gap: 4px;
-    padding: 10px 14px;
-  }
-  .ai-typing span {
-    width: 8px;
-    height: 8px;
-    background: #667eea;
-    border-radius: 50%;
-    animation: typing 1.4s infinite;
-  }
-  .ai-typing span:nth-child(2) { animation-delay: 0.2s; }
-  .ai-typing span:nth-child(3) { animation-delay: 0.4s; }
-  @keyframes typing {
-    0%, 60%, 100% { transform: translateY(0); opacity: 0.4; }
-    30% { transform: translateY(-8px); opacity: 1; }
-  }
-  @media (max-width: 600px) {
-    .ai-chat { right: 10px; left: 10px; width: auto; bottom: 90px; }
-    .ai-fab { bottom: 15px; right: 15px; }
-    .ai-status { bottom: 85px; right: 15px; }
-  }
-</style>
+    /* =============================================
+       RESET & BASE
+    ============================================= */
+    *,*::before,*::after { box-sizing:border-box; margin:0; padding:0; -webkit-tap-highlight-color:transparent; }
+    html { font-size:16px; scroll-behavior:smooth; }
+    body {
+      font-family: var(--font);
+      background: var(--bg-base);
+      color: var(--text-primary);
+      min-height: 100vh;
+      min-height: 100dvh;
+      padding-bottom: calc(80px + var(--safe-bottom));
+      overflow-x: hidden;
+      line-height: 1.5;
+      -webkit-font-smoothing: antialiased;
+    }
+
+    /* =============================================
+       COSMOS BACKGROUND
+    ============================================= */
+    .orb-container { position:fixed; inset:0; pointer-events:none; z-index:0; overflow:hidden; }
+    .orb { position:absolute; border-radius:50%; filter:blur(60px); opacity:.35; animation:floatOrb 18s ease-in-out infinite alternate; }
+    .orb--1 { width:320px; height:320px; background:var(--orb-j1); top:-10%; left:-5%; animation-delay:-3s; }
+    .orb--2 { width:280px; height:280px; background:var(--orb-j2); bottom:15%; right:-8%; animation-delay:-8s; }
+    .orb--3 { width:200px; height:200px; background:var(--accent); top:40%; left:50%; transform:translateX(-50%); opacity:.2; animation:pulseOrb 12s ease-in-out infinite; }
+    @keyframes floatOrb { 0%{transform:translate(0,0) scale(1)} 100%{transform:translate(25px,-35px) scale(1.08)} }
+    @keyframes pulseOrb  { 0%,100%{opacity:.2;transform:translateX(-50%) scale(1)} 50%{opacity:.35;transform:translateX(-50%) scale(1.12)} }
+    .stars {
+      position:absolute; inset:0;
+      background-image:
+        radial-gradient(1px 1px at 15% 12%, rgba(255,255,255,.4) 0%, transparent 100%),
+        radial-gradient(1px 1px at 78% 7%,  rgba(255,255,255,.3) 0%, transparent 100%),
+        radial-gradient(1.5px 1.5px at 52% 28%, rgba(255,255,255,.25) 0%, transparent 100%),
+        radial-gradient(1px 1px at 8%  58%, rgba(255,255,255,.2)  0%, transparent 100%),
+        radial-gradient(1px 1px at 90% 42%, rgba(255,255,255,.28) 0%, transparent 100%),
+        radial-gradient(1px 1px at 63% 88%, rgba(255,255,255,.22) 0%, transparent 100%);
+      background-size:350px 350px;
+      animation:twinkle 22s linear infinite;
+    }
+    @keyframes twinkle { 0%{opacity:.6} 50%{opacity:1} 100%{opacity:.6} }
+
+    /* =============================================
+       LAYOUT
+    ============================================= */
+    .page-header {
+      position: sticky; top:0; z-index:50;
+      background: rgba(7,7,15,.9);
+      backdrop-filter: var(--blur-md); -webkit-backdrop-filter: var(--blur-md);
+      border-bottom: 1px solid var(--border);
+      padding: 14px 20px 12px;
+    }
+    .page-header__inner { max-width:480px; margin:0 auto; display:flex; align-items:center; justify-content:space-between; }
+    .page-title {
+      font-size:24px; font-weight:700; letter-spacing:-.4px;
+      background:linear-gradient(135deg,var(--text-primary),var(--accent-light));
+      -webkit-background-clip:text; -webkit-text-fill-color:transparent;
+    }
+    .page-subtitle { color:var(--text-secondary); font-size:12px; margin-top:2px; }
+    .header-actions { display:flex; gap:8px; }
+
+    .main { position:relative; z-index:1; max-width:480px; margin:0 auto; padding:16px; }
+
+    /* =============================================
+       GLASS CARD
+    ============================================= */
+    .glass-card {
+      background: var(--bg-surface);
+      backdrop-filter: var(--blur-md); -webkit-backdrop-filter: var(--blur-md);
+      border: 1px solid var(--border);
+      border-radius: var(--radius-lg);
+      padding: 18px;
+      margin-bottom: 14px;
+      transition: var(--transition);
+      position: relative; overflow: hidden;
+    }
+    .glass-card::before {
+      content:''; position:absolute; top:0; left:0; right:0; height:1px;
+      background:linear-gradient(90deg,transparent,rgba(255,255,255,.09),transparent);
+      pointer-events:none;
+    }
+    .glass-card:hover { border-color:var(--border-md); }
+    .glass-card--accent { background:rgba(124,58,237,.08); border-color:rgba(124,58,237,.2); }
+    .glass-card--success { background:var(--success-bg); border-color:var(--success-border); }
+    .glass-card--danger  { background:var(--danger-bg);  border-color:var(--danger-border); }
+
+    /* =============================================
+       TYPOGRAPHY
+    ============================================= */
+    .section-title {
+      font-size:12px; font-weight:600; color:var(--text-muted);
+      text-transform:uppercase; letter-spacing:.1em;
+      margin-bottom:12px; display:flex; align-items:center; gap:8px;
+    }
+    .section-title span { color:var(--accent-light); }
+
+    /* =============================================
+       BUTTONS
+    ============================================= */
+    .btn {
+      display:inline-flex; align-items:center; justify-content:center; gap:6px;
+      border:1px solid var(--border); border-radius:var(--radius-md);
+      cursor:pointer; font-family:var(--font); font-weight:500;
+      transition:var(--transition); background:var(--bg-surface-md);
+      color:var(--text-primary); padding:10px 16px; font-size:14px;
+    }
+    .btn:active { transform:scale(.97); }
+    .btn:hover  { border-color:var(--border-md); }
+    .btn--primary { background:linear-gradient(135deg,var(--accent),#6d28d9); border-color:var(--accent); color:#fff; box-shadow:0 4px 20px var(--accent-glow); }
+    .btn--primary:hover { box-shadow:0 6px 28px var(--accent-glow); }
+    .btn--ghost  { background:transparent; border-color:var(--border); color:var(--text-secondary); }
+    .btn--ghost:hover { background:var(--bg-surface); color:var(--text-primary); }
+    .btn--danger { background:var(--danger-bg); border-color:var(--danger-border); color:var(--danger); }
+    .btn--icon   { width:36px; height:36px; padding:0; border-radius:var(--radius-sm); font-size:16px; }
+    .btn--icon-lg{ width:42px; height:42px; padding:0; border-radius:var(--radius-md); font-size:18px; }
+    .btn--full   { width:100%; }
+    .btn--sm     { padding:7px 12px; font-size:12px; }
+
+    /* =============================================
+       INPUTS
+    ============================================= */
+    .input, .textarea, .select {
+      width:100%; padding:12px 14px;
+      background:var(--bg-input); border:1px solid var(--border);
+      border-radius:var(--radius-md); color:var(--text-primary);
+      font-size:15px; font-family:var(--font);
+      transition:var(--transition);
+    }
+    .input:focus, .textarea:focus, .select:focus {
+      outline:none; border-color:var(--accent);
+      box-shadow:0 0 0 3px var(--accent-glow);
+    }
+    .input::placeholder, .textarea::placeholder { color:var(--text-muted); }
+    .textarea { resize:none; min-height:100px; line-height:1.55; }
+    .select {
+      appearance:none;
+      background-image:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='14' height='14' viewBox='0 0 24 24' fill='none' stroke='%239ca3af' stroke-width='2'%3E%3Cpolyline points='6 9 12 15 18 9'/%3E%3C/svg%3E");
+      background-repeat:no-repeat; background-position:right 12px center; cursor:pointer;
+    }
+    .select option { background:var(--bg-base); color:var(--text-primary); }
+    .form-group  { margin-bottom:14px; }
+    .form-label  { display:block; font-size:12px; color:var(--text-secondary); margin-bottom:6px; font-weight:500; }
+
+    /* =============================================
+       BADGES
+    ============================================= */
+    .badge { display:inline-flex; align-items:center; gap:4px; font-size:11px; font-weight:600; padding:3px 8px; border-radius:20px; white-space:nowrap; }
+    .badge--accent  { background:rgba(124,58,237,.2); border:1px solid rgba(124,58,237,.3); color:var(--accent-light); }
+    .badge--success { background:var(--success-bg); border:1px solid var(--success-border); color:var(--success); }
+    .badge--warning { background:var(--warning-bg); border:1px solid var(--warning-border); color:var(--warning); }
+    .badge--danger  { background:var(--danger-bg);  border:1px solid var(--danger-border);  color:var(--danger); }
+    .badge--muted   { background:var(--bg-surface);  border:1px solid var(--border);          color:var(--text-muted); }
+
+    /* =============================================
+       MODALS
+    ============================================= */
+    .modal-overlay {
+      position:fixed; inset:0; background:rgba(7,7,15,.88);
+      backdrop-filter:var(--blur-lg); -webkit-backdrop-filter:var(--blur-lg);
+      z-index:200; display:none; align-items:flex-end; justify-content:center;
+    }
+    .modal-overlay.active { display:flex; }
+    .modal {
+      background:linear-gradient(180deg,#0f0f1c 0%,var(--bg-base) 100%);
+      border:1px solid var(--border-md);
+      border-radius:var(--radius-xl) var(--radius-xl) 0 0;
+      padding:24px 20px 32px;
+      width:100%; max-width:480px; max-height:90vh; overflow-y:auto;
+      animation:slideUp .32s cubic-bezier(.2,.8,.2,1);
+    }
+    .modal__handle  { width:36px; height:4px; background:var(--border-md); border-radius:4px; margin:0 auto 20px; }
+    .modal__header  { display:flex; justify-content:space-between; align-items:center; margin-bottom:18px; }
+    .modal__title   { font-size:18px; font-weight:700; }
+    .modal__close   {
+      width:32px; height:32px; background:var(--bg-surface); border:1px solid var(--border);
+      border-radius:50%; color:var(--text-secondary); font-size:16px; cursor:pointer;
+      display:flex; align-items:center; justify-content:center; transition:var(--transition);
+    }
+    .modal__close:hover { background:var(--danger-bg); border-color:var(--danger-border); color:var(--danger); }
+    @keyframes slideUp { from{transform:translateY(100%)} to{transform:translateY(0)} }
+    @media(min-width:481px) {
+      .modal-overlay { align-items:center; }
+      .modal { border-radius:var(--radius-xl); }
+    }
+
+    /* =============================================
+       BOTTOM NAV
+    ============================================= */
+    .bottom-nav {
+      position:fixed; bottom:0; left:0; right:0;
+      background:rgba(7,7,15,.9); backdrop-filter:var(--blur-md); -webkit-backdrop-filter:var(--blur-md);
+      border-top:1px solid var(--border);
+      display:flex; justify-content:space-around; align-items:center;
+      padding:10px 0 calc(10px + var(--safe-bottom)); z-index:100;
+    }
+    .nav-btn { display:flex; flex-direction:column; align-items:center; gap:4px; text-decoration:none; color:var(--text-muted); padding:6px 12px; border-radius:var(--radius-md); transition:var(--transition); font-size:10px; font-weight:600; background:transparent; border:none; cursor:pointer; }
+    .nav-btn svg { width:22px; height:22px; stroke:currentColor; stroke-width:2; fill:none; transition:stroke .2s; }
+    .nav-btn.active { color:var(--accent-light); }
+    .nav-btn.active svg { stroke-width:2.5; filter:drop-shadow(0 0 8px var(--accent-glow)); }
+
+    /* =============================================
+       TOAST
+    ============================================= */
+    .toast {
+      position:fixed; top:80px; left:50%;
+      transform:translateX(-50%) translateY(-20px);
+      background:rgba(124,58,237,.22); border:1px solid rgba(124,58,237,.4);
+      backdrop-filter:blur(16px); -webkit-backdrop-filter:blur(16px);
+      color:var(--accent-light); padding:10px 20px;
+      border-radius:24px; font-size:13px; font-weight:500;
+      z-index:500; opacity:0; transition:all .3s cubic-bezier(.2,.8,.2,1);
+      white-space:nowrap; pointer-events:none;
+    }
+    .toast.show { opacity:1; transform:translateX(-50%) translateY(0); }
+    .toast--success { background:var(--success-bg); border-color:var(--success-border); color:var(--success); }
+    .toast--danger  { background:var(--danger-bg);  border-color:var(--danger-border);  color:var(--danger); }
+    .toast--info    { background:var(--info-bg); border-color:rgba(56,189,248,.3); color:var(--info); }
+
+    /* =============================================
+       CALENDAR
+    ============================================= */
+    .cal-nav-row { display:flex; justify-content:space-between; align-items:center; margin-bottom:14px; }
+    .cal-month-label { font-size:15px; font-weight:600; }
+    .cal-weekdays { display:grid; grid-template-columns:repeat(7,1fr); gap:4px; margin-bottom:8px; }
+    .cal-weekdays span { text-align:center; font-size:10px; color:var(--text-muted); font-weight:600; padding:2px 0; }
+    .cal-grid { display:grid; grid-template-columns:repeat(7,1fr); gap:5px; }
+    .cal-cell {
+      aspect-ratio:1; background:var(--bg-surface); border:1px solid var(--border);
+      border-radius:var(--radius-sm); display:flex; flex-direction:column;
+      align-items:center; justify-content:center;
+      cursor:pointer; position:relative; transition:var(--transition);
+      overflow:hidden; user-select:none;
+    }
+    .cal-cell:hover { border-color:var(--accent); background:rgba(124,58,237,.1); transform:scale(1.04); }
+    .cal-cell:active { transform:scale(.96); }
+    .cal-cell.today { border-color:var(--accent); box-shadow:0 0 0 2px var(--accent-glow); }
+    .cal-cell.empty { background:transparent; border:none; cursor:default; pointer-events:none; }
+    .cal-cell.has-note .cal-cell__num { color:var(--accent-light); font-weight:700; }
+    .cal-cell__num  { font-size:12px; font-weight:500; z-index:2; line-height:1; }
+    .cal-cell__bg   { position:absolute; inset:0; z-index:1; }
+    .cal-cell__bg img { width:100%; height:100%; object-fit:cover; opacity:.5; }
+    .cal-cell__icon { font-size:10px; z-index:2; line-height:1; margin-top:1px; }
+    .cal-cell__mood { position:absolute; bottom:1px; right:2px; font-size:9px; z-index:3; }
+    .cal-cell__dot  { position:absolute; top:4px; left:50%; transform:translateX(-50%); width:4px; height:4px; border-radius:50%; background:var(--accent-light); z-index:3; }
+
+    /* Mood strip */
+    .mood-strip { display:flex; gap:6px; margin-top:12px; padding-top:12px; border-top:1px solid var(--border); flex-wrap:wrap; }
+    .mood-chip   { font-size:11px; display:flex; align-items:center; gap:4px; padding:4px 8px; background:var(--bg-surface); border:1px solid var(--border); border-radius:20px; }
+
+    /* =============================================
+       SEARCH BAR
+    ============================================= */
+    .search-wrap { position:relative; margin-bottom:14px; }
+    .search-wrap .input { padding-left:38px; }
+    .search-icon { position:absolute; left:13px; top:50%; transform:translateY(-50%); font-size:14px; color:var(--text-muted); pointer-events:none; }
+    .search-clear { position:absolute; right:12px; top:50%; transform:translateY(-50%); background:none; border:none; color:var(--text-muted); cursor:pointer; font-size:14px; display:none; }
+    .search-clear.visible { display:block; }
+
+    /* =============================================
+       NOTE CARDS
+    ============================================= */
+    .notes-list { display:flex; flex-direction:column; gap:12px; }
+    .note-card {
+      background:var(--bg-surface); border:1px solid var(--border);
+      border-radius:var(--radius-lg); padding:16px;
+      animation:fadeIn .22s ease; transition:var(--transition);
+      cursor:pointer;
+    }
+    .note-card:hover { border-color:var(--border-md); transform:translateY(-1px); }
+    .note-card__header { display:flex; justify-content:space-between; align-items:center; margin-bottom:10px; gap:8px; }
+    .note-card__date   { font-size:13px; font-weight:600; color:var(--accent-light); flex:1; }
+    .note-card__mood   { font-size:1.35rem; flex-shrink:0; }
+    .note-card__text   { font-size:13px; color:var(--text-secondary); white-space:pre-wrap; line-height:1.65; margin-bottom:10px; display:-webkit-box; -webkit-line-clamp:4; -webkit-box-orient:vertical; overflow:hidden; }
+    .note-card__text.expanded { -webkit-line-clamp:unset; }
+    .note-card__expand { font-size:11px; color:var(--accent-light); background:none; border:none; cursor:pointer; font-family:var(--font); padding:0; margin-bottom:8px; }
+    .note-card__media  { display:grid; grid-template-columns:repeat(auto-fill,minmax(68px,1fr)); gap:6px; margin-top:8px; }
+    .note-media-item   { aspect-ratio:1; border-radius:var(--radius-sm); overflow:hidden; background:var(--bg-surface-md); position:relative; }
+    .note-media-item img,.note-media-item video { width:100%; height:100%; object-fit:cover; display:block; }
+    .note-media-item audio { width:100%; height:36px; }
+    .note-card__footer { display:flex; justify-content:space-between; align-items:center; margin-top:10px; border-top:1px solid var(--border); padding-top:8px; }
+    .note-del-btn { background:none; border:none; color:var(--text-muted); font-size:11px; cursor:pointer; padding:4px 6px; border-radius:var(--radius-sm); transition:var(--transition); font-family:var(--font); display:flex; align-items:center; gap:4px; }
+    .note-del-btn:hover { background:var(--danger-bg); color:var(--danger); }
+    .note-edit-btn { background:none; border:none; color:var(--text-muted); font-size:11px; cursor:pointer; padding:4px 6px; border-radius:var(--radius-sm); transition:var(--transition); font-family:var(--font); display:flex; align-items:center; gap:4px; }
+    .note-edit-btn:hover { background:rgba(124,58,237,.15); color:var(--accent-light); }
+
+    /* =============================================
+       EMPTY STATE
+    ============================================= */
+    .empty-state { text-align:center; padding:40px 20px; color:var(--text-muted); }
+    .empty-state__icon  { font-size:48px; opacity:.4; display:block; margin-bottom:12px; }
+    .empty-state__title { font-size:15px; font-weight:600; color:var(--text-secondary); margin-bottom:6px; }
+    .empty-state__text  { font-size:13px; line-height:1.6; }
+
+    /* =============================================
+       EDITOR SLIDE-UP PANEL
+    ============================================= */
+    .editor-overlay {
+      position:fixed; inset:0; background:rgba(0,0,0,.65);
+      backdrop-filter:blur(6px); -webkit-backdrop-filter:blur(6px);
+      z-index:140; opacity:0; pointer-events:none; transition:opacity .3s;
+    }
+    .editor-overlay.active { opacity:1; pointer-events:auto; }
+    .editor-panel {
+      position:fixed; bottom:0; left:0; right:0;
+      background:linear-gradient(180deg,var(--bg-surface-md) 0%,var(--bg-base) 100%);
+      border:1px solid var(--border-md);
+      border-radius:var(--radius-xl) var(--radius-xl) 0 0;
+      padding:20px 20px 32px;
+      transform:translateY(100%);
+      transition:transform .35s cubic-bezier(.2,.8,.2,1);
+      z-index:150; max-height:92vh; overflow-y:auto;
+    }
+    .editor-panel.open { transform:translateY(0); }
+    .editor-content { max-width:480px; margin:0 auto; }
+    .editor-handle  { width:36px; height:4px; background:var(--border-md); border-radius:4px; margin:0 auto 18px; }
+    .editor-header  { display:flex; justify-content:space-between; align-items:center; margin-bottom:16px; }
+    .editor-date-lbl { font-size:17px; font-weight:700; }
+    .editor-close-btn {
+      background:var(--bg-surface); border:1px solid var(--border); color:var(--text-secondary);
+      width:34px; height:34px; border-radius:50%; cursor:pointer; font-size:16px;
+      display:flex; align-items:center; justify-content:center; transition:var(--transition);
+    }
+    .editor-close-btn:hover { background:var(--danger-bg); border-color:var(--danger-border); color:var(--danger); }
+
+    /* Mood selector */
+    .mood-selector  { display:flex; justify-content:space-around; margin-bottom:14px; }
+    .mood-btn {
+      font-size:1.9rem; background:transparent; border:2px solid transparent;
+      width:50px; height:50px; border-radius:50%; cursor:pointer;
+      transition:var(--transition); display:flex; align-items:center; justify-content:center;
+    }
+    .mood-btn:hover { background:var(--bg-surface-md); transform:scale(1.1); }
+    .mood-btn.selected { border-color:var(--accent); background:rgba(124,58,237,.15); transform:scale(1.15); }
+
+    /* Tags input */
+    .tags-row   { display:flex; gap:6px; flex-wrap:wrap; margin-bottom:12px; }
+    .tag-chip   { padding:5px 10px; background:var(--bg-input); border:1px solid var(--border); border-radius:20px; font-size:12px; cursor:pointer; transition:var(--transition); font-family:var(--font); color:var(--text-secondary); }
+    .tag-chip:hover, .tag-chip.active { background:rgba(124,58,237,.18); border-color:rgba(124,58,237,.4); color:var(--accent-light); }
+
+    /* Media toolbar */
+    .media-toolbar { display:flex; gap:8px; margin-bottom:10px; }
+    .media-btn {
+      flex:1; padding:9px 4px; background:var(--bg-input); border:1px solid var(--border);
+      color:var(--text-secondary); border-radius:var(--radius-sm);
+      font-size:12px; cursor:pointer; display:flex; align-items:center; justify-content:center; gap:4px;
+      transition:var(--transition); font-family:var(--font);
+    }
+    .media-btn:hover  { border-color:var(--accent); color:var(--accent-light); }
+    .media-btn.recording { background:var(--danger-bg); border-color:var(--danger-border); color:var(--danger); animation:pulseBtn 1.5s infinite; }
+    @keyframes pulseBtn { 0%,100%{transform:scale(1)} 50%{transform:scale(1.03)} }
+    .media-preview { display:flex; gap:8px; flex-wrap:wrap; margin-bottom:10px; min-height:0; }
+    .preview-item  { width:58px; height:58px; border-radius:var(--radius-sm); overflow:hidden; background:var(--bg-input); position:relative; border:1px solid var(--border); }
+    .preview-item img,.preview-item video { width:100%; height:100%; object-fit:cover; display:block; }
+    .preview-item audio { width:100%; height:100%; }
+    .remove-preview {
+      position:absolute; top:2px; right:2px; width:16px; height:16px;
+      background:rgba(0,0,0,.85); color:#fff; border:none; border-radius:50%;
+      cursor:pointer; font-size:8px; display:flex; align-items:center; justify-content:center; z-index:2;
+    }
+
+    /* =============================================
+       STATS ROW (mood calendar summary)
+    ============================================= */
+    .stats-row { display:grid; grid-template-columns:repeat(3,1fr); gap:10px; margin-bottom:14px; }
+    .stat-pill  { background:var(--bg-surface); border:1px solid var(--border); border-radius:var(--radius-md); padding:12px 8px; text-align:center; }
+    .stat-pill__val   { font-size:20px; font-weight:700; }
+    .stat-pill__label { font-size:10px; color:var(--text-muted); margin-top:2px; }
+    .stat-pill__val--accent  { color:var(--accent-light); }
+    .stat-pill__val--success { color:var(--success); }
+    .stat-pill__val--warning { color:var(--warning); }
+
+    /* =============================================
+       AI CHAT FAB
+    ============================================= */
+    #ai-fab {
+      position:fixed; bottom:calc(80px + var(--safe-bottom) + 16px); right:18px;
+      width:58px; height:58px; border-radius:50%;
+      background:linear-gradient(135deg,#7c3aed,#5b21b6);
+      border:none; cursor:pointer; z-index:90;
+      display:flex; align-items:center; justify-content:center;
+      box-shadow:0 6px 28px var(--accent-glow); transition:var(--transition);
+      font-size:24px; color:#fff;
+    }
+    #ai-fab:hover  { transform:scale(1.1) rotate(5deg); box-shadow:0 8px 36px var(--accent-glow); }
+    #ai-fab:active { transform:scale(.93); }
+    .ai-fab-dot {
+      position:absolute; top:4px; right:4px;
+      width:14px; height:14px; border-radius:50%;
+      background:var(--danger); border:2.5px solid var(--bg-base);
+      display:none;
+    }
+    .ai-fab-dot.on { display:block; animation:pulseDot 2s infinite; }
+    @keyframes pulseDot { 0%,100%{transform:scale(1);opacity:1} 50%{transform:scale(1.3);opacity:.7} }
+
+    /* =============================================
+       AI CHAT PANEL
+    ============================================= */
+    #ai-panel {
+      position:fixed; inset:0; z-index:500;
+      background:var(--bg-base);
+      transform:translateX(105%);
+      transition:transform .38s cubic-bezier(.2,.8,.2,1);
+      display:flex; flex-direction:column; overflow:hidden;
+    }
+    #ai-panel.open { transform:translateX(0); }
+
+    /* ambient orbs inside panel */
+    .ai-orb { position:fixed; border-radius:50%; filter:blur(80px); pointer-events:none; z-index:0; }
+    .ai-orb-1 { width:300px; height:300px; background:var(--orb-j1); opacity:.12; top:-80px; left:-60px; }
+    .ai-orb-2 { width:260px; height:260px; background:#5b21b6; opacity:.1;  bottom:100px; right:-50px; }
+
+    .ai-header {
+      background:rgba(7,7,15,.92); backdrop-filter:blur(24px); -webkit-backdrop-filter:blur(24px);
+      border-bottom:1px solid var(--border);
+      padding:13px 16px; display:flex; align-items:center; gap:12px;
+      flex-shrink:0; position:relative; z-index:2;
+    }
+    .ai-back-btn {
+      width:36px; height:36px; border-radius:var(--radius-sm);
+      background:var(--bg-surface); border:1px solid var(--border);
+      color:var(--text-primary); font-size:17px; cursor:pointer;
+      display:flex; align-items:center; justify-content:center; flex-shrink:0; transition:var(--transition);
+    }
+    .ai-back-btn:hover { border-color:var(--border-md); }
+    .ai-avatar {
+      width:42px; height:42px; border-radius:50%;
+      background:linear-gradient(135deg,var(--accent),#5b21b6);
+      display:flex; align-items:center; justify-content:center;
+      font-size:20px; flex-shrink:0; box-shadow:0 0 18px var(--accent-glow);
+    }
+    .ai-header-info { flex:1; min-width:0; }
+    .ai-name        { font-size:15px; font-weight:700; }
+    .ai-status      { font-size:11px; color:var(--success); margin-top:1px; transition:color .2s; }
+    .ai-status.typing { color:var(--accent-light); }
+    .ai-header-actions { display:flex; gap:6px; }
+    .ai-icon-btn {
+      width:32px; height:32px; border-radius:var(--radius-sm);
+      background:var(--bg-surface); border:1px solid var(--border);
+      color:var(--text-muted); font-size:14px; cursor:pointer;
+      display:flex; align-items:center; justify-content:center; transition:var(--transition);
+    }
+    .ai-icon-btn:hover { border-color:var(--border-md); color:var(--text-secondary); }
+    .ai-icon-btn.danger:hover { border-color:var(--danger-border); color:var(--danger); background:var(--danger-bg); }
+
+    /* Messages scroll area */
+    .ai-messages {
+      flex:1; overflow-y:auto; padding:14px 16px;
+      display:flex; flex-direction:column; gap:12px;
+      scroll-behavior:smooth; position:relative; z-index:1;
+    }
+    .ai-messages::-webkit-scrollbar { width:3px; }
+    .ai-messages::-webkit-scrollbar-thumb { background:var(--border-md); border-radius:3px; }
+
+    /* Message bubbles */
+    .msg { display:flex; gap:8px; max-width:90%; animation:fadeIn .2s ease; }
+    .msg.user { align-self:flex-end; flex-direction:row-reverse; }
+    .msg.ai   { align-self:flex-start; }
+    .msg__av  {
+      width:28px; height:28px; border-radius:50%; flex-shrink:0;
+      display:flex; align-items:center; justify-content:center; font-size:12px; margin-top:auto;
+    }
+    .msg.ai   .msg__av { background:linear-gradient(135deg,var(--accent),#5b21b6); box-shadow:0 0 8px var(--accent-glow); }
+    .msg.user .msg__av { background:var(--bg-surface-md); border:1px solid var(--border); }
+    .msg__body {}
+    .msg__bubble { padding:10px 13px; border-radius:var(--radius-md); font-size:14px; line-height:1.6; word-break:break-word; }
+    .msg.ai   .msg__bubble { background:var(--bg-surface); border:1px solid var(--border); border-bottom-left-radius:4px; }
+    .msg.user .msg__bubble { background:linear-gradient(135deg,var(--accent),#6d28d9); color:#fff; border-bottom-right-radius:4px; }
+    .msg__time { font-size:10px; color:var(--text-muted); margin-top:4px; padding:0 2px; }
+    .msg.user .msg__time { text-align:right; }
+
+    /* Typing indicator */
+    .typing-wrap   { align-self:flex-start; display:flex; gap:8px; animation:fadeIn .2s ease; }
+    .typing-bubble { padding:11px 14px; background:var(--bg-surface); border:1px solid var(--border); border-radius:var(--radius-md); border-bottom-left-radius:4px; display:flex; gap:5px; align-items:center; }
+    .typing-dot    { width:7px; height:7px; border-radius:50%; background:var(--accent-light); opacity:.4; animation:typingBounce 1.4s infinite; }
+    .typing-dot:nth-child(2) { animation-delay:.2s; }
+    .typing-dot:nth-child(3) { animation-delay:.4s; }
+    @keyframes typingBounce { 0%,60%,100%{transform:translateY(0);opacity:.4} 30%{transform:translateY(-8px);opacity:1} }
+
+    /* Date separator */
+    .date-sep { display:flex; align-items:center; gap:10px; font-size:11px; color:var(--text-muted); margin:4px 0; }
+    .date-sep::before,.date-sep::after { content:''; flex:1; height:1px; background:var(--border); }
+
+    /* Quick-action chips in chat */
+    .ai-quick-chips { display:flex; flex-wrap:wrap; gap:8px; padding:10px 16px 4px; }
+    .ai-chip {
+      padding:7px 13px; background:var(--bg-surface); border:1px solid var(--border);
+      border-radius:20px; font-size:12px; font-weight:500; cursor:pointer;
+      color:var(--text-secondary); transition:var(--transition); font-family:var(--font);
+    }
+    .ai-chip:hover { border-color:var(--accent); color:var(--accent-light); background:rgba(124,58,237,.1); }
+
+    /* Welcome screen */
+    .ai-welcome { text-align:center; padding:40px 20px 24px; }
+    .ai-welcome__avatar { width:72px; height:72px; border-radius:50%; background:linear-gradient(135deg,var(--accent),#5b21b6); display:flex; align-items:center; justify-content:center; font-size:32px; margin:0 auto 16px; box-shadow:0 0 28px var(--accent-glow); }
+    .ai-welcome__name { font-size:20px; font-weight:700; margin-bottom:8px; }
+    .ai-welcome__desc { font-size:13px; color:var(--text-secondary); line-height:1.65; max-width:300px; margin:0 auto 20px; }
+    .ai-welcome__features { display:flex; flex-direction:column; gap:8px; text-align:left; }
+    .ai-feature { display:flex; align-items:center; gap:10px; background:var(--bg-surface); border:1px solid var(--border); border-radius:var(--radius-md); padding:10px 12px; font-size:12px; color:var(--text-secondary); }
+    .ai-feature__icon { font-size:16px; flex-shrink:0; }
+
+    /* Input area */
+    .ai-input-area {
+      padding:10px 16px calc(12px + var(--safe-bottom));
+      border-top:1px solid var(--border);
+      background:rgba(7,7,15,.92); backdrop-filter:blur(20px);
+      flex-shrink:0; position:relative; z-index:2;
+    }
+    .ai-ctx-chip { display:inline-flex; align-items:center; gap:5px; font-size:11px; color:var(--text-muted); background:var(--bg-surface); border:1px solid var(--border); border-radius:20px; padding:3px 10px; margin-bottom:8px; }
+    .ai-input-row { display:flex; gap:10px; align-items:flex-end; }
+    .ai-textarea {
+      flex:1; background:var(--bg-input); border:1px solid var(--border);
+      border-radius:var(--radius-md); color:var(--text-primary);
+      font-size:15px; font-family:var(--font); padding:11px 13px;
+      resize:none; min-height:44px; max-height:120px;
+      outline:none; transition:var(--transition); line-height:1.45;
+    }
+    .ai-textarea:focus { border-color:var(--accent); box-shadow:0 0 0 3px var(--accent-glow); }
+    .ai-textarea::placeholder { color:var(--text-muted); }
+    .ai-send-btn {
+      width:44px; height:44px; border-radius:var(--radius-md);
+      background:linear-gradient(135deg,var(--accent),#6d28d9);
+      border:none; cursor:pointer; display:flex; align-items:center; justify-content:center;
+      font-size:19px; color:#fff; box-shadow:0 4px 16px var(--accent-glow);
+      transition:var(--transition); flex-shrink:0;
+    }
+    .ai-send-btn:hover  { box-shadow:0 6px 24px var(--accent-glow); }
+    .ai-send-btn:active { transform:scale(.94); }
+    .ai-send-btn:disabled { opacity:.4; cursor:not-allowed; transform:none; }
+
+    /* =============================================
+       ANIMATIONS
+    ============================================= */
+    @keyframes fadeIn { from{opacity:0;transform:translateY(6px)} to{opacity:1;transform:translateY(0)} }
+  </style>
 </head>
 <body>
 
-<header>
-  <h1>📖 Дневник</h1>
-  <p style="font-size: 14px; opacity: 0.9;">Твоё пространство для мыслей и рефлексии</p>
+<!-- ── COSMOS BACKGROUND ── -->
+<div class="orb-container">
+  <div class="orb orb--1"></div>
+  <div class="orb orb--2"></div>
+  <div class="orb orb--3"></div>
+  <div class="stars"></div>
+</div>
+
+<!-- ── TOAST ── -->
+<div class="toast" id="toast"></div>
+
+<!-- ── HEADER ── -->
+<header class="page-header">
+  <div class="page-header__inner">
+    <div>
+      <div class="page-title">📖 Дневник</div>
+      <div class="page-subtitle" id="headerDate"></div>
+    </div>
+    <div class="header-actions">
+      <button class="btn btn--icon btn--icon-lg btn--ghost" id="searchToggleBtn" title="Поиск" style="font-size:17px;">🔍</button>
+    </div>
+  </div>
 </header>
 
-<nav>
-  <a href="tasks.html">📋 Задачи</a>
-  <a href="journal.html" class="active">📖 Дневник</a>
-  <a href="habits.html">✅ Привычки</a>
-  <a href="finance.html">💰 Финансы</a>
-  <a href="health.html">❤️ Здоровье</a>
-</nav>
+<!-- ── MAIN ── -->
+<main class="main">
 
-<div class="container">
-  <div class="calendar">
-    <div class="calendar-header">
-      <button id="prevMonth">◀</button>
-      <h2 id="monthLabel"></h2>
-      <button id="nextMonth">▶</button>
-    </div>
-    <div class="week-days">
-      <div>Пн</div><div>Вт</div><div>Ср</div><div>Чт</div><div>Пт</div><div>Сб</div><div>Вс</div>
-    </div>
-    <div class="days" id="daysGrid"></div>
+  <!-- Search (hidden by default) -->
+  <div class="search-wrap" id="searchWrap" style="display:none;">
+    <span class="search-icon">🔍</span>
+    <input class="input" type="search" id="searchInput" placeholder="Поиск по записям…" autocomplete="off">
+    <button class="search-clear" id="searchClear">✕</button>
   </div>
 
-  <div class="entry-panel">
-    <h2 id="entryTitle">✍️ Новая запись</h2>
-    <div class="mood-selector" id="moodSelector">
+  <!-- Stats row -->
+  <div class="stats-row" id="statsRow">
+    <div class="stat-pill">
+      <div class="stat-pill__val stat-pill__val--accent" id="statTotal">0</div>
+      <div class="stat-pill__label">Записей</div>
+    </div>
+    <div class="stat-pill">
+      <div class="stat-pill__val stat-pill__val--success" id="statStreak">0🔥</div>
+      <div class="stat-pill__label">Дней подряд</div>
+    </div>
+    <div class="stat-pill">
+      <div class="stat-pill__val stat-pill__val--warning" id="statMood">—</div>
+      <div class="stat-pill__label">Настроение</div>
+    </div>
+  </div>
+
+  <!-- Calendar -->
+  <div class="glass-card" style="padding:16px;">
+    <div class="cal-nav-row">
+      <button class="btn btn--ghost btn--sm" id="calPrev">◀</button>
+      <span class="cal-month-label" id="calMonth"></span>
+      <button class="btn btn--ghost btn--sm" id="calNext">▶</button>
+    </div>
+    <div class="cal-weekdays">
+      <span>Пн</span><span>Вт</span><span>Ср</span><span>Чт</span><span>Пт</span><span>Сб</span><span>Вс</span>
+    </div>
+    <div class="cal-grid" id="calGrid"></div>
+
+    <!-- Mood strip -->
+    <div class="mood-strip" id="moodStrip"></div>
+  </div>
+
+  <!-- Notes list -->
+  <div class="section-title" style="margin-top:4px;">📝 Записи <span id="notesCount"></span></div>
+  <div class="notes-list" id="notesList"></div>
+  <div class="empty-state" id="notesEmpty" style="display:none;">
+    <span class="empty-state__icon">✍️</span>
+    <div class="empty-state__title">Записей пока нет</div>
+    <p class="empty-state__text">Нажмите на любую дату в календаре,<br>чтобы добавить запись</p>
+  </div>
+
+</main>
+
+<!-- ── AI FAB ── -->
+<button id="ai-fab" title="Алиса — твой наставник">
+  ✨
+  <span class="ai-fab-dot" id="aiFabDot"></span>
+</button>
+
+<!-- ═══════════════════════════════════════════════
+     AI CHAT PANEL
+═══════════════════════════════════════════════ -->
+<div id="ai-panel">
+  <div class="ai-orb ai-orb-1"></div>
+  <div class="ai-orb ai-orb-2"></div>
+
+  <!-- Header -->
+  <div class="ai-header">
+    <button class="ai-back-btn" id="aiBackBtn" onclick="window.closeAIChat()">←</button>
+    <div class="ai-avatar">✨</div>
+    <div class="ai-header-info">
+      <div class="ai-name">Алиса</div>
+      <div class="ai-status" id="aiStatus">● онлайн</div>
+    </div>
+    <div class="ai-header-actions">
+      <button class="ai-icon-btn danger" id="aiClearBtn" title="Очистить историю" onclick="window.clearAIHistory()">🗑</button>
+    </div>
+  </div>
+
+  <!-- Messages -->
+  <div class="ai-messages" id="aiMessages"></div>
+
+  <!-- Quick chips (shown only on welcome) -->
+  <div class="ai-quick-chips" id="aiQuickChips" style="display:none;">
+    <button class="ai-chip" onclick="window.sendQuick('Как я себя чувствую последнее время?')">Моё состояние</button>
+    <button class="ai-chip" onclick="window.sendQuick('Проанализируй мои привычки и задачи')">Привычки и задачи</button>
+    <button class="ai-chip" onclick="window.sendQuick('Что ты замечаешь в моём дневнике за последние недели?')">Анализ дневника</button>
+    <button class="ai-chip" onclick="window.sendQuick('Дай мне совет на сегодня')">Совет на день</button>
+  </div>
+
+  <!-- Input area -->
+  <div class="ai-input-area">
+    <div style="min-height:18px; margin-bottom:6px;" id="aiCtxHint"></div>
+    <div class="ai-input-row">
+      <textarea class="ai-textarea" id="aiTextarea" placeholder="Напиши Алисе…" rows="1"></textarea>
+      <button class="ai-send-btn" id="aiSendBtn" onclick="window.sendAIMessage()">➤</button>
+    </div>
+  </div>
+</div>
+
+<!-- ═══════════════════════════════════════════════
+     NOTE EDITOR
+═══════════════════════════════════════════════ -->
+<div class="editor-overlay" id="editorOverlay"></div>
+<div class="editor-panel" id="editorPanel">
+  <div class="editor-content">
+    <div class="editor-handle"></div>
+    <div class="editor-header">
+      <span class="editor-date-lbl" id="editorDate"></span>
+      <button class="editor-close-btn" id="editorCloseBtn" onclick="window.closeEditor()">✕</button>
+    </div>
+
+    <!-- Mood -->
+    <div class="form-label" style="margin-bottom:8px;">Как ты сегодня?</div>
+    <div class="mood-selector">
+      <button class="mood-btn" data-mood="🤩">🤩</button>
       <button class="mood-btn" data-mood="😊">😊</button>
       <button class="mood-btn" data-mood="😐">😐</button>
       <button class="mood-btn" data-mood="😢">😢</button>
       <button class="mood-btn" data-mood="😡">😡</button>
-      <button class="mood-btn" data-mood="🤩">🤩</button>
-      <button class="mood-btn" data-mood="😴">😴</button>
     </div>
-    <textarea id="entryText" placeholder="Что у тебя на душе сегодня?"></textarea>
-    <div class="attachments">
-      <label class="attach-btn">📷 Фото<input type="file" accept="image/*" id="photoInput" hidden></label>
-      <label class="attach-btn">🎤 Голос<input type="file" accept="audio/*" id="voiceInput" hidden></label>
+
+    <!-- Quick tags -->
+    <div class="form-label" style="margin-bottom:6px;">Теги</div>
+    <div class="tags-row" id="tagsRow">
+      <button class="tag-chip" data-tag="работа">💼 работа</button>
+      <button class="tag-chip" data-tag="здоровье">💊 здоровье</button>
+      <button class="tag-chip" data-tag="семья">👨‍👩‍👧 семья</button>
+      <button class="tag-chip" data-tag="отношения">❤️ отношения</button>
+      <button class="tag-chip" data-tag="спорт">🏃 спорт</button>
+      <button class="tag-chip" data-tag="планы">📌 планы</button>
     </div>
-    <div id="attachmentsPreview" style="margin-bottom: 15px;"></div>
-    <button class="save-btn" id="saveEntry">💾 Сохранить</button>
 
-    <div class="entries-list" id="entriesList"></div>
+    <!-- Media toolbar -->
+    <div class="media-toolbar">
+      <button class="media-btn" id="btnPhoto">📷 Фото</button>
+      <button class="media-btn" id="btnVideo">🎥 Видео</button>
+      <button class="media-btn" id="btnAudio">🎤 Голос</button>
+    </div>
+    <div class="media-preview" id="mediaPreview"></div>
+
+    <!-- Text -->
+    <div class="form-group">
+      <textarea id="noteText" class="textarea" placeholder="Запишите, как прошёл этот день… Что чувствуете, что произошло, о чём думаете." style="min-height:120px;"></textarea>
+    </div>
+
+    <button id="saveNoteBtn" class="btn btn--primary btn--full" onclick="window.saveNote()">💾 Сохранить запись</button>
   </div>
 </div>
 
-<!-- ИИ-наставник -->
-<div class="ai-status">
-  <span class="dot"></span>
-  <span>Наставник онлайн · анализирует ваши данные</span>
-</div>
-<button class="ai-fab" id="aiFab" title="Открыть чат с наставником">
-  🤖
-  <span class="badge" id="aiBadge" style="display:none;">0</span>
-</button>
+<!-- ── BOTTOM NAV ── -->
+<nav class="bottom-nav">
+  <a href="tasks.html" class="nav-btn">
+    <svg viewBox="0 0 24 24"><path d="M9 11l3 3L22 4"/><path d="M21 12v7a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h11"/></svg>
+    <span>Задачи</span>
+  </a>
+  <a href="journal.html" class="nav-btn active">
+    <svg viewBox="0 0 24 24"><path d="M4 19.5A2.5 2.5 0 0 1 6.5 17H20"/><path d="M6.5 2H20v20H6.5A2.5 2.5 0 0 1 4 19.5v-15A2.5 2.5 0 0 1 6.5 2z"/></svg>
+    <span>Дневник</span>
+  </a>
+  <a href="habits.html" class="nav-btn">
+    <svg viewBox="0 0 24 24"><circle cx="12" cy="12" r="10"/><polyline points="12 6 12 12 16 14"/></svg>
+    <span>Привычки</span>
+  </a>
+  <a href="finance.html" class="nav-btn">
+    <svg viewBox="0 0 24 24"><line x1="12" y1="1" x2="12" y2="23"/><path d="M17 5H9.5a3.5 3.5 0 0 0 0 7h5a3.5 3.5 0 0 1 0 7H6"/></svg>
+    <span>Финансы</span>
+  </a>
+  <a href="health.html" class="nav-btn">
+    <svg viewBox="0 0 24 24"><path d="M20.84 4.61a5.5 5.5 0 0 0-7.78 0L12 5.67l-1.06-1.06a5.5 5.5 0 0 0-7.78 7.78l1.06 1.06L12 21.23l7.78-7.78 1.06-1.06a5.5 5.5 0 0 0 0-7.78z"/></svg>
+    <span>Здоровье</span>
+  </a>
+</nav>
 
-<div class="ai-chat" id="aiChat">
-  <div class="ai-chat-header">
-    <div class="title">🤖 Ваш наставник</div>
-    <button class="close" id="aiClose">✕</button>
-  </div>
-  <div class="ai-messages" id="aiMessages"></div>
-  <div class="ai-input-area">
-    <button class="attach" id="aiAttachBtn" title="Прикрепить фото">📎</button>
-    <input type="file" accept="image/*" id="aiPhotoInput" hidden>
-    <textarea id="aiInput" placeholder="Напишите что-нибудь..."></textarea>
-    <button id="aiSend" title="Отправить">➤</button>
-  </div>
-</div>
+<input type="file" id="fileInput" style="display:none;" />
 
+<!-- ═══════════════════════════════════════════════════════════════════════
+     SCRIPT
+═══════════════════════════════════════════════════════════════════════ -->
 <script>
-/* ============================================
-   БАЗОВАЯ ЛОГИКА ДНЕВНИКА
-   ============================================ */
-const MONTHS = ['Январь','Февраль','Март','Апрель','Май','Июнь','Июль','Август','Сентябрь','Октябрь','Ноябрь','Декабрь'];
-let currentDate = new Date();
-let selectedDate = new Date();
-let currentMood = null;
-let currentAttachments = [];
+(function () {
+  'use strict';
 
-function getEntries() {
-  return JSON.parse(localStorage.getItem('journalEntries') || '{}');
-}
-function saveEntries(entries) {
-  localStorage.setItem('journalEntries', JSON.stringify(entries));
-}
-function dateKey(d) {
-  return `${d.getFullYear()}-${String(d.getMonth()+1).padStart(2,'0')}-${String(d.getDate()).padStart(2,'0')}`;
-}
+  /* ─── CONFIG ─── */
+  const OR_KEY   = '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';
+  const OR_URL   = 'https://openrouter.ai/api/v1/chat/completions';
+  const OR_MODEL = 'anthropic/claude-3.5-sonnet';
 
-function renderCalendar() {
-  const year = currentDate.getFullYear();
-  const month = currentDate.getMonth();
-  document.getElementById('monthLabel').textContent = `${MONTHS[month]} ${year}`;
-  const grid = document.getElementById('daysGrid');
-  grid.innerHTML = '';
-  const firstDay = new Date(year, month, 1);
-  const lastDay = new Date(year, month+1, 0);
-  const startOffset = (firstDay.getDay() + 6) % 7;
-  const entries = getEntries();
-  const today = new Date();
+  /* ─── UTILS ─── */
+  const $ = s => document.querySelector(s);
+  const $$ = s => document.querySelectorAll(s);
+  const esc = s => String(s).replace(/[&<>"']/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#039;'}[c]));
+  const todayISO = () => {
+    const d = new Date();
+    return `${d.getFullYear()}-${String(d.getMonth()+1).padStart(2,'0')}-${String(d.getDate()).padStart(2,'0')}`;
+  };
+  const fmtLong  = ds => new Date(ds+'T00:00:00').toLocaleDateString('ru-RU',{day:'numeric',month:'long',year:'numeric'});
+  const fmtShort = ds => new Date(ds+'T00:00:00').toLocaleDateString('ru-RU',{day:'numeric',month:'long'});
+  const fmtTime  = ts => new Date(ts).toLocaleTimeString('ru-RU',{hour:'2-digit',minute:'2-digit'});
 
-  for (let i = 0; i < startOffset; i++) {
-    const empty = document.createElement('div');
-    empty.className = 'day';
-    empty.style.visibility = 'hidden';
-    grid.appendChild(empty);
+  let toastTimer = null;
+  function showToast(msg, type='') {
+    const el = $('#toast');
+    el.textContent = msg;
+    el.className = 'toast' + (type ? ' toast--'+type : '');
+    el.classList.add('show');
+    clearTimeout(toastTimer);
+    toastTimer = setTimeout(() => el.classList.remove('show'), 2800);
   }
-  for (let d = 1; d <= lastDay.getDate(); d++) {
-    const dayEl = document.createElement('div');
-    dayEl.className = 'day';
-    dayEl.textContent = d;
-    const thisDate = new Date(year, month, d);
-    if (dateKey(thisDate) === dateKey(today)) dayEl.classList.add('today');
-    if (dateKey(thisDate) === dateKey(selectedDate)) dayEl.classList.add('selected');
-    if (entries[dateKey(thisDate)]) dayEl.classList.add('has-entry');
-    dayEl.onclick = () => {
-      selectedDate = thisDate;
-      renderCalendar();
-      loadEntry();
-    };
-    grid.appendChild(dayEl);
-  }
-}
 
-function loadEntry() {
-  const key = dateKey(selectedDate);
-  const entries = getEntries();
-  const entry = entries[key];
-  document.getElementById('entryTitle').textContent = `✍️ Запись на ${selectedDate.toLocaleDateString('ru-RU')}`;
-  document.getElementById('entryText').value = entry ? entry.text : '';
-  currentMood = entry ? entry.mood : null;
-  currentAttachments = entry ? (entry.attachments || []) : [];
-  document.querySelectorAll('.mood-btn').forEach(b => {
-    b.classList.toggle('selected', b.dataset.mood === currentMood);
-  });
-  renderAttachments();
-  renderEntriesList();
-}
+  /* ─── STORAGE ─── */
+  const NOTES_KEY = 'ld_notes';
+  const AI_KEY    = 'lifeDashboard_ai_memory';
+  const defAIMem  = () => ({ conversations:[], userProfile:'', plans:'', lastProactiveDate:'', hasUnread:false });
 
-function renderAttachments() {
-  const preview = document.getElementById('attachmentsPreview');
-  preview.innerHTML = '';
-  currentAttachments.forEach((att, idx) => {
-    const div = document.createElement('div');
-    div.style.cssText = 'display:inline-block; margin:5px; position:relative;';
-    if (att.type === 'image') {
-      div.innerHTML = `<img src="${att.data}" style="max-width:100px; max-height:100px; border-radius:8px;">
-        <button onclick="removeAttachment(${idx})" style="position:absolute; top:-5px; right:-5px; background:#ff4757; color:white; border:none; border-radius:50%; width:22px; height:22px; cursor:pointer;">✕</button>`;
-    } else {
-      div.innerHTML = `<div style="background:#f0f2f7; padding:10px; border-radius:8px;">🎤 Аудио
-        <button onclick="removeAttachment(${idx})" style="margin-left:10px; background:#ff4757; color:white; border:none; border-radius:50%; width:22px; height:22px; cursor:pointer;">✕</button></div>`;
+  const loadNotes = () => { try { return JSON.parse(localStorage.getItem(NOTES_KEY)) || {notes:[]}; } catch { return {notes:[]}; } };
+  const loadAIMem = () => { try { return JSON.parse(localStorage.getItem(AI_KEY)) || defAIMem(); } catch { return defAIMem(); } };
+  const saveNotes = data => {
+    try { localStorage.setItem(NOTES_KEY, JSON.stringify(data)); return true; }
+    catch(e) { if(e.name==='QuotaExceededError') alert('⚠️ Хранилище заполнено.'); return false; }
+  };
+  const saveAIMem = mem => {
+    try { localStorage.setItem(AI_KEY, JSON.stringify(mem)); }
+    catch(e) {
+      if(e.name==='QuotaExceededError') {
+        mem.conversations = mem.conversations.slice(-20);
+        try { localStorage.setItem(AI_KEY, JSON.stringify(mem)); } catch {}
+      }
     }
-    preview.appendChild(div);
-  });
-}
-
-window.removeAttachment = function(idx) {
-  currentAttachments.splice(idx, 1);
-  renderAttachments();
-};
-
-function renderEntriesList() {
-  const list = document.getElementById('entriesList');
-  const entries = getEntries();
-  const sorted = Object.keys(entries).sort().reverse();
-  if (sorted.length === 0) {
-    list.innerHTML = '<p style="color:#888; text-align:center; padding:20px;">Записей пока нет. Нажмите на дату в календаре!</p>';
-    return;
-  }
-  list.innerHTML = '<h3 style="margin:20px 0 10px; color:#667eea;">📚 Прошлые записи</h3>';
-  sorted.slice(0, 10).forEach(key => {
-    const e = entries[key];
-    const div = document.createElement('div');
-    div.className = 'entry-item';
-    div.innerHTML = `<div class="meta">${e.mood || ''} ${new Date(key).toLocaleDateString('ru-RU', {day:'numeric', month:'long', year:'numeric'})}</div>
-      <div class="text">${escapeHtml(e.text || '').substring(0, 200)}${(e.text||'').length > 200 ? '...' : ''}</div>`;
-    list.appendChild(div);
-  });
-}
-
-function escapeHtml(s) {
-  return s.replace(/[&<>"']/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
-}
-
-document.getElementById('prevMonth').onclick = () => {
-  currentDate.setMonth(currentDate.getMonth() - 1);
-  renderCalendar();
-};
-document.getElementById('nextMonth').onclick = () => {
-  currentDate.setMonth(currentDate.getMonth() + 1);
-  renderCalendar();
-};
-document.querySelectorAll('.mood-btn').forEach(btn => {
-  btn.onclick = () => {
-    currentMood = btn.dataset.mood;
-    document.querySelectorAll('.mood-btn').forEach(b => b.classList.remove('selected'));
-    btn.classList.add('selected');
   };
-});
-document.getElementById('photoInput').onchange = e => handleFile(e.target.files[0], 'image');
-document.getElementById('voiceInput').onchange = e => handleFile(e.target.files[0], 'audio');
 
-function handleFile(file, type) {
-  if (!file) return;
-  const reader = new FileReader();
-  reader.onload = ev => {
-    currentAttachments.push({ type, data: ev.target.result, name: file.name });
-    renderAttachments();
-  };
-  reader.readAsDataURL(file);
-}
+  /* ─── JOURNAL STATE ─── */
+  let notes      = loadNotes().notes;
+  let viewDate   = new Date();
+  let selDate    = null;
+  let curMood    = '';
+  let curTags    = [];
+  let pendMedia  = [];
+  let recorder   = null;
+  let audioChunks= [];
+  let isRec      = false;
+  let searchQuery= '';
+  let aiLoading  = false;
 
-document.getElementById('saveEntry').onclick = () => {
-  const text = document.getElementById('entryText').value.trim();
-  if (!text && !currentMood && currentAttachments.length === 0) {
-    alert('Добавьте хотя бы текст, настроение или вложение');
-    return;
-  }
-  const entries = getEntries();
-  const key = dateKey(selectedDate);
-  entries[key] = {
-    text,
-    mood: currentMood,
-    attachments: currentAttachments,
-    timestamp: Date.now()
-  };
-  saveEntries(entries);
-  // Передаём запись ИИ для анализа
-  AIAnalyzer.processJournalEntry(key, entries[key]);
-  renderCalendar();
-  renderEntriesList();
-  alert('✅ Запись сохранена!');
-};
+  /* ─── HEADER ─── */
+  $('#headerDate').textContent = new Date().toLocaleDateString('ru-RU',{weekday:'long',day:'numeric',month:'long'});
 
-/* ============================================
-   ИИ-АНАЛИЗАТОР / НАСТАВНИК
-   ============================================ */
-const AIAnalyzer = {
-  memory: null,
-  chatHistory: [],
-
-  init() {
-    this.memory = JSON.parse(localStorage.getItem('aiMemory') || 'null') || {
-      topics: {},              // { "тема": { mentions: N, lastMention: date, context: [...] } }
-      people: {},              // упоминаемые люди
-      plans: [],               // планы и цели пользователя
-      healthIssues: [],        // проблемы со здоровьем
-      emotionalPatterns: [],   // паттерны настроения
-      keyFacts: [],            // важные факты о жизни
-      lastAnalysis: null
+  /* ═══════════════════════════════
+     JOURNAL FUNCTIONS
+  ═══════════════════════════════ */
+  function compressImg(file, cb) {
+    const r = new FileReader();
+    r.onload = e => {
+      const img = new Image();
+      img.onload = () => {
+        const canvas = document.createElement('canvas');
+        const MAX=600, sc=Math.min(1, MAX/img.width, MAX/img.height);
+        canvas.width = Math.round(img.width*sc);
+        canvas.height = Math.round(img.height*sc);
+        canvas.getContext('2d').drawImage(img, 0, 0, canvas.width, canvas.height);
+        cb(canvas.toDataURL('image/jpeg', 0.68));
+      };
+      img.src = e.target.result;
     };
-    this.chatHistory = JSON.parse(localStorage.getItem('aiChatHistory') || '[]');
-    this.renderChat();
-    this.checkProactiveMessages();
-    // Периодическая проверка новых данных
-    setInterval(() => this.checkProactiveMessages(), 60000);
-  },
+    r.readAsDataURL(file);
+  }
 
-  save() {
-    localStorage.setItem('aiMemory', JSON.stringify(this.memory));
-    localStorage.setItem('aiChatHistory', JSON.stringify(this.chatHistory));
-  },
-
-  // === Анализ записи дневника ===
-  processJournalEntry(dateKey, entry) {
-    this.analyzeText(entry.text || '', dateKey);
-    if (entry.mood) {
-      this.memory.emotionalPatterns.push({
-        date: dateKey,
-        mood: entry.mood,
-        timestamp: Date.now()
-      });
-      if (this.memory.emotionalPatterns.length > 100) this.memory.emotionalPatterns.shift();
+  /* Streak calculation */
+  function calcStreak() {
+    if(!notes.length) return 0;
+    const dates = notes.map(n => n.date).sort().reverse();
+    let streak = 0, cursor = new Date();
+    cursor.setHours(0,0,0,0);
+    for(const ds of dates) {
+      const d = new Date(ds+'T00:00:00');
+      const diff = Math.round((cursor-d)/86400000);
+      if(diff === 0) { streak++; cursor.setDate(cursor.getDate()-1); }
+      else if(diff === 1) { /* skip today if first check */ cursor = d; cursor.setDate(cursor.getDate()-1); }
+      else break;
     }
-    this.save();
-  },
+    return streak;
+  }
 
-  // === Анализ текста сообщения/записи ===
-  analyzeText(text, contextDate) {
-    if (!text) return;
-    const lower = text.toLowerCase();
+  /* Dominant mood */
+  function dominantMood() {
+    const recent = notes.slice(-7).filter(n=>n.mood);
+    if(!recent.length) return '—';
+    const freq={};
+    recent.forEach(n=>{ freq[n.mood]=(freq[n.mood]||0)+1; });
+    return Object.entries(freq).sort((a,b)=>b[1]-a[1])[0][0];
+  }
 
-    // Извлечение тем
-    const topicKeywords = {
-      'работа': ['работ','коллег','начальник','офис','проект','задач','дедлайн','увольн'],
-      'учёба': ['учёб','учеб','экзамен','зачёт','универ','школ','пары','курс'],
-      'отношения': ['отношен','партн','муж','жен','парен','девуш','люб','расста','ссор'],
-      'родители': ['мама','пап','родител','отец','матер','семь'],
-      'друзья': ['друг','подруг','друзья','общени'],
-      'здоровье': ['болит','болезн','врач','лечен','симптом','температур','давлен'],
-      'сон': ['сон','спал','бессонниц','не выспал','устал'],
-      'спорт': ['спорт','трениров','фитнес','бег','зал'],
-      'питание': ['еда','питан','диет','вес','похуд'],
-      'финансы': ['деньг','зарплат','долг','кредит','покуп','трат'],
-      'хобби': ['хобби','увлеч','книг','фильм','игр','музык'],
-      'путешествия': ['путешеств','поезд','отпуск','отдых'],
-      'саморазвитие': ['цел','план','развит','мечт','хочу стать'],
-      'тревога': ['тревог','страх','паник','волну','беспоко'],
-      'одиночество': ['одинок','никому','один','изолир'],
-      'волосы': ['волос','выпад','лыс','шампун'],
-      'кожа': ['кожа','прыщ','акне','высыпан']
-    };
+  /* Update stats row */
+  function updateStats() {
+    $('#statTotal').textContent = notes.length;
+    $('#statStreak').textContent = calcStreak()+'🔥';
+    $('#statMood').textContent = dominantMood();
+  }
 
-    const foundTopics = [];
-    for (const [topic, keywords] of Object.entries(topicKeywords)) {
-      if (keywords.some(k => lower.includes(k))) {
-        foundTopics.push(topic);
-        if (!this.memory.topics[topic]) {
-          this.memory.topics[topic] = { mentions: 0, lastMention: null, contexts: [] };
+  /* Render calendar */
+  function renderCalendar() {
+    const grid = $('#calGrid'), lbl = $('#calMonth');
+    if(!grid || !lbl) return;
+    const y = viewDate.getFullYear(), m = viewDate.getMonth();
+    lbl.textContent = new Intl.DateTimeFormat('ru-RU',{month:'long',year:'numeric'}).format(viewDate);
+    const fdow = (new Date(y,m,1).getDay()+6)%7;
+    const dmax = new Date(y,m+1,0).getDate();
+    const today = todayISO();
+    grid.innerHTML = '';
+
+    for(let i=0;i<fdow;i++) {
+      const el=document.createElement('div'); el.className='cal-cell empty'; grid.appendChild(el);
+    }
+    for(let d=1;d<=dmax;d++) {
+      const ds = `${y}-${String(m+1).padStart(2,'0')}-${String(d).padStart(2,'0')}`;
+      const note = notes.find(n=>n.date===ds);
+      const el = document.createElement('div');
+      el.className = 'cal-cell' + (ds===today?' today':'') + (note?' has-note':'');
+
+      let inner = `<span class="cal-cell__num">${d}</span>`;
+      if(note) {
+        if(note.mood) inner += `<span class="cal-cell__mood">${note.mood}</span>`;
+        if(note.media && note.media.length) {
+          const m0 = note.media[0];
+          if(m0.type==='image') inner = `<div class="cal-cell__bg"><img src="${m0.src}" alt=""></div>` + inner;
+          else if(m0.type==='video') inner += `<span class="cal-cell__icon">🎥</span>`;
+          else inner += `<span class="cal-cell__icon">🎤</span>`;
         }
-        this.memory.topics[topic].mentions++;
-        this.memory.topics[topic].lastMention = contextDate || new Date().toISOString().slice(0,10);
-        this.memory.topics[topic].contexts.push({
-          date: contextDate,
-          snippet: text.substring(0, 150)
-        });
-        if (this.memory.topics[topic].contexts.length > 20) this.memory.topics[topic].contexts.shift();
+        inner += `<div class="cal-cell__dot"></div>`;
       }
+      el.innerHTML = inner;
+      el.addEventListener('click', () => openEditor(ds));
+      grid.appendChild(el);
     }
 
-    // Извлечение людей
-    const peoplePatterns = /\b([А-ЯЁ][а-яё]+)\b/g;
-    let match;
-    while ((match = peoplePatterns.exec(text)) !== null) {
-      const name = match[1];
-      if (['Я','Но','Это','Так','Нет','Да','Он','Она','Они','Мы','Ты','Вот','Как','Что','Кто','Где','Когда'].includes(name)) continue;
-      if (!this.memory.people[name]) this.memory.people[name] = { mentions: 0, contexts: [] };
-      this.memory.people[name].mentions++;
-      this.memory.people[name].contexts.push({ date: contextDate, snippet: text.substring(0, 100) });
-      if (this.memory.people[name].contexts.length > 10) this.memory.people[name].contexts.shift();
+    renderMoodStrip();
+  }
+
+  /* Render mood strip (last 7 days) */
+  function renderMoodStrip() {
+    const strip = $('#moodStrip');
+    if(!strip) return;
+    const moods = [];
+    for(let i=6;i>=0;i--) {
+      const d = new Date(); d.setDate(d.getDate()-i);
+      const ds = `${d.getFullYear()}-${String(d.getMonth()+1).padStart(2,'0')}-${String(d.getDate()).padStart(2,'0')}`;
+      const note = notes.find(n=>n.date===ds);
+      if(note?.mood) moods.push({ds, mood:note.mood});
+    }
+    if(!moods.length) { strip.innerHTML=''; strip.style.display='none'; return; }
+    strip.style.display='flex';
+    strip.innerHTML = '<span style="font-size:11px;color:var(--text-muted);margin-right:4px;">7 дней:</span>' +
+      moods.map(m => `<span class="mood-chip">${m.mood}</span>`).join('');
+  }
+
+  /* Render notes list */
+  function renderNotesList() {
+    const list = $('#notesList'), empty = $('#notesEmpty'), countEl = $('#notesCount');
+    if(!list) return;
+    list.innerHTML = '';
+
+    let filtered = [...notes].sort((a,b)=>new Date(b.date)-new Date(a.date));
+    if(searchQuery) {
+      const q = searchQuery.toLowerCase();
+      filtered = filtered.filter(n =>
+        (n.text && n.text.toLowerCase().includes(q)) ||
+        (n.date && n.date.includes(q)) ||
+        (n.tags && n.tags.some(t=>t.includes(q))) ||
+        (n.mood && n.mood.includes(q))
+      );
     }
 
-    // Планы и цели
-    const planPatterns = /(?:хочу|планирую|намерен|буду|мечтаю|цель|надо|нужно)\s+([^.,!?]+)/gi;
-    let pm;
-    while ((pm = planPatterns.exec(text)) !== null) {
-      const plan = pm[1].trim();
-      if (plan.length > 5 && plan.length < 200) {
-        this.memory.plans.push({
-          text: plan,
-          date: contextDate || new Date().toISOString().slice(0,10),
-          timestamp: Date.now()
-        });
-        if (this.memory.plans.length > 50) this.memory.plans.shift();
-      }
-    }
+    if(countEl) countEl.textContent = filtered.length > 0 ? `(${filtered.length})` : '';
 
-    // Проблемы со здоровьем
-    const healthKeywords = ['болит','голов','живот','спин','горло','кашель','температур','давлен','аллерг','выпаден','кожа','сыпь','тошн'];
-    if (healthKeywords.some(k => lower.includes(k))) {
-      this.memory.healthIssues.push({
-        text: text.substring(0, 200),
-        date: contextDate || new Date().toISOString().slice(0,10),
-        timestamp: Date.now()
-      });
-      if (this.memory.healthIssues.length > 50) this.memory.healthIssues.shift();
-    }
-
-    return foundTopics;
-  },
-
-  // === Получение данных из других разделов ===
-  getExternalData() {
-    const data = { tasks: null, habits: null, health: null, finance: null };
-    try {
-      data.tasks = JSON.parse(localStorage.getItem('tasks') || 'null');
-      data.habits = JSON.parse(localStorage.getItem('habits') || 'null');
-      data.health = JSON.parse(localStorage.getItem('health') || 'null');
-      data.finance = JSON.parse(localStorage.getItem('finance') || 'null');
-    } catch(e) {}
-    return data;
-  },
-
-  // === Поиск скрытых связей ===
-  findHiddenConnections() {
-    const connections = [];
-    const topics = this.memory.topics;
-    const patterns = this.memory.emotionalPatterns;
-
-    // Связь: тема + плохое настроение
-    const negativeMoods = ['😢','😡','😴'];
-    const badDays = new Set(patterns.filter(p => negativeMoods.includes(p.mood)).map(p => p.date));
-
-    for (const [topic, info] of Object.entries(topics)) {
-      const topicDays = new Set(info.contexts.map(c => c.date));
-      const overlap = [...topicDays].filter(d => badDays.has(d));
-      if (overlap.length >= 2) {
-        connections.push({
-          type: 'mood-correlation',
-          topic,
-          strength: overlap.length,
-          message: `Замечаю связь: в дни, когда ты упоминаешь "${topic}", настроение часто хуже`
-        });
-      }
-    }
-
-    // Связь: здоровье + эмоции
-    if (this.memory.healthIssues.length > 0 && patterns.length > 5) {
-      const healthDays = new Set(this.memory.healthIssues.map(h => h.date));
-      const healthBadOverlap = [...healthDays].filter(d => badDays.has(d));
-      if (healthBadOverlap.length >= 2) {
-        connections.push({
-          type: 'health-mood',
-          strength: healthBadOverlap.length,
-          message: 'Проблемы со здоровьем часто совпадают с плохим настроением'
-        });
-      }
-    }
-
-    return connections;
-  },
-
-  // === Генерация ответа ===
-  generateResponse(userMessage, attachments = []) {
-    const lower = userMessage.toLowerCase();
-    this.analyzeText(userMessage, new Date().toISOString().slice(0,10));
-
-    // Контекст: данные из других разделов
-    const external = this.getExternalData();
-    const connections = this.findHiddenConnections();
-
-    // Определение типа сообщения
-    const isGreeting = /^(привет|здравствуй|хай|hello|hi)\b/i.test(userMessage);
-    const isQuestion = /\?$/.test(userMessage.trim());
-    const isComplaint = /(плохо|устал|надоел|бесит|ненавижу|больно|грустно|тревог|страш)/i.test(userMessage);
-    const isHealth = /(болит|здоров|врач|симптом|анализ|давлен|температур|кожа|волос)/i.test(userMessage);
-    const isRelationship = /(родител|мама|пап|муж|парен|друг|подруг|ссор|отношен)/i.test(userMessage);
-    const isWork = /(работ|коллег|начальн|офис|дедлайн|увольн)/i.test(userMessage);
-    const isAchievement = /(получил|удалось|сделал|рад|счастлив|получилось|ура)/i.test(userMessage);
-
-    let response = '';
-    let followUp = '';
-
-    // === Приветствие ===
-    if (isGreeting) {
-      response = this.generateGreeting();
-    }
-    // === Жалоба / негатив ===
-    else if (isComplaint) {
-      response = this.generateEmpatheticResponse(userMessage);
-    }
-    // === Здоровье ===
-    else if (isHealth) {
-      response = this.generateHealthResponse(userMessage);
-    }
-    // === Отношения ===
-    else if (isRelationship) {
-      response = this.generateRelationshipResponse(userMessage);
-    }
-    // === Работа ===
-    else if (isWork) {
-      response = this.generateWorkResponse(userMessage);
-    }
-    // === Достижение ===
-    else if (isAchievement) {
-      response = this.generateAchievementResponse(userMessage);
-    }
-    // === Вопрос ===
-    else if (isQuestion) {
-      response = this.generateQuestionResponse(userMessage);
-    }
-    // === По умолчанию ===
-    else {
-      response = this.generateDefaultResponse(userMessage);
-    }
-
-    // Добавляем уточняющий вопрос
-    followUp = this.generateFollowUp(userMessage, { isComplaint, isHealth, isRelationship, isWork });
-    if (followUp) response += '\n\n' + followUp;
-
-    // Добавляем упоминание связи, если уместно (но только если тема отличается от текущей!)
-    if (connections.length > 0 && Math.random() > 0.7 && !this.isTopicInMessage(connections[0].topic, userMessage)) {
-      response += '\n\n💡 ' + connections[0].message;
-    }
-
-    return response;
-  },
-
-  isTopicInMessage(topic, message) {
-    const topicWords = {
-      'работа': ['работ','коллег','офис'],
-      'здоровье': ['здоров','болит','врач'],
-      'отношения': ['отношен','партн','ссор'],
-      'родители': ['родител','мама','пап'],
-      'сон': ['сон','спал'],
-      'волосы': ['волос','выпад']
-    };
-    const words = topicWords[topic] || [topic];
-    return words.some(w => message.toLowerCase().includes(w));
-  },
-
-  generateGreeting() {
-    const hour = new Date().getHours();
-    let greeting = hour < 12 ? 'Доброе утро! ☀️' : hour < 18 ? 'Добрый день! 🌤' : 'Добрый вечер! 🌙';
-
-    // Проверка планов
-    const recentPlans = this.memory.plans.slice(-5);
-    if (recentPlans.length > 0) {
-      const plan = recentPlans[recentPlans.length - 1];
-      greeting += `\n\nПомнишь, ты говорил(а): "${plan.text}"? Как успехи с этим?`;
-    } else {
-      greeting += '\n\nКак твои дела? О чём хочешь поговорить?';
-    }
-    return greeting;
-  },
-
-  generateEmpatheticResponse(msg) {
-    const responses = [
-      'Я слышу тебя. Это действительно непросто. Расскажи подробнее — что именно сейчас давит больше всего?',
-      'Понимаю, что сейчас тяжело. Важно не держать это в себе. Давай разберёмся — с чего всё началось?',
-      'Это звучит тяжело. Ты имеешь право так себя чувствовать. Но давай посмотрим рационально — что мы можем изменить прямо сейчас?',
-      'Вижу, что тебе сейчас непросто. Иногда нужно просто выговориться — я здесь. А потом вместе подумаем, что делать дальше.'
-    ];
-    return responses[Math.floor(Math.random() * responses.length)];
-  },
-
-  generateHealthResponse(msg) {
-    const external = this.getExternalData();
-    let response = 'Здоровье — это важно. Расскажи подробнее о симптомах: когда началось, как часто повторяется, что облегчает/ухудшает?';
-
-    if (this.memory.healthIssues.length > 3) {
-      response += '\n\n📊 Замечаю, что это не первый раз. Давай отследим паттерн — может, есть триггер?';
-    }
-    if (external.health) {
-      response += '\n\nЗагляну в твой раздел здоровья — там есть что-то связанное?';
-    }
-    response += '\n\nЕсли симптомы сильные или длительные — не откладывай визит к врачу. Я могу помочь отследить динамику, но диагноз — не моя компетенция.';
-    return response;
-  },
-
-  generateRelationshipResponse(msg) {
-    let response = 'Отношения — сложная тема. Давай разберёмся спокойно. Что именно произошло?';
-
-    // Проверяем, упоминался ли этот человек раньше
-    const people = Object.keys(this.memory.people);
-    if (people.length > 0) {
-      response += '\n\nКстати, о ком речь? Если мы уже обсуждали этого человека — напомни контекст, чтобы я лучше понял(а).';
-    }
-
-    response += '\n\nВажно: я постараюсь быть объективным. Если увижу, что ты тоже contributing в проблему — скажу прямо. Это не чтобы осудить, а чтобы помочь.';
-    return response;
-  },
-
-  generateWorkResponse(msg) {
-    const external = this.getExternalData();
-    let response = 'Рабочие вопросы часто забирают много энергии. Что именно сейчас напрягает?';
-
-    if (external.tasks) {
-      response += '\n\n📋 Загляну в твои задачи — может, дело в перегрузке?';
-    }
-    response += '\n\nДавай подумаем: это разовая ситуация или система? Если система — нужно менять подход, а не терпеть.';
-    return response;
-  },
-
-  generateAchievementResponse(msg) {
-    return 'Это здорово! 🎉 Рад за тебя. Расскажи подробнее — как ты к этому пришёл(шла)? Что помогло? Важно фиксировать такие моменты — они показывают, что ты можешь.';
-  },
-
-  generateQuestionResponse(msg) {
-    return 'Хороший вопрос. Давай подумаем вместе. Что ты сам(а) думаешь об этом? Часто ответ уже внутри — нужно просто его услышать.';
-  },
-
-  generateDefaultResponse(msg) {
-    const responses = [
-      'Понял(а). Расскажи больше — что ты при этом чувствуешь?',
-      'Интересно. А как это на тебя влияет в повседневной жизни?',
-      'Спасибо, что делишься. Что для тебя сейчас самое важное в этом?',
-      'Я тебя слышу. Есть ли что-то конкретное, с чем я могу помочь?'
-    ];
-    return responses[Math.floor(Math.random() * responses.length)];
-  },
-
-  generateFollowUp(msg, flags) {
-    // Не смешиваем темы — уточняем только в рамках текущей
-    if (flags.isComplaint) {
-      const q = ['Как давно это длится?','Что было непосредственно перед этим?','Как ты обычно справляешься с таким?','Есть ли что-то, что немного облегчает?'];
-      return '❓ ' + q[Math.floor(Math.random() * q.length)];
-    }
-    if (flags.isHealth) {
-      return '❓ Когда это началось впервые? Были ли похожие эпизоды раньше?';
-    }
-    if (flags.isRelationship) {
-      return '❓ Как ты думаешь, что чувствует другая сторона?';
-    }
-    if (flags.isWork) {
-      return '❓ Это разовая ситуация или повторяется?';
-    }
-    // Общий уточняющий вопрос
-    const general = [
-      'Расскажи подробнее?',
-      'Что ты при этом чувствуешь?',
-      'Как это связано с тем, что было раньше?',
-      'Есть ли что-то, что ты хочешь изменить?'
-    ];
-    return '❓ ' + general[Math.floor(Math.random() * general.length)];
-  },
-
-  // === Проактивные сообщения ===
-  checkProactiveMessages() {
-    const patterns = this.memory.emotionalPatterns;
-    const last24h = Date.now() - 24*60*60*1000;
-    const recent = patterns.filter(p => p.timestamp > last24h);
-
-    // Если 3+ плохих настроений за сутки
-    const badMoods = ['😢','😡'];
-    const badRecent = recent.filter(p => badMoods.includes(p.mood));
-    if (badRecent.length >= 3 && !this.recentProactive('bad-mood', 24*60*60*1000)) {
-      this.sendProactive('bad-mood', 'Замечаю, что сегодня было несколько тяжёлых моментов. Хочешь поговорить об этом? Я рядом. 💙');
-    }
-
-    // Если давно не писал(а), но есть незавершённые планы
-    const lastChat = this.chatHistory.length > 0 ? this.chatHistory[this.chatHistory.length-1].timestamp : 0;
-    const daysSinceChat = (Date.now() - lastChat) / (24*60*60*1000);
-    if (daysSinceChat > 3 && this.memory.plans.length > 0 && !this.recentProactive('plan-check', 3*24*60*60*1000)) {
-      const plan = this.memory.plans[this.memory.plans.length-1];
-      this.sendProactive('plan-check', `Привет! Давно не общались. Помнишь, ты хотел(а): "${plan.text}"? Как успехи?`);
-    }
-
-    // Если проблемы со здоровьем участились
-    const recentHealth = this.memory.healthIssues.filter(h => h.timestamp > last24h);
-    if (recentHealth.length >= 2 && !this.recentProactive('health', 24*60*60*1000)) {
-      this.sendProactive('health', 'Заметил, что сегодня несколько раз упоминались проблемы со здоровьем. Как ты себя чувствуешь?');
-    }
-  },
-
-  recentProactive(type, withinMs) {
-    const last = this.chatHistory.filter(m => m.proactiveType === type).pop();
-    return last && (Date.now() - last.timestamp) < withinMs;
-  },
-
-  sendProactive(type, message) {
-    const msg = {
-      role: 'ai',
-      text: message,
-      timestamp: Date.now(),
-      proactiveType: type
-    };
-    this.chatHistory.push(msg);
-    this.save();
-    this.renderChat();
-    this.updateBadge();
-  },
-
-  // === Обработка пользовательского сообщения ===
-  handleUserMessage(text, attachments = []) {
-    if (!text.trim() && attachments.length === 0) return;
-
-    // Сохраняем сообщение пользователя
-    const userMsg = {
-      role: 'user',
-      text: text,
-      attachments: attachments,
-      timestamp: Date.now()
-    };
-    this.chatHistory.push(userMsg);
-
-    // Анализируем вложения
-    if (attachments.length > 0) {
-      attachments.forEach(att => {
-        if (att.type === 'image') {
-          // Запоминаем факт наличия фото
-          this.memory.keyFacts.push({
-            type: 'photo-shared',
-            date: new Date().toISOString().slice(0,10),
-            timestamp: Date.now()
-          });
-        }
-      });
-    }
-
-    // Генерируем ответ
-    const aiText = this.generateResponse(text, attachments);
-    const aiMsg = {
-      role: 'ai',
-      text: aiText,
-      timestamp: Date.now()
-    };
-    this.chatHistory.push(aiMsg);
-    this.save();
-    this.renderChat();
-  },
-
-  // === Рендер чата ===
-  renderChat() {
-    const container = document.getElementById('aiMessages');
-    if (!container) return;
-    container.innerHTML = '';
-
-    if (this.chatHistory.length === 0) {
-      container.innerHTML = '<div style="text-align:center; padding:30px; color:#888; font-size:14px;">✦ Ваш наставник здесь. Пишите о чём угодно — делах, самочувствии, мыслях.</div>';
+    if(!filtered.length) {
+      empty.style.display='block';
+      empty.querySelector('.empty-state__title').textContent = searchQuery
+        ? 'Ничего не найдено' : 'Записей пока нет';
       return;
     }
+    empty.style.display='none';
 
-    this.chatHistory.forEach(msg => {
-      const div = document.createElement('div');
-      div.className = `ai-msg ${msg.role === 'user' ? 'user' : 'ai'}`;
-      const time = new Date(msg.timestamp).toLocaleTimeString('ru-RU', {hour:'2-digit', minute:'2-digit'});
-      let content = `<div class="bubble">${escapeHtml(msg.text || '')}`;
-      if (msg.attachments && msg.attachments.length > 0) {
-        msg.attachments.forEach(att => {
-          if (att.type === 'image') content += `<br><img src="${att.data}">`;
-          else if (att.type === 'audio') content += `<br>🎤 Аудиосообщение`;
-        });
+    filtered.forEach(note => {
+      const card = document.createElement('div');
+      card.className = 'note-card';
+
+      let mediaHtml = '';
+      if(note.media && note.media.length) {
+        mediaHtml = '<div class="note-card__media">' + note.media.map(m => {
+          if(m.type==='image') return `<div class="note-media-item"><img src="${m.src}" loading="lazy"></div>`;
+          if(m.type==='video') return `<div class="note-media-item"><video controls src="${m.src}"></video></div>`;
+          return `<div class="note-media-item"><audio controls src="${m.src}"></audio></div>`;
+        }).join('') + '</div>';
       }
-      content += `</div><div class="time">${time}</div>`;
-      div.innerHTML = `<div class="avatar">${msg.role === 'user' ? '👤' : '🤖'}</div>${content}`;
-      container.appendChild(div);
+
+      let tagsHtml = '';
+      if(note.tags && note.tags.length) {
+        tagsHtml = '<div style="display:flex;flex-wrap:wrap;gap:5px;margin-top:8px;">' +
+          note.tags.map(t => `<span class="badge badge--muted">${esc(t)}</span>`).join('') + '</div>';
+      }
+
+      const longText = note.text && note.text.length > 250;
+      const displayText = note.text ? esc(note.text) : '';
+
+      card.innerHTML = `
+        <div class="note-card__header">
+          <span class="note-card__date">${fmtLong(note.date)}</span>
+          <span class="note-card__mood">${note.mood||''}</span>
+        </div>
+        ${note.text ? `<div class="note-card__text" id="nt-${note.date}">${displayText}</div>` : ''}
+        ${longText ? `<button class="note-card__expand" data-date="${note.date}">Читать полностью ▾</button>` : ''}
+        ${tagsHtml}
+        ${mediaHtml}
+        <div class="note-card__footer">
+          <button class="note-edit-btn" data-edit="${note.date}">✏️ Редактировать</button>
+          <button class="note-del-btn" data-date="${note.date}">🗑 Удалить</button>
+        </div>`;
+      list.appendChild(card);
     });
-    container.scrollTop = container.scrollHeight;
-  },
+  }
 
-  updateBadge() {
-    const chatOpen = document.getElementById('aiChat').classList.contains('open');
-    if (chatOpen) {
-      document.getElementById('aiBadge').style.display = 'none';
+  /* Open editor */
+  function openEditor(ds) {
+    selDate = ds;
+    const ex = notes.find(n=>n.date===ds);
+    $('#editorDate').textContent = fmtShort(ds);
+    $('#noteText').value = ex ? ex.text : '';
+    curMood = ex ? (ex.mood||'') : '';
+    curTags = ex ? (ex.tags||[]) : [];
+    pendMedia = ex && ex.media ? [...ex.media] : [];
+
+    $$('.mood-btn').forEach(b => b.classList.toggle('selected', b.dataset.mood===curMood));
+    $$('.tag-chip').forEach(b => b.classList.toggle('active', curTags.includes(b.dataset.tag)));
+    renderPreview();
+
+    $('#editorOverlay').classList.add('active');
+    $('#editorPanel').classList.add('open');
+    setTimeout(() => $('#noteText').focus(), 180);
+  }
+
+  function closeEditor() {
+    $('#editorOverlay').classList.remove('active');
+    $('#editorPanel').classList.remove('open');
+    selDate=null; pendMedia=[]; curTags=[]; curMood='';
+    renderPreview();
+  }
+
+  function renderPreview() {
+    const prev = $('#mediaPreview');
+    if(!prev) return;
+    prev.innerHTML = '';
+    pendMedia.forEach((m,i) => {
+      const div = document.createElement('div');
+      div.className = 'preview-item';
+      const c = m.type==='image'
+        ? `<img src="${m.src}" alt="">`
+        : m.type==='video'
+        ? `<video src="${m.src}"></video>`
+        : `<audio src="${m.src}"></audio>`;
+      div.innerHTML = c + `<button class="remove-preview" data-idx="${i}">✕</button>`;
+      prev.appendChild(div);
+    });
+  }
+
+  function saveNote() {
+    if(!selDate) return;
+    const text = ($('#noteText').value||'').trim();
+    if(!text && !curMood && !pendMedia.length && !curTags.length) { closeEditor(); return; }
+
+    const idx = notes.findIndex(n=>n.date===selDate);
+    const newNote = { date:selDate, mood:curMood, text, tags:curTags, media:[...pendMedia], updatedAt:Date.now() };
+    if(idx!==-1) notes[idx]=newNote; else notes.push(newNote);
+
+    if(saveNotes({notes})) {
+      renderCalendar();
+      renderNotesList();
+      updateStats();
+      closeEditor();
+      showToast('Запись сохранена', 'success');
+      // Signal AI about new entry
+      const mem = loadAIMem();
+      mem.hasUnread = true;
+      saveAIMem(mem);
+      updateFabDot();
+    }
+  }
+
+  /* Delete note */
+  function deleteNote(date) {
+    if(!confirm('Удалить эту запись?')) return;
+    notes = notes.filter(n=>n.date!==date);
+    saveNotes({notes});
+    renderCalendar();
+    renderNotesList();
+    updateStats();
+    showToast('Запись удалена', 'danger');
+  }
+
+  /* ═══════════════════════════════
+     AI: BUILD CONTEXT
+  ═══════════════════════════════ */
+  function buildContext() {
+    const today = todayISO();
+    let c = `📅 ДАТА: ${new Date().toLocaleDateString('ru-RU',{weekday:'long',day:'numeric',month:'long',year:'numeric'})}\n\n`;
+
+    // Journal entries
+    const rec = [...notes].sort((a,b)=>new Date(b.date)-new Date(a.date)).slice(0,14);
+    if(rec.length) {
+      c += `📖 ДНЕВНИК (последние ${rec.length} записей):\n`;
+      rec.forEach(n => {
+        c += `▸ ${n.date}`;
+        if(n.mood) c += ` ${n.mood}`;
+        if(n.tags&&n.tags.length) c += ` [${n.tags.join(', ')}]`;
+        c += `: ${n.text ? n.text.slice(0,200) : '(только медиа)'}`;
+        if(n.media&&n.media.length) c += ` 📎${n.media.map(m=>m.type==='image'?'📷':m.type==='video'?'🎥':'🎤').join('')}`;
+        c += '\n';
+      });
+      c += '\n';
+    }
+
+    // Health: today's metrics
+    try {
+      const h = JSON.parse(localStorage.getItem('lifeDashboard_health'))||{};
+      if(h.date===today) {
+        const waterPct = Math.round((h.water||0)/20);
+        c += `💧 ЗДОРОВЬЕ СЕГОДНЯ:\n`;
+        c += `▸ Вода: ${h.water||0}/2000мл (${waterPct}%)\n`;
+        c += `▸ Сон: ${h.sleep||0}/8ч\n`;
+        c += `▸ Шаги: ${h.steps||0}/10000\n\n`;
+      }
+    } catch {}
+
+    // Weight dynamics
+    try {
+      const wArr = JSON.parse(localStorage.getItem('lifeDashboard_weight'))||[];
+      if(wArr.length) {
+        const rw = [...wArr].sort((a,b)=>new Date(b.date)-new Date(a.date)).slice(0,5);
+        c += `⚖️ ВЕС (последние ${rw.length} записей): `;
+        rw.forEach(w => { c += `${w.date}: ${w.weight}кг${w.waist?' (талия '+w.waist+'см)':''}; `; });
+        if(rw.length>=2) {
+          const delta = rw[0].weight - rw[rw.length-1].weight;
+          c += `\n▸ Изменение: ${delta>0?'+':''}${delta.toFixed(1)}кг`;
+        }
+        c += '\n\n';
+      }
+    } catch {}
+
+    // Workouts
+    try {
+      const wk = JSON.parse(localStorage.getItem('lifeDashboard_workouts'))||[];
+      if(wk.length) {
+        const rk = [...wk].sort((a,b)=>new Date(b.date)-new Date(a.date)).slice(0,7);
+        c += `🏃 ТРЕНИРОВКИ: ` + rk.map(w=>`${w.date} ${w.type} ${w.duration}мин`).join('; ') + '\n\n';
+      }
+    } catch {}
+
+    // Tasks today
+    try {
+      const td = JSON.parse(localStorage.getItem('lifeDashboard_tasks'))||{tasks:[]};
+      const tt = (td.tasks||[]).filter(t=>t.scheduledDate===today);
+      if(tt.length) {
+        const done = tt.filter(t=>t.completed).length;
+        c += `📋 ЗАДАЧИ СЕГОДНЯ (${done}/${tt.length} выполнено):\n`;
+        tt.forEach(t => {
+          c += `▸ [${t.completed?'✓':'○'}] ${t.title}`;
+          if(t.priority==='high') c += ' ❗';
+          if(!t.completed && t.dueDate && t.dueDate<today) c += ' ⚠️просрочено';
+          c += '\n';
+        });
+        c += '\n';
+      }
+      // Overdue
+      const ov = (td.tasks||[]).filter(t=>!t.completed&&t.dueDate&&t.dueDate<today);
+      if(ov.length) {
+        c += `⚠️ ПРОСРОЧЕННЫЕ ЗАДАЧИ (${ov.length}):\n`;
+        ov.slice(0,5).forEach(t=>{ c+=`▸ ${t.title} — просрочено с ${t.dueDate}\n`; });
+        c+='\n';
+      }
+    } catch {}
+
+    // Female cycle
+    try {
+      const fc = JSON.parse(localStorage.getItem('lifeDashboard_female'))||{};
+      if(fc.lastPeriod) {
+        const lp=new Date(fc.lastPeriod), len=fc.cycleLength||28, dur=fc.periodLength||5;
+        const diff=Math.floor((new Date()-lp)/86400000), cd=((diff%len)+len)%len, ov=len-14;
+        let phase='Лютеиновая';
+        if(cd<dur) phase='Менструация';
+        else if(cd<ov-3) phase='Фолликулярная';
+        else if(cd>=ov-3&&cd<ov) phase='Фертильная';
+        else if(cd===ov) phase='Овуляция';
+        c += `🌸 ЦИКЛ: день ${cd+1} из ${len} — ${phase}\n\n`;
+      }
+    } catch {}
+
+    // Analyses
+    try {
+      const an = JSON.parse(localStorage.getItem('lifeDashboard_analyses'))||[];
+      if(an.length) {
+        const ra = [...an].sort((a,b)=>new Date(b.date)-new Date(a.date)).slice(0,4);
+        c += `🧪 АНАЛИЗЫ:\n`;
+        ra.forEach(a => {
+          c += `▸ ${a.date}: ${a.name}\n`;
+          (a.indicators||[]).slice(0,10).forEach(i=>{ c+=`  · ${i.name}: ${i.value} ${i.unit}\n`; });
+        });
+        c += '\n';
+      }
+    } catch {}
+
+    // Upcoming doctors
+    try {
+      const dr = JSON.parse(localStorage.getItem('lifeDashboard_doctors'))||[];
+      const up = dr.filter(d=>new Date(d.visitDate)>=new Date()).sort((a,b)=>new Date(a.visitDate)-new Date(b.visitDate)).slice(0,3);
+      if(up.length) {
+        c += `🩺 ВРАЧИ (предстоящие): ` + up.map(d=>`${d.visitDate} — ${d.specialty}${d.visitTime?' в '+d.visitTime:''}${d.symptoms?' ('+d.symptoms.slice(0,50)+')':''}`).join('; ') + '\n\n';
+      }
+    } catch {}
+
+    // Habits
+    try {
+      const hd = JSON.parse(localStorage.getItem('lifeDashboard_habits'))||{};
+      const hArr = hd.habits || [];
+      if(hArr.length) {
+        const done = hArr.filter(h=>h.completions&&h.completions[today]===true).length;
+        c += `🎯 ПРИВЫЧКИ (${done}/${hArr.length} сегодня): `;
+        c += hArr.map(h=>`${h.emoji||''}${h.name||h.title||'?'}[${h.completions&&h.completions[today]?'✓':'○'}]`).join(', ');
+        c += '\n\n';
+      }
+    } catch {}
+
+    return c;
+  }
+
+  /* ═══════════════════════════════
+     AI: SYSTEM PROMPT
+  ═══════════════════════════════ */
+  function buildSystemPrompt(mem) {
+    const ctx = buildContext();
+    return `Ты — Алиса, персональный наставник, близкий друг и сторонний наблюдатель пользователя этого приложения-дневника. Имеешь доступ ко всем данным приложения: дневнику, здоровью, задачам, привычкам, финансам.
+
+═══ ХАРАКТЕР И СТИЛЬ ═══
+• Близкий друг + честный наставник. НЕ психолог-консультант, не chatbot
+• Живой разговорный язык. Никакого "Я вижу, что...", "Я понимаю ваши чувства", "Отличный вопрос!"
+• Конкретика: не «стоит подумать», а «сделай X, потому что Y»
+• Ответы: 2–4 абзаца. Один точный вопрос часто лучше длинного монолога
+• Не начинай с имени или похвалы
+• Иногда можешь шутить, быть немного дерзкой — живо и по-человечески
+
+═══ ЧТО ТЫ УМЕЕШЬ ═══
+• Видишь СКРЫТЫЕ СВЯЗИ: стресс → плохой сон → раздражительность → срыв привычек — говоришь об этом прямо
+• Помнишь всё из предыдущих разговоров. Возвращаешься к темам: «Кстати, ты говорила про выпадение волос — это продолжается?»
+• НЕ ВСЕГДА встаёшь на сторону пользователя. Если человек очевидно неправ или вредит себе — говоришь мягко, но честно
+• Отслеживаешь динамику: вес, настроение, выполнение задач, привычки. Комментируешь изменения
+• Переключаешься между темами ЕСТЕСТВЕННО — без жёсткой структуры
+• Замечаешь повторяющиеся слова и паттерны в дневнике
+• Задаёшь уточняющие вопросы когда ситуация неясна
+
+═══ ФИЗИЧЕСКОЕ + ЭМОЦИОНАЛЬНОЕ ═══
+Анализируешь оба аспекта в связке. Например: «Три дня плохого сна + стресс на работе + ты не выполняла привычки — это не случайно». Даёшь конкретные наблюдения по анализам и физическому состоянию — НЕ медицинские диагнозы. При тревожных паттернах рекомендуешь врача.
+
+═══ ПАМЯТЬ И ПЛАНЫ ═══
+${mem.plans ? `Известные тебе ПЛАНЫ И ЦЕЛИ пользователя:\n${mem.plans}\n` : ''}
+${mem.userProfile ? `Что ты знаешь об этом человеке:\n${mem.userProfile}\n` : ''}
+
+═══ ПРАВИЛА ═══
+• Только русский язык
+• Ты — Алиса, не ИИ и не языковая модель
+• Фото из дневника анализируешь если они прикреплены
+
+═══ ДАННЫЕ ПРИЛОЖЕНИЯ (актуальные) ═══
+${ctx}`;
+  }
+
+  /* ═══════════════════════════════
+     AI: API CALL (OpenRouter)
+  ═══════════════════════════════ */
+  function sanitizeHistory(convs) {
+    if(!convs.length) return [];
+    const mapped = convs.map(m => ({role:m.role, content:m.textContent||m.content||''}));
+    if(mapped[0].role==='assistant') mapped.unshift({role:'user', content:'начало разговора'});
+    const clean = [mapped[0]];
+    for(let i=1;i<mapped.length;i++) {
+      if(mapped[i].role !== clean[clean.length-1].role) clean.push(mapped[i]);
+    }
+    return clean;
+  }
+
+  async function callAI(messages, system) {
+    const res = await fetch(OR_URL, {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+        'Authorization': 'Bearer ' + OR_KEY,
+        'HTTP-Referer': 'https://life-dashboard.app',
+        'X-Title': 'Life Dashboard — Алиса'
+      },
+      body: JSON.stringify({
+        model: OR_MODEL,
+        max_tokens: 1024,
+        messages: [
+          { role:'system', content:system },
+          ...messages
+        ]
+      })
+    });
+    const data = await res.json();
+    if(!res.ok) throw new Error(data.error?.message || `HTTP ${res.status}`);
+    return data.choices?.[0]?.message?.content || 'Не удалось получить ответ.';
+  }
+
+  /* ═══════════════════════════════
+     AI: PROACTIVE MESSAGE
+  ═══════════════════════════════ */
+  async function generateProactive() {
+    const today = todayISO();
+    const mem = loadAIMem();
+    if(mem.lastProactiveDate === today) return;
+
+    mem.lastProactiveDate = today;
+    saveAIMem(mem);
+
+    setAIStatus('⏳ анализирует данные…', true);
+    setCtxHint('⏳ Алиса изучает твои данные…');
+
+    try {
+      const sys = buildSystemPrompt(mem);
+      const hist = sanitizeHistory(mem.conversations.slice(-8));
+
+      const hasData = notes.length > 0 || !!localStorage.getItem('lifeDashboard_health');
+      const trigger = hasData
+        ? `Это начало нашего общения за ${new Date().toLocaleDateString('ru-RU',{day:'numeric',month:'long'})}. Ты видишь все мои данные. Напиши мне — что замечаешь, о чём хочешь поговорить или спросить? Живо, конкретно, 2–3 предложения.`
+        : `Это наш первый разговор. Представься коротко — кто ты и зачем ты здесь. Максимум 3 предложения.`;
+
+      hist.push({ role:'user', content:trigger });
+      const aiText = await callAI(hist, sys);
+
+      const memNow = loadAIMem();
+      memNow.conversations.push({ role:'assistant', content:aiText, timestamp:Date.now() });
+      if(memNow.conversations.length > 120) memNow.conversations = memNow.conversations.slice(-100);
+      memNow.hasUnread = false;
+      saveAIMem(memNow);
+      renderMessages();
+    } catch(e) {
+      console.error('Proactive error:', e);
+    } finally {
+      setAIStatus('● онлайн', false);
+      setCtxHint('');
+    }
+  }
+
+  /* ═══════════════════════════════
+     AI: SEND MESSAGE
+  ═══════════════════════════════ */
+  async function sendAIMessage(overrideText) {
+    const ta = $('#aiTextarea');
+    const text = overrideText || ta.value.trim();
+    if(!text || aiLoading) return;
+    if(ta && !overrideText) { ta.value=''; ta.style.height=''; }
+
+    aiLoading = true;
+    setAIStatus('⏳ печатает…', true);
+    const sendBtn = $('#aiSendBtn');
+    if(sendBtn) sendBtn.disabled = true;
+    $('#aiQuickChips').style.display = 'none';
+
+    // Save user message
+    const mem = loadAIMem();
+    mem.conversations.push({ role:'user', content:text, textContent:text, timestamp:Date.now() });
+    if(mem.conversations.length > 120) mem.conversations = mem.conversations.slice(-100);
+    saveAIMem(mem);
+    renderMessages();
+    addTyping();
+
+    try {
+      const memNow = loadAIMem();
+      const sys = buildSystemPrompt(memNow);
+      let histForAPI = sanitizeHistory(memNow.conversations.slice(-60));
+
+      // Attach today's images for vision
+      const todayNote = notes.find(n=>n.date===todayISO());
+      const imgs = (todayNote?.media||[]).filter(m=>m.type==='image').map(m=>m.src).slice(0,2);
+      if(imgs.length && histForAPI.length && histForAPI[histForAPI.length-1].role==='user') {
+        const last = histForAPI[histForAPI.length-1];
+        histForAPI[histForAPI.length-1] = {
+          role: 'user',
+          content: [
+            { type:'text', text:last.content },
+            ...imgs.map(src => ({ type:'image_url', image_url:{ url:src } }))
+          ]
+        };
+      }
+
+      const aiText = await callAI(histForAPI, sys);
+
+      removeTyping();
+      const memFinal = loadAIMem();
+      memFinal.conversations.push({ role:'assistant', content:aiText, timestamp:Date.now() });
+      if(memFinal.conversations.length > 120) memFinal.conversations = memFinal.conversations.slice(-100);
+
+      // Auto-extract plans/profile from conversation
+      if(memFinal.conversations.length % 10 === 0) {
+        extractMemory(memFinal);
+      }
+      saveAIMem(memFinal);
+      renderMessages();
+
+    } catch(e) {
+      console.error('AI error:', e);
+      removeTyping();
+      const errText = `Не могу ответить сейчас. Ошибка: ${e.message}. Проверь интернет-соединение.`;
+      const memErr = loadAIMem();
+      memErr.conversations.push({ role:'assistant', content:errText, timestamp:Date.now() });
+      saveAIMem(memErr);
+      renderMessages();
+    } finally {
+      aiLoading = false;
+      setAIStatus('● онлайн', false);
+      if(sendBtn) sendBtn.disabled = false;
+    }
+  }
+
+  /* Auto-extract memory from conversation */
+  async function extractMemory(mem) {
+    try {
+      const recent = mem.conversations.slice(-20).map(m=>`${m.role==='user'?'Пользователь':'Алиса'}: ${m.textContent||m.content||''}`).join('\n');
+      const extractRes = await callAI(
+        [{ role:'user', content:`Из этого диалога выдели: 1) ключевые планы и цели человека, 2) важные факты о нём (здоровье, работа, отношения, привычки). Ответь кратко в формате:\nПЛАНЫ: ...\nПРОФИЛЬ: ...\n\nДиалог:\n${recent}` }],
+        'Ты анализируешь диалог и извлекаешь ключевую информацию о пользователе. Будь кратким.'
+      );
+      if(extractRes.includes('ПЛАНЫ:')) {
+        const plansMatch = extractRes.match(/ПЛАНЫ:\s*(.+?)(?:ПРОФИЛЬ:|$)/s);
+        const profileMatch = extractRes.match(/ПРОФИЛЬ:\s*(.+?)$/s);
+        if(plansMatch) mem.plans = (plansMatch[1]||'').trim().slice(0,500);
+        if(profileMatch) mem.userProfile = (profileMatch[1]||'').trim().slice(0,600);
+        saveAIMem(mem);
+      }
+    } catch {}
+  }
+
+  function sendQuick(text) { sendAIMessage(text); }
+
+  /* ═══════════════════════════════
+     AI: UI HELPERS
+  ═══════════════════════════════ */
+  function setAIStatus(text, loading=false) {
+    const el = $('#aiStatus');
+    if(!el) return;
+    el.textContent = text;
+    el.className = 'ai-status' + (loading ? ' typing' : '');
+  }
+  function setCtxHint(text) {
+    const el = $('#aiCtxHint');
+    if(el) el.innerHTML = text ? `<span class="ai-ctx-chip">⚡ ${text}</span>` : '';
+  }
+  function updateFabDot() {
+    const dot = $('#aiFabDot');
+    if(!dot) return;
+    const mem = loadAIMem();
+    dot.classList.toggle('on', !!mem.hasUnread);
+  }
+  function scrollBottom() {
+    const msgs = $('#aiMessages');
+    if(msgs) msgs.scrollTop = msgs.scrollHeight;
+  }
+
+  function fmtAIText(raw) {
+    return esc(raw)
+      .replace(/\*\*(.*?)\*\*/g, '<strong>$1</strong>')
+      .replace(/\*(.*?)\*/g, '<em>$1</em>')
+      .replace(/`(.*?)`/g, '<code style="background:rgba(124,58,237,.2);padding:1px 5px;border-radius:4px;font-size:.9em;">$1</code>')
+      .replace(/\n/g, '<br>');
+  }
+
+  function renderMessages() {
+    const msgs = $('#aiMessages');
+    if(!msgs) return;
+    const mem = loadAIMem();
+    const all = mem.conversations || [];
+
+    if(!all.length) {
+      msgs.innerHTML = `
+        <div class="ai-welcome">
+          <div class="ai-welcome__avatar">✨</div>
+          <div class="ai-welcome__name">Я — Алиса</div>
+          <p class="ai-welcome__desc">Твой персональный наставник. Вижу всё: дневник, здоровье, задачи, привычки. Готова поговорить о чём угодно.</p>
+          <div class="ai-welcome__features">
+            <div class="ai-feature"><span class="ai-feature__icon">🔍</span>Нахожу скрытые связи между твоим состоянием и событиями</div>
+            <div class="ai-feature"><span class="ai-feature__icon">💬</span>Помню наши прошлые разговоры и возвращаюсь к ним</div>
+            <div class="ai-feature"><span class="ai-feature__icon">⚖️</span>Говорю честно — не всегда встаю на твою сторону</div>
+            <div class="ai-feature"><span class="ai-feature__icon">📊</span>Отслеживаю динамику твоего здоровья и настроения</div>
+          </div>
+        </div>`;
+      $('#aiQuickChips').style.display = 'flex';
       return;
     }
-    // Считаем непрочитанные сообщения от ИИ
-    const unread = this.chatHistory.filter(m => m.role === 'ai' && !m.read).length;
-    const badge = document.getElementById('aiBadge');
-    if (unread > 0) {
-      badge.textContent = unread;
-      badge.style.display = 'flex';
-    } else {
-      badge.style.display = 'none';
+
+    $('#aiQuickChips').style.display = 'none';
+    let html='', lastD='';
+    all.forEach(msg => {
+      const d = new Date(msg.timestamp).toLocaleDateString('ru-RU',{day:'numeric',month:'long'});
+      if(d !== lastD) { lastD=d; html+=`<div class="date-sep">${d}</div>`; }
+      const isUser = msg.role==='user';
+      const txt = isUser ? esc(msg.textContent||msg.content||'') : fmtAIText(msg.content||'');
+      html += `
+        <div class="msg ${isUser?'user':'ai'}">
+          <div class="msg__av">${isUser?'👤':'✨'}</div>
+          <div class="msg__body">
+            <div class="msg__bubble">${txt}</div>
+            <div class="msg__time">${fmtTime(msg.timestamp)}</div>
+          </div>
+        </div>`;
+    });
+    msgs.innerHTML = html;
+    setTimeout(() => scrollBottom(), 60);
+  }
+
+  function addTyping() {
+    const msgs = $('#aiMessages');
+    if(!msgs || $('#typing-indicator')) return;
+    const div = document.createElement('div');
+    div.id = 'typing-indicator'; div.className = 'typing-wrap';
+    div.innerHTML = `
+      <div class="msg__av" style="width:28px;height:28px;border-radius:50%;background:linear-gradient(135deg,var(--accent),#5b21b6);display:flex;align-items:center;justify-content:center;font-size:12px;box-shadow:0 0 8px var(--accent-glow);">✨</div>
+      <div class="typing-bubble">
+        <div class="typing-dot"></div><div class="typing-dot"></div><div class="typing-dot"></div>
+      </div>`;
+    msgs.appendChild(div);
+    scrollBottom();
+  }
+  function removeTyping() { const el=$('#typing-indicator'); if(el) el.remove(); }
+
+  function openAIChat() {
+    const panel = $('#ai-panel');
+    if(!panel) return;
+    panel.classList.add('open');
+    const mem = loadAIMem();
+    mem.hasUnread = false;
+    saveAIMem(mem);
+    updateFabDot();
+    renderMessages();
+    if(loadAIMem().lastProactiveDate !== todayISO()) setTimeout(() => generateProactive(), 400);
+    setTimeout(() => scrollBottom(), 100);
+  }
+
+  function closeAIChat() { $('#ai-panel')?.classList.remove('open'); }
+
+  function clearAIHistory() {
+    if(!confirm('Очистить всю историю? Алиса забудет наши разговоры, планы и профиль.')) return;
+    saveAIMem(defAIMem());
+    renderMessages();
+    updateFabDot();
+    showToast('История чата очищена', 'danger');
+  }
+
+  /* ═══════════════════════════════
+     EVENT BINDINGS
+  ═══════════════════════════════ */
+  // Calendar nav
+  $('#calPrev')?.addEventListener('click', () => { viewDate.setMonth(viewDate.getMonth()-1); renderCalendar(); });
+  $('#calNext')?.addEventListener('click', () => { viewDate.setMonth(viewDate.getMonth()+1); renderCalendar(); });
+
+  // Mood buttons
+  $$('.mood-btn').forEach(b => b.addEventListener('click', () => {
+    curMood = b.dataset.mood;
+    $$('.mood-btn').forEach(x => x.classList.remove('selected'));
+    b.classList.add('selected');
+  }));
+
+  // Tag chips
+  $$('.tag-chip').forEach(b => b.addEventListener('click', () => {
+    const tag = b.dataset.tag;
+    if(curTags.includes(tag)) { curTags = curTags.filter(t=>t!==tag); b.classList.remove('active'); }
+    else { curTags.push(tag); b.classList.add('active'); }
+  }));
+
+  // Media
+  $('#btnPhoto')?.addEventListener('click', () => { $('#fileInput').accept='image/*'; $('#fileInput').click(); });
+  $('#btnVideo')?.addEventListener('click', () => { $('#fileInput').accept='video/*'; $('#fileInput').click(); });
+
+  $('#fileInput')?.addEventListener('change', e => {
+    const file = e.target.files[0];
+    if(!file) return;
+    if(file.type.startsWith('image/')) {
+      compressImg(file, b64 => { pendMedia.push({src:b64,type:'image'}); renderPreview(); });
+    } else if(file.type.startsWith('video/')) {
+      if(file.size > 2*1024*1024) { alert('Видео слишком большое (>2МБ).'); e.target.value=''; return; }
+      const r = new FileReader();
+      r.onload = ev => { pendMedia.push({src:ev.target.result,type:'video'}); renderPreview(); };
+      r.readAsDataURL(file);
     }
-  },
+    e.target.value = '';
+  });
 
-  markAllRead() {
-    this.chatHistory.forEach(m => { if (m.role === 'ai') m.read = true; });
-    this.save();
-    this.updateBadge();
+  $('#btnAudio')?.addEventListener('click', async () => {
+    const btn = $('#btnAudio');
+    if(!isRec) {
+      try {
+        if(!navigator.mediaDevices?.getUserMedia) throw new Error('no support');
+        const stream = await navigator.mediaDevices.getUserMedia({audio:true});
+        recorder = new MediaRecorder(stream); audioChunks = [];
+        recorder.ondataavailable = e => { if(e.data.size>0) audioChunks.push(e.data); };
+        recorder.onstop = () => {
+          const blob = new Blob(audioChunks,{type:'audio/webm'});
+          const r = new FileReader();
+          r.onload = ev => { pendMedia.push({src:ev.target.result,type:'audio'}); renderPreview(); };
+          r.readAsDataURL(blob);
+          stream.getTracks().forEach(t=>t.stop());
+          isRec=false; btn.classList.remove('recording'); btn.textContent='🎤 Голос';
+        };
+        recorder.start(); isRec=true; btn.classList.add('recording'); btn.textContent='⏹ Стоп';
+      } catch { alert('🎤 Нет доступа к микрофону. Нужен HTTPS.'); }
+    } else {
+      if(recorder?.state !== 'inactive') recorder.stop();
+    }
+  });
+
+  // Media preview delete
+  $('#mediaPreview')?.addEventListener('click', e => {
+    const btn = e.target.closest('.remove-preview');
+    if(btn) { pendMedia.splice(parseInt(btn.dataset.idx),1); renderPreview(); }
+  });
+
+  // Editor close
+  $('#editorOverlay')?.addEventListener('click', closeEditor);
+
+  // Notes list actions (delegate)
+  $('#notesList')?.addEventListener('click', e => {
+    const delBtn  = e.target.closest('.note-del-btn');
+    const editBtn = e.target.closest('[data-edit]');
+    const expand  = e.target.closest('.note-card__expand');
+
+    if(delBtn)  { deleteNote(delBtn.dataset.date); }
+    if(editBtn) { openEditor(editBtn.dataset.edit); }
+    if(expand)  {
+      const ds = expand.dataset.date;
+      const textEl = $(`#nt-${ds}`);
+      if(textEl) {
+        textEl.classList.toggle('expanded');
+        expand.textContent = textEl.classList.contains('expanded') ? 'Свернуть ▴' : 'Читать полностью ▾';
+      }
+    }
+  });
+
+  // Search
+  $('#searchToggleBtn')?.addEventListener('click', () => {
+    const wrap = $('#searchWrap');
+    const visible = wrap.style.display !== 'none';
+    wrap.style.display = visible ? 'none' : 'block';
+    if(!visible) setTimeout(() => $('#searchInput').focus(), 100);
+    else { searchQuery=''; $('#searchInput').value=''; renderNotesList(); }
+  });
+  $('#searchInput')?.addEventListener('input', e => {
+    searchQuery = e.target.value.trim();
+    $('#searchClear').classList.toggle('visible', searchQuery.length>0);
+    renderNotesList();
+  });
+  $('#searchClear')?.addEventListener('click', () => {
+    searchQuery=''; $('#searchInput').value='';
+    $('#searchClear').classList.remove('visible');
+    renderNotesList();
+  });
+
+  // AI events
+  $('#ai-fab')?.addEventListener('click', openAIChat);
+
+  // AI textarea auto-resize + Enter to send
+  const aiTa = $('#aiTextarea');
+  if(aiTa) {
+    aiTa.addEventListener('keydown', e => {
+      if(e.key==='Enter' && !e.shiftKey) { e.preventDefault(); sendAIMessage(); }
+    });
+    aiTa.addEventListener('input', () => {
+      aiTa.style.height = '';
+      aiTa.style.height = Math.min(aiTa.scrollHeight, 120) + 'px';
+    });
   }
-};
 
-/* ============================================
-   UI ЧАТА
-   ============================================ */
-document.getElementById('aiFab').onclick = () => {
-  const chat = document.getElementById('aiChat');
-  chat.classList.toggle('open');
-  if (chat.classList.contains('open')) {
-    AIAnalyzer.markAllRead();
-    document.getElementById('aiInput').focus();
-  }
-};
-document.getElementById('aiClose').onclick = () => {
-  document.getElementById('aiChat').classList.remove('open');
-};
+  /* ═══════════════════════════════
+     GLOBAL EXPORTS (onclick attrs)
+  ═══════════════════════════════ */
+  window.openEditor     = openEditor;
+  window.closeEditor    = closeEditor;
+  window.saveNote       = saveNote;
+  window.deleteNote     = deleteNote;
+  window.openAIChat     = openAIChat;
+  window.closeAIChat    = closeAIChat;
+  window.clearAIHistory = clearAIHistory;
+  window.sendAIMessage  = sendAIMessage;
+  window.sendQuick      = sendQuick;
 
-document.getElementById('aiSend').onclick = sendAIMessage;
-document.getElementById('aiInput').addEventListener('keydown', e => {
-  if (e.key === 'Enter' && !e.shiftKey) {
-    e.preventDefault();
-    sendAIMessage();
-  }
-});
+  /* ═══════════════════════════════
+     INIT
+  ═══════════════════════════════ */
+  $('#headerDate').textContent = new Date().toLocaleDateString('ru-RU',{weekday:'long',day:'numeric',month:'long'});
 
-let pendingAttachments = [];
-document.getElementById('aiAttachBtn').onclick = () => {
-  document.getElementById('aiPhotoInput').click();
-};
-document.getElementById('aiPhotoInput').onchange = e => {
-  const file = e.target.files[0];
-  if (!file) return;
-  const reader = new FileReader();
-  reader.onload = ev => {
-    pendingAttachments.push({ type: 'image', data: ev.target.result, name: file.name });
-    // Показываем превью во введённом поле
-    const input = document.getElementById('aiInput');
-    input.placeholder = `📎 Фото прикреплено (${pendingAttachments.length})`;
-  };
-  reader.readAsDataURL(file);
-};
+  renderCalendar();
+  renderNotesList();
+  updateStats();
 
-function sendAIMessage() {
-  const input = document.getElementById('aiInput');
-  const text = input.value.trim();
-  if (!text && pendingAttachments.length === 0) return;
+  // Check if new day for proactive dot
+  (function initFabDot() {
+    const mem = loadAIMem();
+    if(mem.lastProactiveDate !== todayISO()) {
+      mem.hasUnread = true;
+      saveAIMem(mem);
+    }
+    updateFabDot();
+  })();
 
-  const attachments = [...pendingAttachments];
-  pendingAttachments = [];
-  input.value = '';
-  input.placeholder = 'Напишите что-нибудь...';
-
-  // Показываем индикатор "печатает"
-  const container = document.getElementById('aiMessages');
-  const typing = document.createElement('div');
-  typing.className = 'ai-msg ai';
-  typing.id = 'typing-indicator';
-  typing.innerHTML = `<div class="avatar">🤖</div><div class="bubble"><div class="ai-typing"><span></span><span></span><span></span></div></div>`;
-  container.appendChild(typing);
-  container.scrollTop = container.scrollHeight;
-
-  // Имитируем задержку "обдумывания"
-  setTimeout(() => {
-    const ti = document.getElementById('typing-indicator');
-    if (ti) ti.remove();
-    AIAnalyzer.handleUserMessage(text, attachments);
-  }, 800 + Math.random() * 800);
-}
-
-/* ============================================
-   ИНИЦИАЛИЗАЦИЯ
-   ============================================ */
-renderCalendar();
-loadEntry();
-AIAnalyzer.init();
+})();
 </script>
 </body>
 </html>
+ENDOFFILE
+echo "✅ Done: $(wc -c < /mnt/user-data/outputs/journal.html) bytes, $(wc -l < /mnt/user-data/outputs/journal.html) lines"
