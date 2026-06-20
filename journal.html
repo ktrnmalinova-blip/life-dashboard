@@ -686,9 +686,9 @@
       <div class="ai-status" id="aiStatus">● онлайн</div>
     </div>
     <div class="ai-header-actions">
-  <button class="ai-icon-btn danger" id="aiClearBtn" ...>🗑</button>
-  <button class="ai-icon-btn" id="aiKeyBtn" title="Сменить API-ключ">🔑</button>
-</div>
+      <button class="ai-icon-btn danger" id="aiClearBtn" title="Очистить историю" onclick="window.clearAIHistory()">🗑</button>
+      <button class="ai-icon-btn" id="aiKeyBtn" title="Сменить API-ключ">🔑</button>
+    </div>
   </div>
 
   <!-- Messages -->
@@ -795,21 +795,21 @@
 (function () {
   'use strict';
 
-  /* ─── CONFIG ─── */
   // --- API KEY MANAGEMENT ---
-function getApiKey() {
-  let key = localStorage.getItem('openrouter_api_key');
-  if (!key) {
-    key = prompt('Введите ваш API-ключ OpenRouter (начнётся с sk-or-v1-):');
-    if (key && key.trim().startsWith('sk-or-v1-')) {
-      localStorage.setItem('openrouter_api_key', key.trim());
-    } else {
-      alert('Неверный ключ. Попробуйте ещё раз.');
-      return getApiKey(); // рекурсивно запрашиваем
+  function getApiKey() {
+    let key = localStorage.getItem('openrouter_api_key');
+    if (!key) {
+      key = prompt('Введите ваш API-ключ OpenRouter (начнётся с sk-or-v1-):');
+      if (key && key.trim().startsWith('sk-or-v1-')) {
+        localStorage.setItem('openrouter_api_key', key.trim());
+      } else {
+        alert('Неверный ключ. Попробуйте ещё раз.');
+        return getApiKey();
+      }
     }
+    return key.trim();
   }
-  return key.trim();
-}
+
   const OR_URL   = 'https://openrouter.ai/api/v1/chat/completions';
   const OR_MODEL = 'anthropic/claude-3.5-sonnet';
 
@@ -892,7 +892,6 @@ function getApiKey() {
     r.readAsDataURL(file);
   }
 
-  /* Streak calculation */
   function calcStreak() {
     if(!notes.length) return 0;
     const dates = notes.map(n => n.date).sort().reverse();
@@ -902,13 +901,12 @@ function getApiKey() {
       const d = new Date(ds+'T00:00:00');
       const diff = Math.round((cursor-d)/86400000);
       if(diff === 0) { streak++; cursor.setDate(cursor.getDate()-1); }
-      else if(diff === 1) { /* skip today if first check */ cursor = d; cursor.setDate(cursor.getDate()-1); }
+      else if(diff === 1) { cursor = d; cursor.setDate(cursor.getDate()-1); }
       else break;
     }
     return streak;
   }
 
-  /* Dominant mood */
   function dominantMood() {
     const recent = notes.slice(-7).filter(n=>n.mood);
     if(!recent.length) return '—';
@@ -917,14 +915,12 @@ function getApiKey() {
     return Object.entries(freq).sort((a,b)=>b[1]-a[1])[0][0];
   }
 
-  /* Update stats row */
   function updateStats() {
     $('#statTotal').textContent = notes.length;
     $('#statStreak').textContent = calcStreak()+'🔥';
     $('#statMood').textContent = dominantMood();
   }
 
-  /* Render calendar */
   function renderCalendar() {
     const grid = $('#calGrid'), lbl = $('#calMonth');
     if(!grid || !lbl) return;
@@ -963,7 +959,6 @@ function getApiKey() {
     renderMoodStrip();
   }
 
-  /* Render mood strip (last 7 days) */
   function renderMoodStrip() {
     const strip = $('#moodStrip');
     if(!strip) return;
@@ -980,7 +975,6 @@ function getApiKey() {
       moods.map(m => `<span class="mood-chip">${m.mood}</span>`).join('');
   }
 
-  /* Render notes list */
   function renderNotesList() {
     const list = $('#notesList'), empty = $('#notesEmpty'), countEl = $('#notesCount');
     if(!list) return;
@@ -1046,7 +1040,6 @@ function getApiKey() {
     });
   }
 
-  /* Open editor */
   function openEditor(ds) {
     selDate = ds;
     const ex = notes.find(n=>n.date===ds);
@@ -1104,7 +1097,6 @@ function getApiKey() {
       updateStats();
       closeEditor();
       showToast('Запись сохранена', 'success');
-      // Signal AI about new entry
       const mem = loadAIMem();
       mem.hasUnread = true;
       saveAIMem(mem);
@@ -1112,7 +1104,6 @@ function getApiKey() {
     }
   }
 
-  /* Delete note */
   function deleteNote(date) {
     if(!confirm('Удалить эту запись?')) return;
     notes = notes.filter(n=>n.date!==date);
@@ -1130,7 +1121,6 @@ function getApiKey() {
     const today = todayISO();
     let c = `📅 ДАТА: ${new Date().toLocaleDateString('ru-RU',{weekday:'long',day:'numeric',month:'long',year:'numeric'})}\n\n`;
 
-    // Journal entries
     const rec = [...notes].sort((a,b)=>new Date(b.date)-new Date(a.date)).slice(0,14);
     if(rec.length) {
       c += `📖 ДНЕВНИК (последние ${rec.length} записей):\n`;
@@ -1145,7 +1135,6 @@ function getApiKey() {
       c += '\n';
     }
 
-    // Health: today's metrics
     try {
       const h = JSON.parse(localStorage.getItem('lifeDashboard_health'))||{};
       if(h.date===today) {
@@ -1157,7 +1146,6 @@ function getApiKey() {
       }
     } catch {}
 
-    // Weight dynamics
     try {
       const wArr = JSON.parse(localStorage.getItem('lifeDashboard_weight'))||[];
       if(wArr.length) {
@@ -1172,7 +1160,6 @@ function getApiKey() {
       }
     } catch {}
 
-    // Workouts
     try {
       const wk = JSON.parse(localStorage.getItem('lifeDashboard_workouts'))||[];
       if(wk.length) {
@@ -1181,7 +1168,6 @@ function getApiKey() {
       }
     } catch {}
 
-    // Tasks today
     try {
       const td = JSON.parse(localStorage.getItem('lifeDashboard_tasks'))||{tasks:[]};
       const tt = (td.tasks||[]).filter(t=>t.scheduledDate===today);
@@ -1196,7 +1182,6 @@ function getApiKey() {
         });
         c += '\n';
       }
-      // Overdue
       const ov = (td.tasks||[]).filter(t=>!t.completed&&t.dueDate&&t.dueDate<today);
       if(ov.length) {
         c += `⚠️ ПРОСРОЧЕННЫЕ ЗАДАЧИ (${ov.length}):\n`;
@@ -1205,7 +1190,6 @@ function getApiKey() {
       }
     } catch {}
 
-    // Female cycle
     try {
       const fc = JSON.parse(localStorage.getItem('lifeDashboard_female'))||{};
       if(fc.lastPeriod) {
@@ -1220,7 +1204,6 @@ function getApiKey() {
       }
     } catch {}
 
-    // Analyses
     try {
       const an = JSON.parse(localStorage.getItem('lifeDashboard_analyses'))||[];
       if(an.length) {
@@ -1234,7 +1217,6 @@ function getApiKey() {
       }
     } catch {}
 
-    // Upcoming doctors
     try {
       const dr = JSON.parse(localStorage.getItem('lifeDashboard_doctors'))||[];
       const up = dr.filter(d=>new Date(d.visitDate)>=new Date()).sort((a,b)=>new Date(a.visitDate)-new Date(b.visitDate)).slice(0,3);
@@ -1243,7 +1225,6 @@ function getApiKey() {
       }
     } catch {}
 
-    // Habits
     try {
       const hd = JSON.parse(localStorage.getItem('lifeDashboard_habits'))||{};
       const hArr = hd.habits || [];
@@ -1258,9 +1239,6 @@ function getApiKey() {
     return c;
   }
 
-  /* ═══════════════════════════════
-     AI: SYSTEM PROMPT
-  ═══════════════════════════════ */
   function buildSystemPrompt(mem) {
     const ctx = buildContext();
     return `Ты — Алиса, персональный наставник, близкий друг и сторонний наблюдатель пользователя этого приложения-дневника. Имеешь доступ ко всем данным приложения: дневнику, здоровью, задачам, привычкам, финансам.
@@ -1298,9 +1276,6 @@ ${mem.userProfile ? `Что ты знаешь об этом человеке:\n$
 ${ctx}`;
   }
 
-  /* ═══════════════════════════════
-     AI: API CALL (OpenRouter)
-  ═══════════════════════════════ */
   function sanitizeHistory(convs) {
     if(!convs.length) return [];
     const mapped = convs.map(m => ({role:m.role, content:m.textContent||m.content||''}));
@@ -1313,36 +1288,29 @@ ${ctx}`;
   }
 
   async function callAI(messages, system) {
-  const key = getApiKey();
-  const res = await fetch(OR_URL, {
-    method: 'POST',
-    headers: {
-      'Content-Type': 'application/json',
-      'Authorization': 'Bearer ' + key,
-      'HTTP-Referer': 'https://life-dashboard.app',
-      'X-Title': 'Life Dashboard — Алиса'
-    },
-    body: JSON.stringify({
-      model: OR_MODEL,
-      max_tokens: 1024,
-      messages: [
-        { role: 'system', content: system },
-        ...messages
-      ]
-    })
-  });
-  const data = await res.json();
-  if (!res.ok) throw new Error(data.error?.message || `HTTP ${res.status}`);
-  return data.choices?.[0]?.message?.content || 'Не удалось получить ответ.';
-}
+    const key = getApiKey();
+    const res = await fetch(OR_URL, {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+        'Authorization': 'Bearer ' + key,
+        'HTTP-Referer': 'https://life-dashboard.app',
+        'X-Title': 'Life Dashboard — Алиса'
+      },
+      body: JSON.stringify({
+        model: OR_MODEL,
+        max_tokens: 1024,
+        messages: [
+          { role: 'system', content: system },
+          ...messages
+        ]
+      })
+    });
     const data = await res.json();
-    if(!res.ok) throw new Error(data.error?.message || `HTTP ${res.status}`);
+    if (!res.ok) throw new Error(data.error?.message || `HTTP ${res.status}`);
     return data.choices?.[0]?.message?.content || 'Не удалось получить ответ.';
   }
 
-  /* ═══════════════════════════════
-     AI: PROACTIVE MESSAGE
-  ═══════════════════════════════ */
   async function generateProactive() {
     const today = todayISO();
     const mem = loadAIMem();
@@ -1380,9 +1348,6 @@ ${ctx}`;
     }
   }
 
-  /* ═══════════════════════════════
-     AI: SEND MESSAGE
-  ═══════════════════════════════ */
   async function sendAIMessage(overrideText) {
     const ta = $('#aiTextarea');
     const text = overrideText || ta.value.trim();
@@ -1395,7 +1360,6 @@ ${ctx}`;
     if(sendBtn) sendBtn.disabled = true;
     $('#aiQuickChips').style.display = 'none';
 
-    // Save user message
     const mem = loadAIMem();
     mem.conversations.push({ role:'user', content:text, textContent:text, timestamp:Date.now() });
     if(mem.conversations.length > 120) mem.conversations = mem.conversations.slice(-100);
@@ -1408,7 +1372,6 @@ ${ctx}`;
       const sys = buildSystemPrompt(memNow);
       let histForAPI = sanitizeHistory(memNow.conversations.slice(-60));
 
-      // Attach today's images for vision
       const todayNote = notes.find(n=>n.date===todayISO());
       const imgs = (todayNote?.media||[]).filter(m=>m.type==='image').map(m=>m.src).slice(0,2);
       if(imgs.length && histForAPI.length && histForAPI[histForAPI.length-1].role==='user') {
@@ -1428,14 +1391,11 @@ ${ctx}`;
       const memFinal = loadAIMem();
       memFinal.conversations.push({ role:'assistant', content:aiText, timestamp:Date.now() });
       if(memFinal.conversations.length > 120) memFinal.conversations = memFinal.conversations.slice(-100);
-
-      // Auto-extract plans/profile from conversation
       if(memFinal.conversations.length % 10 === 0) {
         extractMemory(memFinal);
       }
       saveAIMem(memFinal);
       renderMessages();
-
     } catch(e) {
       console.error('AI error:', e);
       removeTyping();
@@ -1451,7 +1411,6 @@ ${ctx}`;
     }
   }
 
-  /* Auto-extract memory from conversation */
   async function extractMemory(mem) {
     try {
       const recent = mem.conversations.slice(-20).map(m=>`${m.role==='user'?'Пользователь':'Алиса'}: ${m.textContent||m.content||''}`).join('\n');
@@ -1471,25 +1430,25 @@ ${ctx}`;
 
   function sendQuick(text) { sendAIMessage(text); }
 
-  /* ═══════════════════════════════
-     AI: UI HELPERS
-  ═══════════════════════════════ */
   function setAIStatus(text, loading=false) {
     const el = $('#aiStatus');
     if(!el) return;
     el.textContent = text;
     el.className = 'ai-status' + (loading ? ' typing' : '');
   }
+
   function setCtxHint(text) {
     const el = $('#aiCtxHint');
     if(el) el.innerHTML = text ? `<span class="ai-ctx-chip">⚡ ${text}</span>` : '';
   }
+
   function updateFabDot() {
     const dot = $('#aiFabDot');
     if(!dot) return;
     const mem = loadAIMem();
     dot.classList.toggle('on', !!mem.hasUnread);
   }
+
   function scrollBottom() {
     const msgs = $('#aiMessages');
     if(msgs) msgs.scrollTop = msgs.scrollHeight;
@@ -1559,6 +1518,7 @@ ${ctx}`;
     msgs.appendChild(div);
     scrollBottom();
   }
+
   function removeTyping() { const el=$('#typing-indicator'); if(el) el.remove(); }
 
   function openAIChat() {
@@ -1584,28 +1544,22 @@ ${ctx}`;
     showToast('История чата очищена', 'danger');
   }
 
-  /* ═══════════════════════════════
-     EVENT BINDINGS
-  ═══════════════════════════════ */
-  // Calendar nav
+  /* ─── EVENT BINDINGS ─── */
   $('#calPrev')?.addEventListener('click', () => { viewDate.setMonth(viewDate.getMonth()-1); renderCalendar(); });
   $('#calNext')?.addEventListener('click', () => { viewDate.setMonth(viewDate.getMonth()+1); renderCalendar(); });
 
-  // Mood buttons
   $$('.mood-btn').forEach(b => b.addEventListener('click', () => {
     curMood = b.dataset.mood;
     $$('.mood-btn').forEach(x => x.classList.remove('selected'));
     b.classList.add('selected');
   }));
 
-  // Tag chips
   $$('.tag-chip').forEach(b => b.addEventListener('click', () => {
     const tag = b.dataset.tag;
     if(curTags.includes(tag)) { curTags = curTags.filter(t=>t!==tag); b.classList.remove('active'); }
     else { curTags.push(tag); b.classList.add('active'); }
   }));
 
-  // Media
   $('#btnPhoto')?.addEventListener('click', () => { $('#fileInput').accept='image/*'; $('#fileInput').click(); });
   $('#btnVideo')?.addEventListener('click', () => { $('#fileInput').accept='video/*'; $('#fileInput').click(); });
 
@@ -1646,16 +1600,13 @@ ${ctx}`;
     }
   });
 
-  // Media preview delete
   $('#mediaPreview')?.addEventListener('click', e => {
     const btn = e.target.closest('.remove-preview');
     if(btn) { pendMedia.splice(parseInt(btn.dataset.idx),1); renderPreview(); }
   });
 
-  // Editor close
   $('#editorOverlay')?.addEventListener('click', closeEditor);
 
-  // Notes list actions (delegate)
   $('#notesList')?.addEventListener('click', e => {
     const delBtn  = e.target.closest('.note-del-btn');
     const editBtn = e.target.closest('[data-edit]');
@@ -1673,7 +1624,6 @@ ${ctx}`;
     }
   });
 
-  // Search
   $('#searchToggleBtn')?.addEventListener('click', () => {
     const wrap = $('#searchWrap');
     const visible = wrap.style.display !== 'none';
@@ -1681,21 +1631,21 @@ ${ctx}`;
     if(!visible) setTimeout(() => $('#searchInput').focus(), 100);
     else { searchQuery=''; $('#searchInput').value=''; renderNotesList(); }
   });
+
   $('#searchInput')?.addEventListener('input', e => {
     searchQuery = e.target.value.trim();
     $('#searchClear').classList.toggle('visible', searchQuery.length>0);
     renderNotesList();
   });
+
   $('#searchClear')?.addEventListener('click', () => {
     searchQuery=''; $('#searchInput').value='';
     $('#searchClear').classList.remove('visible');
     renderNotesList();
   });
 
-  // AI events
   $('#ai-fab')?.addEventListener('click', openAIChat);
 
-  // AI textarea auto-resize + Enter to send
   const aiTa = $('#aiTextarea');
   if(aiTa) {
     aiTa.addEventListener('keydown', e => {
@@ -1707,9 +1657,18 @@ ${ctx}`;
     });
   }
 
-  /* ═══════════════════════════════
-     GLOBAL EXPORTS (onclick attrs)
-  ═══════════════════════════════ */
+  // Кнопка смены ключа
+  $('#aiKeyBtn')?.addEventListener('click', () => {
+    const newKey = prompt('Введите новый API-ключ OpenRouter:');
+    if (newKey && newKey.trim().startsWith('sk-or-v1-')) {
+      localStorage.setItem('openrouter_api_key', newKey.trim());
+      showToast('Ключ обновлён', 'success');
+    } else {
+      showToast('Ключ не изменён', 'danger');
+    }
+  });
+
+  /* ─── GLOBAL EXPORTS ─── */
   window.openEditor     = openEditor;
   window.closeEditor    = closeEditor;
   window.saveNote       = saveNote;
@@ -1720,16 +1679,13 @@ ${ctx}`;
   window.sendAIMessage  = sendAIMessage;
   window.sendQuick      = sendQuick;
 
-  /* ═══════════════════════════════
-     INIT
-  ═══════════════════════════════ */
+  /* ─── INIT ─── */
   $('#headerDate').textContent = new Date().toLocaleDateString('ru-RU',{weekday:'long',day:'numeric',month:'long'});
 
   renderCalendar();
   renderNotesList();
   updateStats();
 
-  // Check if new day for proactive dot
   (function initFabDot() {
     const mem = loadAIMem();
     if(mem.lastProactiveDate !== todayISO()) {
