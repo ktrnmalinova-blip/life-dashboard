@@ -1370,7 +1370,7 @@ ${ctx}`;
     try {
       const memNow = loadAIMem();
       const sys = buildSystemPrompt(memNow);
-      let histForAPI = sanitizeHistory(memNow.conversations.slice(-60));
+      let histForAPI = sanitizeHistory(memNow.conversations.slice(-15));
 
       const todayNote = notes.find(n=>n.date===todayISO());
       const imgs = (todayNote?.media||[]).filter(m=>m.type==='image').map(m=>m.src).slice(0,2);
