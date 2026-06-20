@@ -453,6 +453,7 @@
       transform:translateX(105%);
       transition:transform .38s cubic-bezier(.2,.8,.2,1);
       display:flex; flex-direction:column; overflow:hidden;
+      <button class="ai-icon-btn" id="aiKeyBtn" title="Сменить API-ключ">🔑</button>
     }
     #ai-panel.open { transform:translateX(0); }
 
@@ -794,10 +795,20 @@
 (function () {
   'use strict';
 
-  /* ─── CONFIG ─── */
-  const OR_KEY   = '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';
-  const OR_URL   = 'https://openrouter.ai/api/v1/chat/completions';
-  const OR_MODEL = 'anthropic/claude-3.5-sonnet';
+// --- API KEY MANAGEMENT ---
+function getApiKey() {
+  let key = localStorage.getItem('openrouter_api_key');
+  if (!key) {
+    key = prompt('Введите ваш API-ключ OpenRouter (начнётся с sk-or-v1-):');
+    if (key && key.trim().startsWith('sk-or-v1-')) {
+      localStorage.setItem('openrouter_api_key', key.trim());
+    } else {
+      alert('Неверный ключ. Попробуйте ещё раз.');
+      return getApiKey(); // рекурсивно запрашиваем
+    }
+  }
+  return key.trim();
+}
 
   /* ─── UTILS ─── */
   const $ = s => document.querySelector(s);
@@ -1249,7 +1260,7 @@
   ═══════════════════════════════ */
   function buildSystemPrompt(mem) {
     const ctx = buildContext();
-    return `Ты — Алиса, персональный наставник, близкий друг и сторонний наблюдатель пользователя этого приложения-дневника. Имеешь доступ ко всем данным приложения: дневнику, здоровью, задачам, привычкам, финансам.
+    return `Ты — Эмилия, персональный наставник, близкий друг и сторонний наблюдатель пользователя этого приложения-дневника. Имеешь доступ ко всем данным приложения: дневнику, здоровью, задачам, привычкам, финансам.
 
 ═══ ХАРАКТЕР И СТИЛЬ ═══
 • Близкий друг + честный наставник. НЕ психолог-консультант, не chatbot
@@ -1277,7 +1288,7 @@ ${mem.userProfile ? `Что ты знаешь об этом человеке:\n$
 
 ═══ ПРАВИЛА ═══
 • Только русский язык
-• Ты — Алиса, не ИИ и не языковая модель
+• Ты — Эмилия, не ИИ и не языковая модель
 • Фото из дневника анализируешь если они прикреплены
 
 ═══ ДАННЫЕ ПРИЛОЖЕНИЯ (актуальные) ═══
@@ -1299,27 +1310,17 @@ ${ctx}`;
   }
 
   async function callAI(messages, system) {
-    const res = await fetch(OR_URL, {
-      method: 'POST',
-      headers: {
-        'Content-Type': 'application/json',
-        'Authorization': 'Bearer ' + OR_KEY,
-        'HTTP-Referer': 'https://life-dashboard.app',
-        'X-Title': 'Life Dashboard — Алиса'
-      },
-      body: JSON.stringify({
-        model: OR_MODEL,
-        max_tokens: 1024,
-        messages: [
-          { role:'system', content:system },
-          ...messages
-        ]
-      })
-    });
-    const data = await res.json();
-    if(!res.ok) throw new Error(data.error?.message || `HTTP ${res.status}`);
-    return data.choices?.[0]?.message?.content || 'Не удалось получить ответ.';
-  }
+  const key = getApiKey();
+  const res = await fetch(OR_URL, {
+    method: 'POST',
+    headers: {
+      'Content-Type': 'application/json',
+      'Authorization': 'Bearer ' + key,
+      ...
+    },
+    ...
+  });
+}
 
   /* ═══════════════════════════════
      AI: PROACTIVE MESSAGE
@@ -1687,6 +1688,15 @@ ${ctx}`;
       aiTa.style.height = Math.min(aiTa.scrollHeight, 120) + 'px';
     });
   }
+  $('#aiKeyBtn')?.addEventListener('click', () => {
+  const newKey = prompt('Введите новый API-ключ OpenRouter:');
+  if (newKey && newKey.trim().startsWith('sk-or-v1-')) {
+    localStorage.setItem('openrouter_api_key', newKey.trim());
+    showToast('Ключ обновлён', 'success');
+  } else {
+    showToast('Ключ не изменён', 'danger');
+  }
+});
 
   /* ═══════════════════════════════
      GLOBAL EXPORTS (onclick attrs)
