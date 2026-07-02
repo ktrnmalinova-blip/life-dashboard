@@ -1143,57 +1143,16 @@ async function callAI(messages, system) {
     return clean;
   }
 
-  async function callAI(messages, system) {
-  const key = getApiKey();
-  if (!key) throw new Error('Не задан API-ключ. Введи свой ключ в поле выше.');
-
-  const controller = new AbortController();
-  const timeoutId = setTimeout(() => controller.abort(), 45000);
-
-  try {
-    const res = await fetch(OR_URL, {
-      method: 'POST',
-      signal: controller.signal,
-      headers: {
-        'Content-Type': 'application/json',
-        'Authorization': 'Bearer ' + key,
-        'HTTP-Referer': 'https://life-dashboard.app',
-        'X-Title': 'Life Dashboard - Alise'
-      },
-      body: JSON.stringify({ model: OR_MODEL, max_tokens: 1024, messages: [{role:'system',content:system}, ...messages] })
-    });
-    const data = await res.json();
-    if (!res.ok) {
-      const errMsg = data.error?.message || ('HTTP ' + res.status);
-      if (res.status === 401 || errMsg.toLowerCase().includes('invalid api key') || errMsg==='User not found')
-        throw new Error('❌ Невалидный API-ключ. Проверь ключ в поле выше.');
-      if (res.status === 429)
-        throw new Error('⏳ Бесплатная модель перегружена (лимит запросов). Подожди и попробуй снова.');
-      throw new Error(errMsg);
+ /* ═══ AI: API CALL (OpenRouter) ═══ */
+  function sanitizeHistory(convs) {
+    if(!convs.length) return [];
+    const mapped=convs.map(m=>({role:m.role,content:m.textContent||m.content||''}));
+    if(mapped[0].role==='assistant') mapped.unshift({role:'user',content:'начало разговора'});
+    const clean=[mapped[0]];
+    for(let i=1;i<mapped.length;i++){
+      if(mapped[i].role!==clean[clean.length-1].role) clean.push(mapped[i]);
     }
-    return data.choices?.[0]?.message?.content || 'Не удалось получить ответ.';
-  } catch (e) {
-    if (e.name === 'AbortError') throw new Error('⏱ Сервер не ответил за 45 секунд. Попробуй ещё раз.');
-    throw e;
-  } finally {
-    clearTimeout(timeoutId);
-  }
-}
-      body:JSON.stringify({
-        model:OR_MODEL,
-        max_tokens:1024,
-        messages:[{role:'system',content:system}, ...messages]
-      })
-    });
-    const data=await res.json();
-    if(!res.ok) {
-  const errMsg = data.error?.message || ('HTTP '+res.status);
-  if (errMsg === 'User not found' || errMsg.includes('invalid api key')) {
-    throw new Error('❌ Невалидный или отсутствующий API‑ключ. Введите свой ключ в поле выше.');
-  }
-  throw new Error(errMsg);
-}
-    return (data.choices&&data.choices[0]&&data.choices[0].message&&data.choices[0].message.content)||'Не удалось получить ответ.';
+    return clean;
   }
 
   /* ═══ AI: PROACTIVE ═══ */
