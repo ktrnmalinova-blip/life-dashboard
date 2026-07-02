@@ -986,20 +986,54 @@
     return m ? parseInt(m[1]) : null;
   }
 
-  async function fetchWildberriesById(id) {
-    // Try v1 first (most stable), then v2 as fallback
-    let product = null;
-    for(const ver of ['v1','v2']) {
-      try {
-        const apiUrl = `https://card.wb.ru/cards/${ver}/detail?appType=1&curr=rub&dest=-1257786&spp=30&nm=${id}`;
-        const r = await fetchTimed(apiUrl, 8000);
-        if(!r.ok) continue;
-        const d = await r.json();
-        const p = d?.data?.products?.[0];
-        if(p){ product = p; break; }
-      } catch(e){ continue; }
+async function fetchWildberriesById(id) {
+    // Разные региональные склады: если товара нет на одном, может быть на другом
+    const DESTS = [-1257786, 12358499, -5817244, 123585990, -1029256];
+    const apiUrl = (ver, dest) =>
+      `https://card.wb.ru/cards/${ver}/detail?appType=1&curr=rub&dest=${dest}&spp=30&nm=${id}`;
+
+    function extractProduct(json) {
+      return json?.data?.products?.[0] || null;
     }
-    if(!product) throw new Error('WB API: product not found');
+
+    // Путь A: прямой запрос с клиента (быстрый, но может упасть из-за CORS)
+    async function tryDirect() {
+      for (const dest of DESTS) {
+        for (const ver of ['v2','v1']) {
+          try {
+            const r = await fetchTimed(apiUrl(ver, dest), 7000);
+            if (!r.ok) continue;
+            const p = extractProduct(await r.json());
+            if (p) return p;
+          } catch(e) { continue; } // CORS/сеть — пробуем дальше
+        }
+      }
+      return null;
+    }
+
+    // Путь B: через CORS-прокси, если прямой доступ заблокирован
+    async function tryViaProxy() {
+      for (const dest of DESTS) {
+        const target = apiUrl('v2', dest);
+        try {
+          const r = await fetchTimed(`https://corsproxy.io/?${encodeURIComponent(target)}`, 10000);
+          if (!r.ok) continue;
+          const p = extractProduct(await r.json());
+          if (p) return p;
+        } catch(e) { continue; }
+        try {
+          const r = await fetchTimed(`https://api.allorigins.win/raw?url=${encodeURIComponent(target)}`, 10000);
+          if (!r.ok) continue;
+          const p = extractProduct(await r.json());
+          if (p) return p;
+        } catch(e) { continue; }
+      }
+      return null;
+    }
+
+    let product = await tryDirect();
+    if (!product) product = await tryViaProxy();
+    if (!product) throw new Error('WB API: product not found');
 
     const price = product.salePriceU
       ? Math.round(product.salePriceU / 100)
@@ -1009,7 +1043,7 @@
     return {
       name:     [product.brand, product.name].filter(Boolean).join(' / '),
       price,
-      imageUrl: imgUrls[0],   // store primary; card will try next on error
+      imageUrl: imgUrls[0],
       imageUrlFallback: imgUrls[1],
       source:   'wb'
     };
