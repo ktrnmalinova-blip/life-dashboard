@@ -637,8 +637,9 @@
   /* ─── CONFIG ─── */
 // Функция для получения ключа из localStorage или дефолтного (устаревшего)
 function getApiKey() {
-  return localStorage.getItem('openrouter_key') || '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';
-}  const OR_URL   = 'https://openrouter.ai/api/v1/chat/completions';
+  return (localStorage.getItem('openrouter_key') || '').trim();
+}
+  const OR_URL   = 'https://openrouter.ai/api/v1/chat/completions';
   const OR_MODEL = 'nvidia/nemotron-3-nano-omni-30b-a3b-reasoning:free';
   
   /* ─── UTILS ─── */
@@ -1022,17 +1023,30 @@ function getApiKey() {
     }catch(e){}
 
     try{
-      const hd=JSON.parse(localStorage.getItem('lifeDashboard_habits'))||{};
-      const hArr=hd.habits||[];
-      if(hArr.length){
-        const done=hArr.filter(h=>h.completions&&h.completions[today]===true).length;
-        c+='🎯 ПРИВЫЧКИ ('+done+'/'+hArr.length+' сегодня): ';
-        c+=hArr.map(h=>(h.emoji||'')+(h.name||h.title||'?')+'['+(h.completions&&h.completions[today]?'✓':'○')+']').join(', ');
-        c+='\n\n';
-      }
-    }catch(e){}
-
+  const hd = JSON.parse(localStorage.getItem('lifeDashboard_habits_v2')) || {habits:[], completions:[]};
+  const hArr = hd.habits || [];
+  const compArr = hd.completions || [];
+  if(hArr.length){
+    const doneIds = compArr.filter(c => c.date===today && c.completed).map(c => c.habitId);
+    const done = hArr.filter(h => doneIds.includes(h.id)).length;
+    c += '🎯 ПРИВЫЧКИ (' + done + '/' + hArr.length + ' сегодня): ';
+    c += hArr.map(h => (h.emoji||'') + (h.name||'?') + '[' + (doneIds.includes(h.id)?'✓':'○') + ']').join(', ');
+    c += '\n\n';
+  }
+}catch(e){}
     return c;
+    try{
+  const fin = JSON.parse(localStorage.getItem('lifeDashboard_finance')) || {transactions:[]};
+  const txs = fin.transactions || [];
+  if(txs.length){
+    const balance = txs.reduce((s,t)=>s+(t.type==='income'?t.amount:-t.amount),0);
+    const month = new Date().toISOString().slice(0,7);
+    const monthTx = txs.filter(t=>t.date && t.date.startsWith(month));
+    const inc = monthTx.filter(t=>t.type==='income').reduce((s,t)=>s+t.amount,0);
+    const exp = monthTx.filter(t=>t.type==='expense').reduce((s,t)=>s+t.amount,0);
+    c += '💰 ФИНАНСЫ: баланс ' + Math.round(balance) + '₽; за месяц доход ' + Math.round(inc) + '₽, расход ' + Math.round(exp) + '₽\n\n';
+  }
+}catch(e){}
   }
 
   /* ═══ AI: SYSTEM PROMPT ═══ */
@@ -1079,14 +1093,41 @@ function getApiKey() {
   }
 
   async function callAI(messages, system) {
-    const res=await fetch(OR_URL,{
-      method:'POST',
-      headers:{
-        'Content-Type':'application/json',
-        'Authorization':'Bearer '+getApiKey(),
-        'HTTP-Referer':'https://life-dashboard.app',
-        'X-Title':'Life Dashboard - Alise'
+  const key = getApiKey();
+  if (!key) throw new Error('Не задан API-ключ. Введи свой ключ в поле выше.');
+
+  const controller = new AbortController();
+  const timeoutId = setTimeout(() => controller.abort(), 45000);
+
+  try {
+    const res = await fetch(OR_URL, {
+      method: 'POST',
+      signal: controller.signal,
+      headers: {
+        'Content-Type': 'application/json',
+        'Authorization': 'Bearer ' + key,
+        'HTTP-Referer': 'https://life-dashboard.app',
+        'X-Title': 'Life Dashboard - Alise'
       },
+      body: JSON.stringify({ model: OR_MODEL, max_tokens: 1024, messages: [{role:'system',content:system}, ...messages] })
+    });
+    const data = await res.json();
+    if (!res.ok) {
+      const errMsg = data.error?.message || ('HTTP ' + res.status);
+      if (res.status === 401 || errMsg.toLowerCase().includes('invalid api key') || errMsg==='User not found')
+        throw new Error('❌ Невалидный API-ключ. Проверь ключ в поле выше.');
+      if (res.status === 429)
+        throw new Error('⏳ Бесплатная модель перегружена (лимит запросов). Подожди и попробуй снова.');
+      throw new Error(errMsg);
+    }
+    return data.choices?.[0]?.message?.content || 'Не удалось получить ответ.';
+  } catch (e) {
+    if (e.name === 'AbortError') throw new Error('⏱ Сервер не ответил за 45 секунд. Попробуй ещё раз.');
+    throw e;
+  } finally {
+    clearTimeout(timeoutId);
+  }
+}
       body:JSON.stringify({
         model:OR_MODEL,
         max_tokens:1024,
@@ -1105,38 +1146,37 @@ function getApiKey() {
   }
 
   /* ═══ AI: PROACTIVE ═══ */
-  async function generateProactive() {
+async function generateProactive() {
     const today=todayISO();
     const mem=loadAIMem();
     if(mem.lastProactiveDate===today) return;
-    mem.lastProactiveDate=today;
-    saveAIMem(mem);
+    if(!getApiKey()) return;
 
     setAIStatus('⏳ анализирует данные…',true);
     setCtxHint('⏳ Алиса изучает твои данные…');
-
     try{
       const sys=buildSystemPrompt(mem);
       const hist=sanitizeHistory(mem.conversations.slice(-8));
       const hasData=notes.length>0||!!localStorage.getItem('lifeDashboard_health');
       const trigger=hasData
-        ?('Это начало нашего общения за '+new Date().toLocaleDateString('ru-RU',{day:'numeric',month:'long'})+'. Ты видишь все мои данные. Напиши мне — что замечаешь, о чём хочешь поговорить или спросить? Живо, конкретно, 2–3 предложения.')
-        :'Это наш первый разговор. Представься коротко — кто ты и зачем ты здесь. Максимум 3 предложения.';
+        ?('Это начало нашего общения за '+new Date().toLocaleDateString('ru-RU',{day:'numeric',month:'long'})+'. Ты видишь все мои данные. Напиши мне — что замечаешь, о чём хочешь поговорить? Живо, конкретно, 2–3 предложения.')
+        :'Это наш первый разговор. Представься коротко. Максимум 3 предложения.';
       hist.push({role:'user',content:trigger});
       const aiText=await callAI(hist,sys);
       const memNow=loadAIMem();
       memNow.conversations.push({role:'assistant',content:aiText,timestamp:Date.now()});
       if(memNow.conversations.length>120) memNow.conversations=memNow.conversations.slice(-100);
       memNow.hasUnread=false;
+      memNow.lastProactiveDate=today;   // ← только теперь, после успеха
       saveAIMem(memNow);
       renderMessages();
     }catch(e){
-      console.error('Proactive error:',e);
+      console.error('Proactive error:',e); // дата НЕ трогается — попробует снова при следующем открытии
     }finally{
       setAIStatus('● онлайн',false);
       setCtxHint('');
     }
-  }
+}
 
   /* ═══ AI: SEND ═══ */
   async function sendAIMessage(overrideText) {
