@@ -964,11 +964,29 @@
     return [`https://basket-${n}.wbbasket.ru${path}`, `https://basket-${n}.wb.ru${path}`];
   }
 
-  async function fetchWildberries(url) {
-    const m = url.match(/wildberries\.ru\/catalog\/(\d+)/);
-    if(!m) throw new Error('not wb');
-    const id = parseInt(m[1]);
+  // Разворачивает кэшбэк/партнёрские ссылки-редиректоры и достаёт целевой URL
+  // из query-параметров (targetUrl, target_url, url, redirect, to, goto).
+  function unwrapRedirectUrl(url) {
+    try {
+      const u = new URL(url);
+      for (const key of ['targetUrl','target_url','url','redirect','to','goto']) {
+        const val = u.searchParams.get(key);
+        if (val) {
+          try { return decodeURIComponent(val); } catch { return val; }
+        }
+      }
+    } catch(e) { /* not a valid URL object, ignore */ }
+    return url;
+  }
 
+  // Находит ID товара Wildberries по паттерну пути (/catalog/{id}/detail),
+  // а не по домену — так работает и с прямыми, и с обёрнутыми ссылками.
+  function extractWbId(url) {
+    const m = url.match(/catalog[\/%2F]+(\d+)[\/%2F]+detail/i);
+    return m ? parseInt(m[1]) : null;
+  }
+
+  async function fetchWildberriesById(id) {
     // Try v1 first (most stable), then v2 as fallback
     let product = null;
     for(const ver of ['v1','v2']) {
@@ -1037,13 +1055,19 @@
     throw new Error('All proxies failed: ' + errors.join(' | '));
   }
 
-  // Detect & route to the right fetcher
-  async function fetchProductInfo(url) {
-    if(!url) throw new Error('no url');
-    const u = url.toLowerCase();
-    if(u.includes('wildberries.ru/catalog/')) return fetchWildberries(url);
-    // For Ozon, AliExpress, Lamoda, DNS etc — use CORS proxy OG tags
-    return fetchViaProxy(url);
+// Detect & route to the right fetcher
+  async function fetchProductInfo(rawUrl) {
+    if(!rawUrl) throw new Error('no url');
+
+    // 1. Разворачиваем возможную кэшбэк/партнёрскую обёртку
+    const unwrapped = unwrapRedirectUrl(rawUrl);
+
+    // 2. Ищем WB-паттерн и в развёрнутой, и в исходной ссылке
+    const wbId = extractWbId(unwrapped) || extractWbId(rawUrl);
+    if (wbId) return fetchWildberriesById(wbId);
+
+    // 3. Иначе — обычный маркетплейс через CORS-прокси (по развёрнутому URL)
+    return fetchViaProxy(unwrapped);
   }
 
   /* ─── PRICE REFRESH ─── */
@@ -1113,7 +1137,10 @@
         filled>0 ? 'ok' : 'err'
       );
     } catch(e) {
-      setFetchStatus('⚠️ Не удалось загрузить — заполните вручную','err');
+      const msg = String(e.message||'').includes('WB API')
+        ? '⚠️ Wildberries не отдал данные — попробуйте прямую ссылку на товар'
+        : '⚠️ Сайт не поддерживает автозаполнение — заполните вручную';
+      setFetchStatus(msg,'err');
     }
   }
 
