@@ -640,21 +640,28 @@ function getApiKey() {
 }
 const OR_URL = 'https://openrouter.ai/api/v1/chat/completions';
 
-// Цепочка моделей: пробуем по порядку, первая же рабочая — используется
-const MODEL_CHAIN = [
-  'meta-llama/llama-4-scout:free',      // приоритет: быстрая, vision, не reasoning
-  'google/gemma-4-31b-it:free',         // запасной: vision, чуть качественнее
-  'nvidia/nemotron-nano-12b-v2-vl:free' // запасной: vision, лёгкая/шустрая
+// Текстовые модели — для обычных сообщений (без фото). Приоритет — грамотный связный русский
+const TEXT_MODEL_CHAIN = [
+  'openai/gpt-oss-20b:free',        // лучшее качество письма среди бесплатных на сегодня
+  'meta-llama/llama-3.3-70b:free'   // запасной: крупная, стабильная, хороший русский
 ];
 
-async function callAI(messages, system) {
+// Vision-модели — только когда в сообщении реально есть фото из дневника
+const VISION_MODEL_CHAIN = [
+  'google/gemma-4-31b-it:free',
+  'nvidia/nemotron-nano-12b-v2-vl:free',
+  'meta-llama/llama-4-scout:free'   // самая слабая по грамотности — теперь в конце, только для фото
+];
+
+async function callAI(messages, system, hasImages = false) {
   const key = getApiKey();
   if (!key) throw new Error('Не задан API-ключ. Введи свой ключ в поле выше.');
 
+  const chain = hasImages ? VISION_MODEL_CHAIN : TEXT_MODEL_CHAIN;
   let lastErr = null;
-  for (const model of MODEL_CHAIN) {
+  for (const model of chain) {
     const controller = new AbortController();
-    const timeoutId = setTimeout(() => controller.abort(), 20000); // 20с на модель
+    const timeoutId = setTimeout(() => controller.abort(), 20000);
     try {
       const res = await fetch(OR_URL, {
         method: 'POST',
@@ -667,7 +674,8 @@ async function callAI(messages, system) {
         },
         body: JSON.stringify({
           model,
-          max_tokens: 700,           // короче ответ — быстрее генерация
+          max_tokens: 900,      // подняли лимит — раньше обрезало ответ
+          temperature: 0.75,
           messages: [{ role: 'system', content: system }, ...messages]
         })
       });
@@ -677,14 +685,14 @@ async function callAI(messages, system) {
         if (res.status === 401 || /invalid api key|user not found/i.test(errMsg))
           throw new Error('❌ Невалидный API-ключ. Проверь ключ в поле выше.');
         lastErr = new Error(errMsg);
-        continue; // пробуем следующую модель в цепочке
+        continue;
       }
       return data.choices?.[0]?.message?.content || 'Не удалось получить ответ.';
     } catch (e) {
       lastErr = e.name === 'AbortError'
         ? new Error(model + ': не ответила за 20с')
         : e;
-      if (/невалидный api-ключ/i.test(lastErr.message)) throw lastErr; // ключ неверный — смысла пробовать другие нет
+      if (/невалидный api-ключ/i.test(lastErr.message)) throw lastErr;
       continue;
     } finally {
       clearTimeout(timeoutId);
@@ -1111,6 +1119,14 @@ async function callAI(messages, system) {
 '• Ответы: 2–4 абзаца. Один точный вопрос часто лучше длинного монолога\n'+
 '• Не начинай с имени или похвалы\n'+
 '• Иногда можешь шутить, быть немного дерзкой — живо и по-человечески\n\n'+
+      '• Живой разговорный язык. Никакого "Я вижу, что...", "Я понимаю ваши чувства", "Отличный вопрос!"\n'+
+'• Конкретика: не «стоит подумать», а «сделай X, потому что Y»\n'+
+'• Ответы: 2–4 абзаца. Один точный вопрос часто лучше длинного монолога\n'+
+'• Не начинай с имени или похвалы\n'+
+'• Иногда можешь шутить, быть немного дерзкой — живо и по-человечески\n\n'+
+      '• Пиши ТОЛЬКО грамотным, связным литературным русским языком. Никаких выдуманных слов, оборванных фраз, markdown-заголовков (###) и нумерованных списков — это переписка в чате, а не отчёт\n'+
+'• Резкие выражения — редко, к месту и без ущерба ясности речи\n'+
+      
 '═══ ЧТО ТЫ УМЕЕШЬ ═══\n'+
 '• Видишь СКРЫТЫЕ СВЯЗИ: стресс → плохой сон → раздражительность → срыв привычек — говоришь об этом прямо\n'+
 '• Помнишь всё из предыдущих разговоров. Возвращаешься к темам\n'+
@@ -1223,7 +1239,7 @@ async function generateProactive() {
         };
       }
 
-      const aiText=await callAI(histForAPI,sys);
+      const aiText=await callAI(histForAPI,sys,imgs.length>0);
 
       removeTyping();
       const memFinal=loadAIMem();
