@@ -1,3 +1,13 @@
+<!--
+  ✅ Визуал: Cosmos Theme (орбы #065f46/#4a1d96, glass-card, Sora font)
+  ✅ Календарная сетка: дни месяца × привычки, цветовая индикация, sticky первая колонка
+  ✅ Список на сегодня: эмодзи, текст, чекбокс, зачёркивание, стрик
+  ✅ Модалка: название, эмодзи-пикер, цвет, частота, дни недели, цель
+  ✅ Streak: 🔥 подсчёт дней подряд, умный пропуск нерасписанных дней
+  ✅ Аналитика: Canvas-барчарт (неделя/месяц/год), heatmap GitHub-стиль, детальная статистика
+  ✅ Редактирование прошедших дней: клик по ячейке матрицы отмечает/снимает выполнение задним числом
+  ✅ Глобальное меню: активный пункт "Привычки"
+-->
 <!DOCTYPE html>
 <html lang="ru">
 <head>
@@ -6,14 +16,13 @@
     <meta name="theme-color" content="#07070f">
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover" />
-    <meta name="theme-color" content="#07070f" />
     <meta name="apple-mobile-web-app-capable" content="yes" />
     <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent" />
     <title>Life Dashboard — Привычки</title>
     <link rel="preconnect" href="https://fonts.googleapis.com" />
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
     <link href="https://fonts.googleapis.com/css2?family=Sora:wght@300;400;500;600;700&display=swap" rel="stylesheet" />
-    <style>
+  <style>
     /* =========================================
        COSMOS VARIABLES
     ========================================= */
@@ -201,12 +210,14 @@
     .cell-inner { width: 24px; height: 24px; border-radius: 5px; display: flex; align-items: center; justify-content: center; font-size: 11px; font-weight: 700; transition: var(--transition); }
     .cell-done   { background: rgba(52,211,153,.22); border: 1px solid rgba(52,211,153,.5); color: var(--success); }
     .cell-missed { background: rgba(248,113,113,.1);  border: 1px solid rgba(248,113,113,.2); color: rgba(248,113,113,.55); }
-    .cell-editable { cursor: pointer; }
-    .cell-editable:hover { transform: scale(1.18); filter: brightness(1.4); box-shadow: 0 0 10px rgba(124,58,237,.5); }
     .cell-future { background: rgba(255,255,255,.03); border: 1px solid rgba(255,255,255,.05); color: transparent; }
     .cell-na     { background: transparent; border: 1px solid transparent; }
     .cell-today-ring { box-shadow: 0 0 0 2px var(--accent); }
     .cell-today-done { box-shadow: 0 0 0 2px var(--success), 0 0 10px rgba(52,211,153,.25); }
+
+    /* Редактируемые ячейки — прошедшие и сегодняшний день */
+    .cell-editable { cursor: pointer; }
+    .cell-editable:hover { transform: scale(1.18); filter: brightness(1.4); box-shadow: 0 0 10px rgba(124,58,237,.5); }
 
     /* =========================================
        TODAY LIST
@@ -347,12 +358,11 @@
         <div class="matrix-days-col" id="matrixDays"></div>
       </div>
       <div id="monthStatsEl"></div>
+      <div style="text-align:center;font-size:11px;color:var(--text-muted);margin-top:8px;">
+        💡 Нажмите на ячейку прошедшего дня, чтобы отметить или снять выполнение
+      </div>
     </div>
 
-<div style="text-align:center;font-size:11px;color:var(--text-muted);margin-top:8px;">
-  💡 Нажмите на ячейку прошедшего дня, чтобы отметить или снять выполнение
-</div>
-      
     <!-- TODAY'S HABITS -->
     <div class="glass-card" id="todayCard">
       <div class="section-title">
@@ -674,15 +684,15 @@
       }
       dHtml += '</div>';
 
-     let totalSched = 0, totalDone = 0;
+      let totalSched = 0, totalDone = 0;
       habits.forEach((h, idx) => {
         const alt = idx % 2 === 1 ? ' mdays-alt' : '';
         dHtml += `<div class="mdays-habit-row${alt}">`;
         for (let d = 1; d <= daysInMonth; d++) {
-          const ds   = mkDate(y, m, d);
-          const isT  = ds === today;
-          const past = ds < today;
-          const editable = past || isT;
+          const ds       = mkDate(y, m, d);
+          const isT      = ds === today;
+          const past     = ds < today;
+          const editable = past || isT; // редактировать можно сегодня и прошедшие дни
 
           if (!isActive(h, ds)) {
             dHtml += '<div class="mday-cell"><div class="cell-inner cell-na"></div></div>';
@@ -693,27 +703,15 @@
           if (editable) { totalSched++; if (done) totalDone++; }
 
           let cls = 'cell-inner';
-          if (done)          cls += isT ? ' cell-done cell-today-done' : ' cell-done';
-          else if (editable) cls += isT ? ' cell-missed cell-today-ring' : ' cell-missed';
-          else               cls += ' cell-future';
+          if (done)            cls += isT ? ' cell-done cell-today-done' : ' cell-done';
+          else if (editable)   cls += isT ? ' cell-missed cell-today-ring' : ' cell-missed';
+          else                 cls += ' cell-future';
           if (editable) cls += ' cell-editable';
 
           const clickAttr = editable ? ` onclick="window.toggleHabitDate(${h.id},'${ds}')"` : '';
           const tip = editable ? ' title="Нажмите, чтобы отметить/снять"' : '';
+
           dHtml += `<div class="mday-cell"><div class="${cls}"${clickAttr}${tip}>${done ? '✓' : (editable ? '·' : '')}</div></div>`;
-        }
-        dHtml += '</div>';
-      });
-
-          const done = isDone(h.id, ds);
-          if (past || isT) { totalSched++; if (done) totalDone++; }
-
-          let cls = 'cell-inner ';
-          if (done)            cls += isT ? 'cell-done cell-today-done' : 'cell-done';
-          else if (past || isT) cls += isT ? 'cell-missed cell-today-ring' : 'cell-missed';
-          else                  cls += 'cell-future';
-
-          dHtml += `<div class="mday-cell"><div class="${cls}">${done ? '✓' : (past ? '·' : '')}</div></div>`;
         }
         dHtml += '</div>';
       });
@@ -804,7 +802,7 @@
       }
     }
 
-    /* ===== TOGGLE HABIT ===== */
+    /* ===== TOGGLE HABIT (today, из списка "Сегодня") ===== */
     function toggleHabit(id) {
       const today = todayStr();
       toggleDone(id, today);
@@ -812,7 +810,8 @@
       renderToday();
       if (isDone(id, today)) notify('Выполнено! 🎯', 'success');
     }
-      /* ===== TOGGLE HABIT FOR A SPECIFIC PAST/TODAY DATE ===== */
+
+    /* ===== TOGGLE HABIT FOR A SPECIFIC PAST/TODAY DATE (клик по матрице) ===== */
     function toggleHabitDate(id, ds) {
       if (ds > todayStr()) { notify('Нельзя отмечать будущие дни', 'danger'); return; }
       toggleDone(id, ds);
@@ -1229,6 +1228,7 @@
     window.deleteHabit      = deleteHabit;
     window.saveHabit        = saveHabit;
     window.toggleHabit      = toggleHabit;
+    window.toggleHabitDate  = toggleHabitDate;
     window.changeMonth      = changeMonth;
     window.openAnalytics    = openAnalytics;
     window.onAHabitChange   = onAHabitChange;
