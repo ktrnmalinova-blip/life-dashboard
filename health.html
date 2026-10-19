@@ -34,3 +34,1573 @@
       --border: rgba(var(--orb-rgb), 0.16);
       --border-md: rgba(var(--orb-rgb), 0.30);
       --border-strong: rgba(var(--orb-rgb), 0.5);
+
+      --text-primary: #efe9ff;
+      --text-secondary: rgba(239, 233, 255, 0.7);
+      --text-muted: rgba(239, 233, 255, 0.4);
+
+      --accent: #b6a2fb;
+      --accent-light: #d9cffc;
+      --accent-glow: rgba(var(--orb-rgb), 0.35);
+
+      --success: #6fd8ab;
+      --success-bg: rgba(111, 216, 171, 0.12);
+      --danger: #ef9393;
+      --danger-bg: rgba(239, 147, 147, 0.12);
+      --warning: #e8c17c;
+      --warning-bg: rgba(232, 193, 124, 0.12);
+      --info: #8fc4ef;
+      --info-bg: rgba(143, 196, 239, 0.12);
+
+      --radius: 34px;
+      --radius-sm: 18px;
+      --radius-pill: 999px;
+
+      --blur-md: blur(22px);
+      --blur-lg: blur(46px);
+      --transition: all 0.25s cubic-bezier(0.4, 0, 0.2, 1);
+      --safe-bottom: env(safe-area-inset-bottom, 20px);
+      --font-main: 'Manrope', -apple-system, BlinkMacSystemFont, sans-serif;
+
+      --shadow-convex: inset 0 1px 0 rgba(255,255,255,0.14),
+                        inset 0 -10px 16px -12px rgba(0,0,0,0.45),
+                        0 10px 22px -6px rgba(0,0,0,0.4),
+                        0 2px 4px rgba(0,0,0,0.25);
+      --shadow-convex-sm: inset 0 1px 0 rgba(255,255,255,0.12),
+                        inset 0 -6px 10px -8px rgba(0,0,0,0.4),
+                        0 6px 14px -4px rgba(0,0,0,0.35);
+    }
+
+    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; -webkit-tap-highlight-color: transparent; }
+    html { font-size: 16px; scroll-behavior: smooth; }
+    body {
+      font-family: var(--font-main);
+      background: radial-gradient(120% 90% at 20% -10%, var(--bg-base-2) 0%, var(--bg-base) 55%);
+      color: var(--text-primary);
+      min-height: 100vh;
+      padding-bottom: calc(80px + var(--safe-bottom));
+      overflow-x: hidden;
+      position: relative;
+      line-height: 1.5;
+      -webkit-font-smoothing: antialiased;
+    }
+    svg { display: block; }
+    .icon { width: 18px; height: 18px; stroke: currentColor; stroke-width: 1.8; fill: none; stroke-linecap: round; stroke-linejoin: round; flex-shrink: 0; }
+
+    /* =========================================
+       NEBULA BACKGROUND — layered, parallax-driven
+    ========================================= */
+    .orb-container { position: fixed; inset: 0; pointer-events: none; z-index: 0; overflow: hidden; }
+    .orb-layer { position: absolute; inset: 0; will-change: transform; transition: transform 0.4s cubic-bezier(0.2,0.7,0.2,1); }
+    .orb { position: absolute; border-radius: 50%; filter: blur(56px); animation: floatOrb 20s ease-in-out infinite alternate; }
+    .orb--1 { width: 300px; height: 300px; background: rgba(var(--orb-rgb), 0.16); top: -8%; left: -10%; animation-delay: -2s; }
+    .orb--2 { width: 260px; height: 260px; background: rgba(var(--orb-rgb), 0.13); bottom: 10%; right: -12%; animation-delay: -10s; }
+    .orb--3 { width: 190px; height: 190px; background: rgba(var(--orb-rgb), 0.10); top: 46%; left: 58%; animation-delay: -6s; }
+    .orb--4 { width: 150px; height: 150px; background: rgba(var(--orb-rgb), 0.09); top: 68%; left: 8%; animation-delay: -14s; }
+    @keyframes floatOrb { 0% { transform: translate(0,0) scale(1); } 100% { transform: translate(18px,-24px) scale(1.06); } }
+    .stars { position: absolute; inset: 0;
+      background-image:
+        radial-gradient(1px 1px at 12% 18%, rgba(239,233,255,0.35) 0%, transparent 100%),
+        radial-gradient(1px 1px at 76% 10%, rgba(239,233,255,0.25) 0%, transparent 100%),
+        radial-gradient(1.4px 1.4px at 48% 34%, rgba(239,233,255,0.2) 0%, transparent 100%),
+        radial-gradient(1px 1px at 8% 62%, rgba(239,233,255,0.16) 0%, transparent 100%),
+        radial-gradient(1px 1px at 88% 48%, rgba(239,233,255,0.22) 0%, transparent 100%),
+        radial-gradient(1px 1px at 34% 80%, rgba(239,233,255,0.15) 0%, transparent 100%);
+      background-size: 340px 340px; animation: twinkle 22s linear infinite;
+    }
+    @keyframes twinkle { 0% { opacity:.55; } 50% { opacity:1; } 100% { opacity:.55; } }
+    @media (prefers-reduced-motion: reduce) { .orb, .stars { animation: none !important; } }
+
+    /* =========================================
+       LAYOUT
+    ========================================= */
+    .container { position: relative; z-index: 1; max-width: 480px; margin: 0 auto; padding: 0 20px; }
+
+    /* =========================================
+       GLASS CARD
+    ========================================= */
+    .glass-card {
+      background: linear-gradient(150deg, var(--surface-other-1), var(--surface-other-2));
+      backdrop-filter: var(--blur-md); -webkit-backdrop-filter: var(--blur-md);
+      border: 1px solid var(--border);
+      border-radius: var(--radius);
+      padding: 20px;
+      margin-bottom: 16px;
+      transition: var(--transition);
+      position: relative;
+      box-shadow: var(--shadow-convex);
+    }
+    .glass-card::before { content: ''; position: absolute; top: 0; left: 0; right: 0; height: 1px; background: linear-gradient(90deg, transparent, rgba(255,255,255,.30), transparent); pointer-events: none; }
+    .glass-card--accent { border-color: var(--border-strong); background: linear-gradient(150deg, var(--surface-task-1), var(--surface-task-2)); }
+    .glass-card--success { border-color: rgba(111,216,171,.4); background: var(--success-bg); }
+    .glass-card--danger { border-color: rgba(239,147,147,.4); background: var(--danger-bg); }
+
+    /* =========================================
+       TYPOGRAPHY
+    ========================================= */
+    .page-title { font-size: 26px; font-weight: 800; letter-spacing: -.4px; color: var(--text-primary); display: flex; align-items: center; gap: 10px; margin-bottom: 3px; }
+    .page-title .icon { width: 25px; height: 25px; stroke: var(--accent-light); }
+    .page-subtitle { color: var(--text-secondary); font-size: 13px; margin-bottom: 20px; font-weight: 500; }
+    .section-title { font-size: 15px; font-weight: 700; margin-bottom: 14px; display: flex; align-items: center; gap: 9px; }
+    .section-title .icon { width: 17px; height: 17px; stroke: var(--accent-light); }
+    .text-secondary { color: var(--text-secondary); }
+    .text-muted { color: var(--text-muted); }
+    .text-success { color: var(--success); }
+    .text-danger { color: var(--danger); }
+    .text-accent { color: var(--accent-light); }
+    .metric-value { font-size: 32px; font-weight: 800; letter-spacing: -1px; }
+    .metric-value--positive { color: var(--success); }
+    .metric-value--negative { color: var(--danger); }
+
+    /* =========================================
+       BUTTONS
+    ========================================= */
+    .btn { display: inline-flex; align-items: center; justify-content: center; gap: 8px; padding: 13px 18px; border: 1px solid var(--border); border-radius: var(--radius-sm); font-size: 14px; font-weight: 600; cursor: pointer; transition: var(--transition); background: linear-gradient(150deg, var(--surface-other-1), var(--surface-other-2)); color: var(--text-primary); font-family: inherit; box-shadow: var(--shadow-convex-sm); }
+    .btn:hover { border-color: var(--border-md); }
+    .btn:active { transform: scale(0.97); }
+    .btn--primary { background: linear-gradient(135deg, var(--surface-btn-1), var(--surface-btn-2)); border-color: var(--border-strong); color: var(--text-primary); box-shadow: var(--shadow-convex-sm), 0 4px 20px rgba(var(--orb-rgb), 0.2); }
+    .btn--primary:hover { box-shadow: var(--shadow-convex-sm), 0 6px 26px rgba(var(--orb-rgb), 0.28); }
+    .btn--ghost { background: transparent; border-color: var(--border); color: var(--text-secondary); box-shadow: none; }
+    .btn--ghost:hover { background: var(--surface-other-1); color: var(--text-primary); border-color: var(--border-md); }
+    .btn--success { background: var(--success-bg); border: 1px solid rgba(111,216,171,.32); color: var(--success); box-shadow: none; }
+    .btn--success:hover { background: rgba(111,216,171,.2); }
+    .btn--danger { background: var(--danger-bg); border: 1px solid rgba(239,147,147,.32); color: var(--danger); box-shadow: none; }
+    .btn--danger:hover { background: rgba(239,147,147,.2); }
+    .btn--icon { width: 40px; height: 40px; padding: 0; border-radius: var(--radius-sm); flex-shrink: 0; }
+    .btn--full { width: 100%; }
+    .btn .icon { width: 16px; height: 16px; }
+    .btn.done { border-color: var(--success); color: var(--success); background: var(--success-bg); }
+
+    /* =========================================
+       FORMS
+    ========================================= */
+    .input, .select, .textarea { width: 100%; padding: 14px 16px; background: rgba(var(--orb-rgb),0.04); border: 1px solid var(--border); border-radius: var(--radius-sm); color: var(--text-primary); font-size: 15px; font-family: inherit; transition: var(--transition); }
+    .input:focus, .select:focus, .textarea:focus { outline: none; border-color: var(--border-strong); box-shadow: 0 0 0 3px rgba(var(--orb-rgb),0.18); }
+    .input::placeholder { color: var(--text-muted); }
+    .select { appearance: none; background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='14' height='14' viewBox='0 0 24 24' fill='none' stroke='%23c4b5fd' stroke-width='2'%3E%3Cpolyline points='6 9 12 15 18 9'/%3E%3C/svg%3E"); background-repeat: no-repeat; background-position: right 14px center; }
+    .select option { background: #17171c; color: var(--text-primary); }
+    .textarea { min-height: 80px; resize: vertical; }
+    .form-group { margin-bottom: 16px; }
+    .form-label { display: block; font-size: 13px; color: var(--text-secondary); margin-bottom: 8px; font-weight: 600; }
+
+    /* =========================================
+       TABS
+    ========================================= */
+    .tabs-nav { display: flex; gap: 8px; overflow-x: auto; padding: 0 0 4px; scrollbar-width: none; margin-bottom: 18px; }
+    .tabs-nav::-webkit-scrollbar { display: none; }
+    .tab-btn { flex: 0 0 auto; padding: 10px 17px; border-radius: var(--radius-pill); font-size: 13px; font-weight: 700; color: var(--text-secondary); background: var(--surface-other-1); border: 1px solid var(--border); cursor: pointer; transition: var(--transition); white-space: nowrap; font-family: inherit; }
+    .tab-btn.active { background: var(--surface-task-1); color: var(--accent-light); border-color: var(--border-strong); box-shadow: var(--shadow-convex-sm); }
+    .tab-content { display: none; animation: fadeIn 0.3s ease; }
+    .tab-content.active { display: block; }
+    @keyframes fadeIn { from { opacity: 0; transform: translateY(8px); } to { opacity: 1; transform: translateY(0); } }
+
+    /* =========================================
+       COMPACT METRICS GRID (unified typography + sparklines)
+    ========================================= */
+    .metrics-grid2 { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; margin-bottom: 12px; }
+    .metric-card { padding: 14px 16px; display: flex; flex-direction: column; align-items: center; text-align: center; min-height: 138px; justify-content: space-between; }
+    .metric-card__label { font-size: 12px; color: var(--text-secondary); font-weight: 700; display: flex; align-items: center; justify-content: center; gap: 6px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; width: 100%; }
+    .metric-card__label .icon { width: 15px; height: 15px; stroke: var(--accent-light); }
+    .metric-card__value { font-size: 19px; font-weight: 800; line-height: 1.1; margin-top: 6px; }
+    .metric-card__spark { width: 100%; height: 26px; margin: 7px 0 2px; display: block; }
+    .metric-card__sub { font-size: 11px; color: var(--text-muted); margin-top: 1px; font-weight: 600; }
+    .metric-card__counter { display: flex; align-items: center; justify-content: center; gap: 8px; margin-top: 9px; }
+    .metric-card__counter .btn--icon { width: 26px; height: 26px; border-radius: 9px; }
+    .vitals-card { cursor: pointer; }
+
+    /* =========================================
+       WEEK OVERVIEW — stats row + insights
+    ========================================= */
+    .week-stats-row { display: grid; grid-template-columns: repeat(3, 1fr); gap: 8px; margin-bottom: 4px; }
+    .week-stat { text-align: center; background: var(--surface-other-1); border: 1px solid var(--border); border-radius: var(--radius-sm); padding: 9px 4px; }
+    .week-stat__val { font-size: 15px; font-weight: 800; color: var(--accent-light); }
+    .week-stat__lbl { font-size: 9px; color: var(--text-muted); margin-top: 3px; font-weight: 700; text-transform: uppercase; letter-spacing: .04em; }
+    .insight-item { display: flex; align-items: flex-start; gap: 10px; padding: 10px 0; border-bottom: 1px solid var(--border); font-size: 13px; color: var(--text-secondary); line-height: 1.5; }
+    .insight-item:last-child { border-bottom: none; padding-bottom: 0; }
+    .insight-item .icon { width: 16px; height: 16px; stroke: var(--accent-light); margin-top: 1px; flex-shrink: 0; }
+    .trend-arrow { font-size: 10px; font-weight: 800; margin-left: 3px; }
+    .trend-arrow.up { color: var(--danger); }
+    .trend-arrow.down { color: var(--success); }
+    .trend-arrow.flat { color: var(--text-muted); }
+
+    /* =========================================
+       QUICK CARDS — full-width rows (Оценить день / Кофе / Экранное время)
+    ========================================= */
+    .quick-card { cursor: pointer; }
+    .quick-card__header { display: flex; align-items: center; justify-content: space-between; gap: 10px; }
+    .quick-card__title { display: flex; align-items: center; gap: 11px; font-size: 15px; font-weight: 700; min-width: 0; }
+    .quick-card__icon { width: 38px; height: 38px; border-radius: var(--radius-sm); background: var(--surface-other-1); border: 1px solid var(--border); display: flex; align-items: center; justify-content: center; flex-shrink: 0; }
+    .quick-card__icon .icon { width: 18px; height: 18px; stroke: var(--accent-light); }
+    .quick-card__meta { font-size: 12px; color: var(--text-muted); font-weight: 600; margin-top: 2px; }
+    .quick-card__right { display: flex; align-items: center; gap: 8px; flex-shrink: 0; }
+    .quick-card__status { font-size: 12px; font-weight: 700; color: var(--text-secondary); white-space: nowrap; }
+    .quick-card__status.done { color: var(--success); }
+    .quick-card__chevron { width: 18px; height: 18px; stroke: var(--text-muted); transition: transform 0.2s; flex-shrink: 0; }
+    .quick-card__chevron.open { transform: rotate(180deg); }
+    .quick-card__body { max-height: 0; overflow: hidden; transition: max-height 0.3s ease; }
+    .quick-card__body.open { max-height: 900px; margin-top: 16px; }
+
+    /* =========================================
+       TOGGLE PILLS (replaces checkboxes — style like habits day-chip)
+    ========================================= */
+    .toggle-pill-row { display: flex; gap: 8px; flex-wrap: wrap; margin: 12px 0; }
+    .toggle-pill { padding: 9px 15px; border-radius: var(--radius-pill); font-size: 12px; font-weight: 700; background: var(--surface-other-1); border: 1px solid var(--border); color: var(--text-secondary); cursor: pointer; transition: var(--transition); font-family: inherit; display: inline-flex; align-items: center; gap: 6px; }
+    .toggle-pill:hover { border-color: var(--border-md); }
+    .toggle-pill.active { background: var(--surface-task-1); border-color: var(--border-strong); color: var(--accent-light); box-shadow: var(--shadow-convex-sm); }
+    .toggle-pill .icon { width: 14px; height: 14px; }
+
+    /* =========================================
+       RATING ROWS — day rating (styled like habit-item)
+    ========================================= */
+    .rating-row { display: flex; align-items: center; gap: 12px; padding: 13px 0; border-bottom: 1px solid var(--border); }
+    .rating-row:last-child { border-bottom: none; }
+    .rating-icon { width: 38px; height: 38px; border-radius: var(--radius-sm); background: var(--surface-other-1); border: 1px solid var(--border); display: flex; align-items: center; justify-content: center; flex-shrink: 0; }
+    .rating-icon .icon { width: 17px; height: 17px; stroke: var(--accent-light); }
+    .rating-body { flex: 1; min-width: 0; }
+    .rating-label-row { display: flex; justify-content: space-between; align-items: baseline; margin-bottom: 7px; }
+    .rating-label { font-size: 13px; font-weight: 700; }
+    .rating-val { font-size: 15px; font-weight: 800; color: var(--accent-light); min-width: 20px; text-align: right; }
+    .range-slider { width: 100%; -webkit-appearance: none; appearance: none; height: 6px; border-radius: 3px; background: rgba(var(--orb-rgb),.15); outline: none; }
+    .range-slider::-webkit-slider-thumb { -webkit-appearance: none; width: 20px; height: 20px; border-radius: 50%; background: var(--accent); box-shadow: 0 0 10px var(--accent-glow); cursor: pointer; }
+    .range-slider::-moz-range-thumb { width: 20px; height: 20px; border-radius: 50%; background: var(--accent); border: none; box-shadow: 0 0 10px var(--accent-glow); cursor: pointer; }
+
+    /* =========================================
+       HISTORY LIST — day ratings (full history, not just sleep)
+    ========================================= */
+    .history-entry { padding: 13px 0; border-bottom: 1px solid var(--border); }
+    .history-entry:last-child { border-bottom: none; }
+    .history-entry__date { font-size: 12px; color: var(--accent-light); font-weight: 700; margin-bottom: 9px; }
+    .history-chips { display: flex; flex-wrap: wrap; gap: 6px; }
+    .history-chip { display: inline-flex; align-items: center; gap: 5px; padding: 4px 9px; border-radius: var(--radius-pill); font-size: 11px; font-weight: 700; background: var(--surface-task-1); border: 1px solid var(--border-md); color: var(--accent-light); }
+    .history-note { font-size: 13px; color: var(--text-secondary); margin-top: 9px; line-height: 1.5; }
+
+    /* =========================================
+       MEDS MINI-TRACKER
+    ========================================= */
+    .meds-summary { display: flex; align-items: center; justify-content: space-between; cursor: pointer; }
+    .meds-summary .section-title { margin-bottom: 0; }
+    .meds-list { display: none; margin-top: 6px; }
+    .meds-list.open { display: block; animation: fadeIn 0.25s ease; }
+    .med-row { display: flex; align-items: center; gap: 10px; padding: 10px 0; border-bottom: 1px solid var(--border); }
+    .med-row:last-child { border-bottom: none; }
+    .med-check { width: 28px; height: 28px; border-radius: 9px; border: 2px solid var(--border-md); background: rgba(var(--orb-rgb),0.04); display: flex; align-items: center; justify-content: center; cursor: pointer; transition: var(--transition); flex-shrink: 0; }
+    .med-check .icon { width: 14px; height: 14px; stroke: #0f0f12; opacity: 0; transition: opacity 0.15s; }
+    .med-check:active { transform: scale(0.88); }
+    .med-check.checked { background: var(--success); border-color: var(--success); box-shadow: 0 0 12px rgba(111,216,171,.35); }
+    .med-check.checked .icon { opacity: 1; }
+    .med-name { flex: 1; font-size: 14px; font-weight: 600; }
+    .med-del { background: none; border: none; color: var(--text-muted); cursor: pointer; padding: 6px; display: flex; border-radius: 8px; transition: var(--transition); }
+    .med-del:hover, .med-del:active { color: var(--danger); background: var(--danger-bg); }
+    .med-add-row { display: flex; gap: 8px; margin-top: 12px; }
+
+    /* =========================================
+       SPARKLINE
+    ========================================= */
+    .sparkline-wrap { margin-top: 4px; }
+
+    /* =========================================
+       PROGRESS RING (old, still used in modals if needed)
+    ========================================= */
+    .progress-ring-wrapper { position: relative; width: 128px; height: 128px; margin: 0 auto 18px; }
+    .progress-ring { transform: rotate(-90deg); width: 128px; height: 128px; }
+    .progress-ring-bg { fill: none; stroke: rgba(var(--orb-rgb),.1); stroke-width: 9; }
+    .progress-ring-fill { fill: none; stroke: var(--accent); stroke-width: 9; stroke-linecap: round; transition: stroke-dashoffset 0.5s ease; filter: drop-shadow(0 0 8px var(--accent-glow)); }
+    .progress-text { position: absolute; top: 50%; left: 50%; transform: translate(-50%, -50%); text-align: center; }
+    .progress-value { font-size: 28px; font-weight: 800; color: var(--accent-light); }
+    .progress-label { font-size: 11px; color: var(--text-muted); margin-top: 4px; font-weight: 600; }
+
+    /* =========================================
+       DOCTOR / ANALYSIS ITEMS
+    ========================================= */
+    .doctor-item, .analysis-item { display: flex; align-items: flex-start; gap: 12px; padding: 14px; border-radius: var(--radius-sm); background: linear-gradient(150deg, var(--surface-task-1), var(--surface-task-2)); border: 1px solid var(--border); margin-bottom: 8px; box-shadow: var(--shadow-convex-sm); }
+    .doctor-item:last-child, .analysis-item:last-child { margin-bottom: 0; }
+    .doctor-icon { width: 40px; height: 40px; border-radius: var(--radius-sm); background: var(--surface-other-1); border: 1px solid var(--border); display: flex; align-items: center; justify-content: center; flex-shrink: 0; color: var(--accent-light); }
+    .doctor-info { flex: 1; min-width: 0; }
+    .doctor-name { font-weight: 700; font-size: 15px; margin-bottom: 3px; }
+    .doctor-meta { font-size: 12px; color: var(--text-secondary); font-weight: 500; }
+    .doctor-actions { display: flex; gap: 6px; margin-top: 9px; flex-wrap: wrap; }
+    .doctor-actions .btn { padding: 7px 12px; font-size: 12px; }
+    .doctor-badge { padding: 5px 11px; border-radius: var(--radius-pill); font-size: 11px; font-weight: 700; background: var(--info-bg); color: var(--info); border: 1px solid rgba(143,196,239,.3); white-space: nowrap; }
+    .doctor-badge.past { background: rgba(var(--orb-rgb),.05); color: var(--text-muted); border-color: var(--border); }
+    .doctor-results { margin-top: 9px; padding: 11px; background: var(--success-bg); font-size: 13px; color: var(--text-primary); border-left: 3px solid var(--success); border-radius: 0 var(--radius-sm) var(--radius-sm) 0; display:flex; align-items:flex-start; gap:7px; }
+    .doctor-results .icon { width: 14px; height: 14px; stroke: var(--success); margin-top: 2px; }
+
+    /* =========================================
+       ANALYSIS TABLE
+    ========================================= */
+    .analysis-table { width: 100%; border-collapse: collapse; margin-top: 12px; font-size: 13px; }
+    .analysis-table th { text-align: left; padding: 8px 4px; color: var(--text-secondary); font-weight: 600; border-bottom: 1px solid var(--border); font-size: 11px; text-transform: uppercase; letter-spacing: .05em; }
+    .analysis-table td { padding: 9px 4px; border-bottom: 1px solid rgba(var(--orb-rgb),.06); }
+    .analysis-table .val-cell { font-weight: 800; color: var(--accent-light); text-align: right; }
+    .pdf-badge { font-size: 11px; color: var(--accent-light); background: var(--surface-task-1); border: 1px solid var(--border-md); padding: 4px 10px; border-radius: var(--radius-pill); margin-top: 8px; display: inline-flex; align-items: center; gap: 5px; font-weight: 600; }
+    .pdf-badge .icon { width: 12px; height: 12px; }
+
+    /* =========================================
+       CALENDAR (cycle tab)
+    ========================================= */
+    .calendar-header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 14px; }
+    .calendar-nav { width: 38px; height: 38px; border-radius: var(--radius-sm); background: var(--surface-other-1); border: 1px solid var(--border); color: var(--text-primary); cursor: pointer; display: flex; align-items: center; justify-content: center; transition: var(--transition); }
+    .calendar-nav:hover { border-color: var(--border-md); background: var(--surface-other-2); }
+    .calendar-nav .icon { width: 14px; height: 14px; }
+    .calendar-month { font-size: 15px; font-weight: 700; }
+    .calendar-grid { display: grid; grid-template-columns: repeat(7, 1fr); gap: 6px; }
+    .cal-day { aspect-ratio: 1; border-radius: 10px; display: flex; align-items: center; justify-content: center; font-size: 13px; font-weight: 600; background: var(--surface-other-1); border: 1px solid var(--border); color: var(--text-primary); cursor: pointer; transition: var(--transition); position: relative; }
+    .cal-day.empty { background: transparent; border: none; cursor: default; opacity: 0.3; }
+    .cal-day.today { border-color: var(--border-strong); box-shadow: 0 0 0 2px rgba(var(--orb-rgb),.22); }
+    .cal-day.period { background: var(--danger-bg); border-color: rgba(239,147,147,.4); color: var(--danger); }
+    .cal-day.fertile { background: var(--warning-bg); border-color: rgba(232,193,124,.4); color: var(--warning); }
+    .cal-day.ovulation { background: var(--info-bg); border-color: rgba(143,196,239,.4); color: var(--info); }
+    .cal-day-header { text-align: center; font-size: 11px; color: var(--text-muted); font-weight: 700; padding: 4px; }
+
+    /* =========================================
+       CYCLE INFO
+    ========================================= */
+    .cycle-info { background: linear-gradient(150deg, var(--surface-task-1), var(--surface-task-2)); border: 1px solid var(--border-md); border-radius: var(--radius-sm); padding: 18px; margin-bottom: 16px; text-align: center; box-shadow: var(--shadow-convex-sm); }
+    .cycle-day { font-size: 30px; font-weight: 800; color: var(--accent-light); margin: 5px 0; }
+    .cycle-phase { font-size: 14px; color: var(--text-secondary); font-weight: 600; }
+    .legend { display: flex; flex-wrap: wrap; gap: 14px; margin-top: 14px; font-size: 12px; color: var(--text-secondary); font-weight: 500; }
+    .legend-item { display: flex; align-items: center; gap: 6px; }
+    .legend-dot { width: 10px; height: 10px; border-radius: 50%; }
+
+    /* =========================================
+       ACTIVITY WEEK
+    ========================================= */
+    .activity-week { display: flex; justify-content: space-between; gap: 6px; margin: 14px 0; }
+    .act-day { flex: 1; background: var(--surface-other-1); border: 1px solid var(--border); border-radius: var(--radius-sm); padding: 11px 6px; text-align: center; transition: var(--transition); }
+    .act-day.active { background: var(--success-bg); border-color: rgba(111,216,171,.4); }
+    .act-day.today { border-color: var(--border-strong); }
+    .act-day-name { font-size: 10px; color: var(--text-muted); font-weight: 600; }
+    .act-day-num { font-size: 15px; font-weight: 700; margin: 5px 0; }
+    .act-day-dot { width: 6px; height: 6px; background: var(--success); border-radius: 50%; margin: 0 auto; display: none; }
+    .act-day.active .act-day-dot { display: block; }
+
+    /* =========================================
+       STATS GRID
+    ========================================= */
+    .stats-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; }
+    .stat-card { text-align: center; padding: 18px; }
+    .stat-label { font-size: 12px; color: var(--text-secondary); margin-bottom: 7px; font-weight: 600; }
+    .stat-value { font-size: 22px; font-weight: 800; }
+
+    /* =========================================
+       EMPTY STATE
+    ========================================= */
+    .empty-state { text-align: center; padding: 36px 20px; color: var(--text-muted); }
+    .empty-state-icon { width: 40px; height: 40px; margin: 0 auto 12px; stroke: var(--text-muted); }
+    .empty-state-title { font-size: 15px; font-weight: 700; color: var(--text-secondary); margin-bottom: 4px; }
+
+    /* =========================================
+       MODALS
+    ========================================= */
+    .modal-overlay { position: fixed; inset: 0; background: rgba(10,10,13,.85); backdrop-filter: var(--blur-lg); -webkit-backdrop-filter: var(--blur-lg); z-index: 1000; display: none; align-items: flex-end; justify-content: center; }
+    .modal-overlay.active { display: flex; }
+    .modal { background: linear-gradient(180deg, #1c1c22 0%, var(--bg-base) 100%); border: 1px solid var(--border-md); border-radius: var(--radius) var(--radius) 0 0; padding: 24px; width: 100%; max-width: 480px; max-height: 92vh; overflow-y: auto; animation: slideUp .3s ease; scrollbar-width: thin; scrollbar-color: var(--border-md) transparent; }
+    .modal::-webkit-scrollbar { width: 3px; }
+    .modal::-webkit-scrollbar-thumb { background: var(--border-md); border-radius: 3px; }
+    @keyframes slideUp { from { transform: translateY(100%); } to { transform: translateY(0); } }
+    .modal__handle { width: 36px; height: 4px; background: var(--border-md); border-radius: 4px; margin: 0 auto 18px; }
+    .modal__header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 20px; }
+    .modal__title { font-size: 18px; font-weight: 800; display: flex; align-items: center; gap: 9px; }
+    .modal__title .icon { width: 19px; height: 19px; stroke: var(--accent-light); }
+    .modal__close { width: 36px; height: 36px; border-radius: var(--radius-sm); background: var(--surface-other-1); border: 1px solid var(--border); color: var(--text-secondary); cursor: pointer; display: flex; align-items: center; justify-content: center; transition: var(--transition); }
+    .modal__close .icon { width: 15px; height: 15px; }
+    .modal__close:hover { color: var(--text-primary); border-color: var(--border-md); background: var(--danger-bg); }
+    @media (min-width: 481px) { .modal-overlay { align-items: center; } .modal { border-radius: var(--radius); } }
+
+    /* =========================================
+       GLOBAL NAVIGATION
+    ========================================= */
+    .bottom-nav { position: fixed; bottom: 0; left: 0; right: 0; background: rgba(15,15,18,.86); backdrop-filter: var(--blur-md); border-top: 1px solid var(--border); display: flex; justify-content: space-around; align-items: center; padding: 10px 0 calc(10px + var(--safe-bottom)); z-index: 100; }
+    .nav-btn { display: flex; flex-direction: column; align-items: center; gap: 4px; text-decoration: none; color: var(--text-muted); padding: 8px 12px; border-radius: var(--radius-sm); transition: var(--transition); font-size: 10px; font-weight: 600; background: transparent; border: none; cursor: pointer; }
+    .nav-btn svg { width: 22px; height: 22px; stroke: currentColor; stroke-width: 1.8; fill: none; transition: stroke 0.2s; }
+    .nav-btn.active { color: var(--accent-light); }
+    .nav-btn.active svg { stroke-width: 2.2; filter: drop-shadow(0 0 8px var(--accent-glow)); }
+
+    /* =========================================
+       NOTIFICATION
+    ========================================= */
+    .notification { position: fixed; top: 20px; left: 50%; transform: translateX(-50%) translateY(-100px); background: rgba(var(--orb-rgb), 0.24); border: 1px solid var(--border-strong); color: var(--accent-light); padding: 12px 24px; border-radius: var(--radius-pill); font-weight: 700; font-size: 14px; z-index: 2000; transition: transform 0.3s cubic-bezier(.4,0,.2,1); backdrop-filter: blur(18px); box-shadow: 0 8px 26px rgba(0,0,0,.35); white-space: nowrap; }
+    .notification.show { transform: translateX(-50%) translateY(0); }
+    .notification--success { background: rgba(111,216,171,.2); border-color: rgba(111,216,171,.4); color: var(--success); }
+    .notification--danger { background: rgba(239,147,147,.2); border-color: rgba(239,147,147,.4); color: var(--danger); }
+
+    .divider { height: 1px; background: var(--border); margin: 16px 0; }
+
+    @media (min-width: 481px) { .container { max-width: 480px; margin: 0 auto; } }
+    @media (prefers-reduced-motion: reduce) { *, *::before, *::after { animation-duration: 0.01ms !important; transition-duration: 0.01ms !important; } }
+  </style>
+</head>
+<body>
+
+  <!-- NEBULA BACKGROUND -->
+  <div class="orb-container" id="orbContainer">
+    <div class="orb-layer" data-depth="0.025" id="orbLayer1"><div class="orb orb--1"></div></div>
+    <div class="orb-layer" data-depth="0.04"  id="orbLayer2"><div class="orb orb--2"></div></div>
+    <div class="orb-layer" data-depth="0.018" id="orbLayer3"><div class="orb orb--3"></div></div>
+    <div class="orb-layer" data-depth="0.05"  id="orbLayer4"><div class="orb orb--4"></div></div>
+    <div class="stars"></div>
+  </div>
+
+  <!-- NOTIFICATION -->
+  <div class="notification" id="notification">Действие выполнено</div>
+
+  <!-- HEADER -->
+  <header class="container" style="padding: 24px 20px 0;">
+    <h1 class="page-title">
+      <svg class="icon" viewBox="0 0 24 24"><path d="M20.84 4.61a5.5 5.5 0 0 0-7.78 0L12 5.67l-1.06-1.06a5.5 5.5 0 0 0-7.78 7.78l1.06 1.06L12 21.23l7.78-7.78 1.06-1.06a5.5 5.5 0 0 0 0-7.78z"/></svg>
+      Здоровье
+    </h1>
+    <p class="page-subtitle">Ваш персональный трекер самочувствия</p>
+
+    <!-- TABS NAV -->
+    <nav class="tabs-nav">
+      <button class="tab-btn active" data-tab="tabGeneral">Общее</button>
+      <button class="tab-btn" data-tab="tabAnalyses">Анализы</button>
+      <button class="tab-btn" data-tab="tabFemale">Цикл</button>
+      <button class="tab-btn" data-tab="tabWeight">Вес</button>
+      <button class="tab-btn" data-tab="tabActivity">Активность</button>
+    </nav>
+  </header>
+
+  <!-- MAIN CONTENT -->
+  <main class="container" style="padding: 0 20px;">
+
+    <!-- TAB 1: ОБЩЕЕ (REDESIGNED — минималистичный, иконки вместо эмодзи) -->
+    <section class="tab-content active" id="tabGeneral">
+
+      <!-- 2x2 compact metrics — мини-графики за 7 дней вместо колец -->
+      <div class="metrics-grid2">
+        <!-- Water -->
+        <div class="glass-card metric-card">
+          <div class="metric-card__label"><svg class="icon" viewBox="0 0 24 24"><path d="M12 2.5S5 11 5 15a7 7 0 0 0 14 0c0-4-7-12.5-7-12.5z"/></svg>Вода</div>
+          <div class="metric-card__value"><span id="water-val">0</span></div>
+          <canvas class="metric-card__spark" id="water-spark"></canvas>
+          <div class="metric-card__sub">из 2000 мл</div>
+          <div class="metric-card__counter">
+            <button class="btn btn--icon btn--danger" data-metric="water" data-action="dec"><svg class="icon" viewBox="0 0 24 24" style="width:12px;height:12px;"><line x1="5" y1="12" x2="19" y2="12"/></svg></button>
+            <button class="btn btn--icon btn--success" data-metric="water" data-action="inc"><svg class="icon" viewBox="0 0 24 24" style="width:12px;height:12px;"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg></button>
+          </div>
+        </div>
+
+        <!-- Sleep -->
+        <div class="glass-card metric-card">
+          <div class="metric-card__label"><svg class="icon" viewBox="0 0 24 24"><path d="M20 12.8A8 8 0 1 1 11.2 4 6.5 6.5 0 0 0 20 12.8z"/></svg>Сон</div>
+          <div class="metric-card__value"><span id="sleep-val">0</span></div>
+          <canvas class="metric-card__spark" id="sleep-spark"></canvas>
+          <div class="metric-card__sub">из 8 ч</div>
+          <div class="metric-card__counter">
+            <button class="btn btn--icon btn--danger" data-metric="sleep" data-action="dec"><svg class="icon" viewBox="0 0 24 24" style="width:12px;height:12px;"><line x1="5" y1="12" x2="19" y2="12"/></svg></button>
+            <button class="btn btn--icon btn--success" data-metric="sleep" data-action="inc"><svg class="icon" viewBox="0 0 24 24" style="width:12px;height:12px;"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg></button>
+          </div>
+        </div>
+
+        <!-- Steps -->
+        <div class="glass-card metric-card">
+          <div class="metric-card__label"><svg class="icon" viewBox="0 0 24 24"><ellipse cx="8" cy="16.5" rx="2.6" ry="4" transform="rotate(-12 8 16.5)"/><ellipse cx="16" cy="10.5" rx="2.6" ry="4" transform="rotate(12 16 10.5)"/></svg>Шаги</div>
+          <div class="metric-card__value"><span id="steps-val">0</span></div>
+          <canvas class="metric-card__spark" id="steps-spark"></canvas>
+          <div class="metric-card__sub">из 10000</div>
+          <div class="metric-card__counter">
+            <button class="btn btn--icon btn--danger" data-metric="steps" data-action="dec"><svg class="icon" viewBox="0 0 24 24" style="width:12px;height:12px;"><line x1="5" y1="12" x2="19" y2="12"/></svg></button>
+            <button class="btn btn--icon btn--success" data-metric="steps" data-action="inc"><svg class="icon" viewBox="0 0 24 24" style="width:12px;height:12px;"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg></button>
+          </div>
+        </div>
+
+        <!-- Vitals (pulse/pressure) -->
+        <div class="glass-card metric-card vitals-card" onclick="window.openVitalsModal()">
+          <div class="metric-card__label"><svg class="icon" viewBox="0 0 24 24"><path d="M20.84 4.61a5.5 5.5 0 0 0-7.78 0L12 5.67l-1.06-1.06a5.5 5.5 0 0 0-7.78 7.78l1.06 1.06L12 21.23l7.78-7.78 1.06-1.06a5.5 5.5 0 0 0 0-7.78z"/></svg>Пульс/Давл.</div>
+          <div class="metric-card__value" id="vitals-last-val">—</div>
+          <canvas class="metric-card__spark" id="vitals-spark"></canvas>
+          <div class="metric-card__sub" id="vitals-last-time">Нет данных</div>
+        </div>
+      </div>
+
+      <!-- Weekly overview: stats + auto-detected insights -->
+      <div class="glass-card">
+        <div class="section-title" style="justify-content:space-between;">
+          <span style="display:flex;align-items:center;gap:9px;">
+            <svg class="icon" viewBox="0 0 24 24"><path d="M4 20V10M12 20V4M20 20v-7"/></svg>
+            Обзор недели
+          </span>
+          <button class="btn btn--icon btn--ghost" style="width:32px;height:32px;" onclick="window.openFullHistoryModal()" title="История за всё время">
+            <svg class="icon" viewBox="0 0 24 24" style="width:15px;height:15px;"><circle cx="12" cy="12" r="10"/><polyline points="12 6 12 12 16 14"/></svg>
+          </button>
+        </div>
+        <div class="week-stats-row">
+          <div class="week-stat"><div class="week-stat__val" id="wk-water">—</div><div class="week-stat__lbl">Вода</div></div>
+          <div class="week-stat"><div class="week-stat__val" id="wk-sleep">—</div><div class="week-stat__lbl">Сон</div></div>
+          <div class="week-stat"><div class="week-stat__val" id="wk-steps">—</div><div class="week-stat__lbl">Шаги</div></div>
+          <div class="week-stat"><div class="week-stat__val" id="wk-pulse">—</div><div class="week-stat__lbl">Пульс</div></div>
+          <div class="week-stat"><div class="week-stat__val" id="wk-mood">—</div><div class="week-stat__lbl">Настрой</div></div>
+          <div class="week-stat"><div class="week-stat__val" id="wk-coffee">—</div><div class="week-stat__lbl">Кофе/дн</div></div>
+        </div>
+        <div class="divider"></div>
+        <div class="section-title" style="margin-bottom:6px;">
+          <svg class="icon" viewBox="0 0 24 24"><circle cx="11" cy="11" r="7"/><line x1="21" y1="21" x2="16.65" y2="16.65"/></svg>
+          Замечено
+        </div>
+        <div id="insightsList"></div>
+      </div>
+
+      <!-- Rate day card -->
+      <div class="glass-card quick-card" id="rateDayCard" onclick="window.openDayRatingModal()">
+        <div class="quick-card__header">
+          <div class="quick-card__title">
+            <div class="quick-card__icon"><svg class="icon" viewBox="0 0 24 24"><path d="M12 20h9"/><path d="M16.5 3.5a2.1 2.1 0 0 1 3 3L7 19l-4 1 1-4Z"/></svg></div>
+            <div>
+              <div>Оценить день</div>
+              <div class="quick-card__meta" id="rateDayMeta">Настроение, сон, силы и другое</div>
+            </div>
+          </div>
+          <div class="quick-card__right">
+            <span class="quick-card__status" id="rateDayStatus">Не оценён</span>
+            <svg class="icon quick-card__chevron" viewBox="0 0 24 24"><polyline points="9 18 15 12 9 6"/></svg>
+          </div>
+        </div>
+      </div>
+
+      <!-- Coffee card (accordion) -->
+      <div class="glass-card quick-card" id="coffeeCard">
+        <div class="quick-card__header" id="coffeeCardHeader">
+          <div class="quick-card__title">
+            <div class="quick-card__icon"><svg class="icon" viewBox="0 0 24 24"><path d="M4 8h13a3 3 0 0 1 0 6h-1"/><path d="M4 8v8a3 3 0 0 0 3 3h6a3 3 0 0 0 3-3V8"/><path d="M8 2c0 1-1 1-1 2s1 1 1 2"/><path d="M12 2c0 1-1 1-1 2s1 1 1 2"/></svg></div>
+            <div>
+              <div>Кофе</div>
+              <div class="quick-card__meta" id="coffeeMeta">Сегодня ещё не было</div>
+            </div>
+          </div>
+          <div class="quick-card__right">
+            <svg class="icon quick-card__chevron" id="coffeeChevron" viewBox="0 0 24 24"><polyline points="9 18 15 12 9 6"/></svg>
+          </div>
+        </div>
+        <div class="quick-card__body" id="coffeeBody">
+          <div class="form-group">
+            <label class="form-label">Объём (мл)</label>
+            <input class="input" type="number" id="coffee-volume" placeholder="200" min="10">
+          </div>
+          <div class="form-group">
+            <label class="form-label">Тип</label>
+            <select class="select" id="coffee-type">
+              <option value="Эспрессо">Эспрессо</option>
+              <option value="Американо">Американо</option>
+              <option value="Капучино">Капучино</option>
+              <option value="Латте">Латте</option>
+              <option value="Растворимый">Растворимый</option>
+              <option value="Другое">Другое</option>
+            </select>
+          </div>
+          <div class="toggle-pill-row">
+            <button type="button" class="toggle-pill" id="pill-bought">
+              <svg class="icon" viewBox="0 0 24 24"><path d="M3 9l1-5h16l1 5"/><path d="M4 9v9a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V9"/><path d="M9 21V13h6v8"/></svg>
+              Куплен в заведении
+            </button>
+            <button type="button" class="toggle-pill" id="pill-syrup">
+              <svg class="icon" viewBox="0 0 24 24"><path d="M8 3h8l-1 5H9L8 3z"/><path d="M7 8h10l1 12a2 2 0 0 1-2 2H8a2 2 0 0 1-2-2L7 8z"/></svg>
+              Сироп
+            </button>
+            <button type="button" class="toggle-pill active" id="pill-caffeine">
+              <svg class="icon" viewBox="0 0 24 24"><path d="M13 2 4 14h6l-1 8 9-12h-6l1-8z"/></svg>
+              С кофеином
+            </button>
+          </div>
+          <div class="form-group" id="coffee-location-wrap" style="display:none;">
+            <label class="form-label">Где</label>
+            <input class="input" type="text" id="coffee-location" placeholder="Название кофейни">
+          </div>
+          <button class="btn btn--primary btn--full" onclick="event.stopPropagation(); window.saveCoffeeEntry()">Добавить</button>
+          <div id="coffee-today-list" style="margin-top:12px;"></div>
+        </div>
+      </div>
+
+      <!-- Screen time card -->
+      <div class="glass-card quick-card" id="screenTimeCard" onclick="window.openScreenTimeModal()">
+        <div class="quick-card__header">
+          <div class="quick-card__title">
+            <div class="quick-card__icon"><svg class="icon" viewBox="0 0 24 24"><rect x="6" y="3" width="12" height="18" rx="2"/><line x1="11" y1="18" x2="13" y2="18"/></svg></div>
+            <div>
+              <div>Экранное время</div>
+              <div class="quick-card__meta" id="screenTimeMeta">За вчера — не указано</div>
+            </div>
+          </div>
+          <div class="quick-card__right">
+            <svg class="icon quick-card__chevron" viewBox="0 0 24 24"><polyline points="9 18 15 12 9 6"/></svg>
+          </div>
+        </div>
+      </div>
+
+      <!-- Meds mini-tracker -->
+      <div class="glass-card">
+        <div class="meds-summary" onclick="window.toggleMedsList()">
+          <div class="section-title"><svg class="icon" viewBox="0 0 24 24"><rect x="4.5" y="4.5" width="15" height="15" rx="7.5" transform="rotate(45 12 12)"/><line x1="8.5" y1="15.5" x2="15.5" y2="8.5"/></svg>Принято сегодня <span id="meds-summary-count" style="color:var(--accent-light);margin-left:4px;"></span></div>
+          <svg class="icon" id="meds-chevron" viewBox="0 0 24 24" style="transition:transform .2s;"><polyline points="6 9 12 15 18 9"/></svg>
+        </div>
+        <div class="meds-list" id="medsList"></div>
+        <div class="med-add-row">
+          <input class="input" type="text" id="med-new-name" placeholder="Название (витамин D, магний...)" style="flex:1;">
+          <button class="btn btn--icon btn--primary" onclick="window.addMedItem()">
+            <svg class="icon" viewBox="0 0 24 24"><path d="M12 5v14M5 12h14"/></svg>
+          </button>
+        </div>
+      </div>
+
+      <!-- Nearest -->
+      <div class="glass-card" id="nearestCard"></div>
+
+    </section>
+
+    <!-- TAB 2: АНАЛИЗЫ -->
+    <section class="tab-content" id="tabAnalyses">
+      <!-- Doctors -->
+      <div class="glass-card">
+        <div class="section-title">
+          <svg class="icon" viewBox="0 0 24 24"><path d="M6 2.5v4.5a3 3 0 0 0 6 0V2.5"/><path d="M9 11v2.5a5 5 0 0 0 10 0v-1.5"/><circle cx="19" cy="9.5" r="2"/></svg>
+          Врачи
+        </div>
+        <div id="doctors-planned" style="margin-bottom: 18px;">
+          <div class="text-muted" style="font-size:12px;margin-bottom:10px;font-weight:600;">Запланированные</div>
+          <div id="doctors-planned-list"></div>
+        </div>
+        <div id="doctors-upcoming" style="margin-bottom: 18px;">
+          <div class="text-muted" style="font-size:12px;margin-bottom:10px;font-weight:600;">Предстоящие</div>
+          <div id="doctors-upcoming-list"></div>
+        </div>
+        <div id="doctors-past">
+          <div class="text-muted" style="font-size:12px;margin-bottom:10px;font-weight:600;">Прошедшие</div>
+          <div id="doctors-past-list"></div>
+        </div>
+        <div style="display:flex;gap:8px;margin-top:14px;">
+          <button class="btn btn--ghost" style="flex:1;" onclick="window.openPlanModal()">
+            <svg class="icon" viewBox="0 0 24 24"><path d="M12 20h9"/><path d="M16.5 3.5a2.1 2.1 0 0 1 3 3L7 19l-4 1 1-4Z"/></svg>
+            Запланировать
+          </button>
+          <button class="btn btn--primary" style="flex:1;" onclick="window.openDoctorModal()">
+            <svg class="icon" viewBox="0 0 24 24"><path d="M12 5v14M5 12h14"/></svg>
+            Записаться к врачу
+          </button>
+        </div>
+      </div>
+
+      <!-- Analyses -->
+      <div class="glass-card">
+        <div class="section-title">
+          <svg class="icon" viewBox="0 0 24 24"><path d="M9 2h6"/><path d="M10 2v6l-5 10a2 2 0 0 0 1.8 3h10.4a2 2 0 0 0 1.8-3l-5-10V2"/><path d="M7.5 14h9"/></svg>
+          Лабораторные анализы
+        </div>
+        <div id="analyses-list"></div>
+        <div style="display:flex;gap:8px;margin-top:14px;">
+          <button class="btn btn--success" style="flex:1;" onclick="window.openAnalysisModal()">
+            <svg class="icon" viewBox="0 0 24 24"><path d="M12 5v14M5 12h14"/></svg>
+            Анализ
+          </button>
+          <button class="btn btn--ghost" style="flex:1;" onclick="window.openAnalytics()">
+            <svg class="icon" viewBox="0 0 24 24"><path d="M4 20V10M12 20V4M20 20v-7"/></svg>
+            Аналитика
+          </button>
+        </div>
+      </div>
+    </section>
+
+    <!-- TAB 3: ЖЕНСКИЙ -->
+    <section class="tab-content" id="tabFemale">
+      <div class="glass-card">
+        <div class="section-title">
+          <svg class="icon" viewBox="0 0 24 24"><circle cx="12" cy="12" r="1.6"/><path d="M12 4c1.6 2 1.6 5 0 7-1.6-2-1.6-5 0-7z"/><g transform="rotate(90 12 12)"><path d="M12 4c1.6 2 1.6 5 0 7-1.6-2-1.6-5 0-7z"/></g><g transform="rotate(180 12 12)"><path d="M12 4c1.6 2 1.6 5 0 7-1.6-2-1.6-5 0-7z"/></g><g transform="rotate(270 12 12)"><path d="M12 4c1.6 2 1.6 5 0 7-1.6-2-1.6-5 0-7z"/></g></svg>
+          Менструальный цикл
+        </div>
+        <div class="cycle-info">
+          <div style="font-size:13px;color:var(--text-secondary);font-weight:600;">День цикла</div>
+          <div class="cycle-day" id="cycle-day">—</div>
+          <div class="cycle-phase" id="cycle-phase">Введите параметры</div>
+        </div>
+        <div class="calendar-header">
+          <button class="calendar-nav" onclick="window.changeCycleMonth(-1)"><svg class="icon" viewBox="0 0 24 24"><polyline points="15 18 9 12 15 6"/></svg></button>
+          <div class="calendar-month" id="cycle-month">—</div>
+          <button class="calendar-nav" onclick="window.changeCycleMonth(1)"><svg class="icon" viewBox="0 0 24 24"><polyline points="9 18 15 12 9 6"/></svg></button>
+        </div>
+        <div class="calendar-grid" id="cycle-calendar"></div>
+        <div class="legend">
+          <span class="legend-item"><span class="legend-dot" style="background:var(--danger);"></span> Менструация</span>
+          <span class="legend-item"><span class="legend-dot" style="background:var(--warning);"></span> Фертильные</span>
+          <span class="legend-item"><span class="legend-dot" style="background:var(--info);"></span> Овуляция</span>
+        </div>
+        <button class="btn btn--primary btn--full" style="margin-top:14px;" onclick="window.markPeriodToday()">
+          <svg class="icon" viewBox="0 0 24 24"><path d="M12 2.5S5 11 5 15a7 7 0 0 0 14 0c0-4-7-12.5-7-12.5z"/></svg>
+          Отметить месячные
+        </button>
+        <button class="btn btn--ghost btn--full" style="margin-top:10px;" onclick="window.openCycleModal()">
+          <svg class="icon" viewBox="0 0 24 24"><circle cx="12" cy="12" r="3"/><path d="M19.4 15a1.7 1.7 0 0 0 .3 1.9l.1.1a2 2 0 1 1-2.8 2.8l-.1-.1a1.7 1.7 0 0 0-1.9-.3 1.7 1.7 0 0 0-1 1.6V21a2 2 0 1 1-4 0v-.2a1.7 1.7 0 0 0-1-1.6 1.7 1.7 0 0 0-1.9.3l-.1.1a2 2 0 1 1-2.8-2.8l.1-.1a1.7 1.7 0 0 0 .3-1.9 1.7 1.7 0 0 0-1.6-1H3a2 2 0 1 1 0-4h.2a1.7 1.7 0 0 0 1.6-1 1.7 1.7 0 0 0-.3-1.9l-.1-.1a2 2 0 1 1 2.8-2.8l.1.1a1.7 1.7 0 0 0 1.9.3H9a1.7 1.7 0 0 0 1-1.6V3a2 2 0 1 1 4 0v.2a1.7 1.7 0 0 0 1 1.6 1.7 1.7 0 0 0 1.9-.3l.1-.1a2 2 0 1 1 2.8 2.8l-.1.1a1.7 1.7 0 0 0-.3 1.9V9a1.7 1.7 0 0 0 1.6 1H21a2 2 0 1 1 0 4h-.2a1.7 1.7 0 0 0-1.6 1z"/></svg>
+          Настройки цикла
+        </button>
+      </div>
+    </section>
+
+    <!-- TAB 4: ВЕС -->
+    <section class="tab-content" id="tabWeight">
+      <div class="glass-card">
+        <div class="section-title">
+          <svg class="icon" viewBox="0 0 24 24"><rect x="3" y="3" width="18" height="18" rx="4"/><path d="M12 8v4l3 2"/></svg>
+          Динамика веса
+        </div>
+        <canvas id="weight-chart" style="width:100%;height:220px;background:var(--surface-other-1);border-radius:var(--radius-sm);margin-bottom:16px;"></canvas>
+        <button class="btn btn--primary btn--full" onclick="window.openWeightModal()">
+          <svg class="icon" viewBox="0 0 24 24"><path d="M12 5v14M5 12h14"/></svg>
+          Записать вес
+        </button>
+      </div>
+      <div class="glass-card">
+        <div class="section-title">История записей</div>
+        <div id="weight-list"></div>
+      </div>
+    </section>
+
+    <!-- TAB 5: АКТИВНОСТЬ -->
+    <section class="tab-content" id="tabActivity">
+      <div class="glass-card">
+        <div class="section-title">
+          <svg class="icon" viewBox="0 0 24 24"><circle cx="14" cy="4.5" r="1.8"/><path d="M9 20l2-6 3 2 3-2-2-5-4-1-3 3"/></svg>
+          Тренировки
+        </div>
+        <button class="btn btn--primary btn--full" style="margin-bottom:16px;" onclick="window.openWorkoutModal()">
+          <svg class="icon" viewBox="0 0 24 24"><path d="M12 5v14M5 12h14"/></svg>
+          Добавить тренировку
+        </button>
+        <div class="activity-week" id="activity-calendar"></div>
+        <div id="workouts-list" style="margin-top:16px;"></div>
+      </div>
+    </section>
+
+  </main>
+
+  <!-- ==================== MODALS ==================== -->
+
+  <!-- Vitals Modal (NEW) -->
+  <div class="modal-overlay" id="modal-vitals">
+    <div class="modal">
+      <div class="modal__handle"></div>
+      <div class="modal__header">
+        <h2 class="modal__title">
+          <svg class="icon" viewBox="0 0 24 24"><path d="M20.84 4.61a5.5 5.5 0 0 0-7.78 0L12 5.67l-1.06-1.06a5.5 5.5 0 0 0-7.78 7.78l1.06 1.06L12 21.23l7.78-7.78 1.06-1.06a5.5 5.5 0 0 0 0-7.78z"/></svg>
+          Пульс и давление
+        </h2>
+        <button class="modal__close" onclick="window.closeModal('modal-vitals')"><svg class="icon" viewBox="0 0 24 24"><path d="M18 6 6 18M6 6l12 12"/></svg></button>
+      </div>
+      <div style="display:grid;grid-template-columns:1fr 1fr 1fr;gap:8px;margin-bottom:10px;">
+        <div class="form-group" style="margin-bottom:0;"><label class="form-label">Сист.</label><input class="input" type="number" id="vitals-sys" placeholder="120"></div>
+        <div class="form-group" style="margin-bottom:0;"><label class="form-label">Диаст.</label><input class="input" type="number" id="vitals-dia" placeholder="80"></div>
+        <div class="form-group" style="margin-bottom:0;"><label class="form-label">Пульс</label><input class="input" type="number" id="vitals-pulse" placeholder="72"></div>
+      </div>
+      <div class="form-group">
+        <label class="form-label">Время</label>
+        <input class="input" type="time" id="vitals-time">
+      </div>
+      <button class="btn btn--primary btn--full" onclick="window.saveVitalsEntry()">Сохранить измерение</button>
+      <div class="divider"></div>
+      <div class="section-title">За сегодня</div>
+      <div id="vitals-today-list"></div>
+      <div class="divider"></div>
+      <div class="section-title">Пульс за неделю</div>
+      <div class="sparkline-wrap"><canvas id="vitals-sparkline" style="width:100%;height:70px;"></canvas></div>
+    </div>
+  </div>
+
+  <!-- Day Rating Modal (NEW) -->
+  <div class="modal-overlay" id="modal-dayrating">
+    <div class="modal">
+      <div class="modal__handle"></div>
+      <div class="modal__header">
+        <h2 class="modal__title">
+          <svg class="icon" viewBox="0 0 24 24"><path d="M12 20h9"/><path d="M16.5 3.5a2.1 2.1 0 0 1 3 3L7 19l-4 1 1-4Z"/></svg>
+          Оценить день
+        </h2>
+        <button class="modal__close" onclick="window.closeModal('modal-dayrating')"><svg class="icon" viewBox="0 0 24 24"><path d="M18 6 6 18M6 6l12 12"/></svg></button>
+      </div>
+      <div id="dayRatingSliders"></div>
+      <div class="form-group">
+        <label class="form-label">Заметка о сне</label>
+        <textarea class="textarea" id="sleep-note" placeholder="Как спалось, сны, пробуждения..."></textarea>
+      </div>
+      <button class="btn btn--primary btn--full" onclick="window.saveDayRating()">Сохранить оценку</button>
+      <div class="divider"></div>
+      <div class="section-title">
+        <svg class="icon" viewBox="0 0 24 24"><circle cx="12" cy="12" r="10"/><polyline points="12 6 12 12 16 14"/></svg>
+        История оценок
+      </div>
+      <div id="dayrating-history"></div>
+    </div>
+  </div>
+
+  <!-- Screen Time Modal (NEW) -->
+  <div class="modal-overlay" id="modal-screentime">
+    <div class="modal">
+      <div class="modal__handle"></div>
+      <div class="modal__header">
+        <h2 class="modal__title">
+          <svg class="icon" viewBox="0 0 24 24"><rect x="6" y="3" width="12" height="18" rx="2"/><line x1="11" y1="18" x2="13" y2="18"/></svg>
+          Экранное время
+        </h2>
+        <button class="modal__close" onclick="window.closeModal('modal-screentime')"><svg class="icon" viewBox="0 0 24 24"><path d="M18 6 6 18M6 6l12 12"/></svg></button>
+      </div>
+      <div class="form-group">
+        <label class="form-label" id="screentime-date-label">За вчера</label>
+        <input class="input" type="number" id="screentime-minutes" placeholder="Минут за день">
+      </div>
+      <button class="btn btn--primary btn--full" onclick="window.saveScreenTime()">Сохранить</button>
+      <div class="divider"></div>
+      <div class="section-title">Последние записи</div>
+      <div id="screentime-history"></div>
+    </div>
+  </div>
+
+  <!-- Full History Modal (NEW) — данные за всё время по каждой карточке -->
+  <div class="modal-overlay" id="modal-fullhistory">
+    <div class="modal">
+      <div class="modal__handle"></div>
+      <div class="modal__header">
+        <h2 class="modal__title">
+          <svg class="icon" viewBox="0 0 24 24"><circle cx="12" cy="12" r="10"/><polyline points="12 6 12 12 16 14"/></svg>
+          История за всё время
+        </h2>
+        <button class="modal__close" onclick="window.closeModal('modal-fullhistory')"><svg class="icon" viewBox="0 0 24 24"><path d="M18 6 6 18M6 6l12 12"/></svg></button>
+      </div>
+      <nav class="tabs-nav" id="fh-tabs"></nav>
+      <div id="fh-content"></div>
+    </div>
+  </div>
+
+  <!-- Doctor Modal -->
+  <div class="modal-overlay" id="modal-doctor">
+    <div class="modal">
+      <div class="modal__header">
+        <h2 class="modal__title" id="doctor-modal-title">
+          <svg class="icon" viewBox="0 0 24 24"><path d="M6 2.5v4.5a3 3 0 0 0 6 0V2.5"/><path d="M9 11v2.5a5 5 0 0 0 10 0v-1.5"/><circle cx="19" cy="9.5" r="2"/></svg>
+          Запись к врачу
+        </h2>
+        <button class="modal__close" onclick="window.closeModal('modal-doctor')"><svg class="icon" viewBox="0 0 24 24"><path d="M18 6 6 18M6 6l12 12"/></svg></button>
+      </div>
+      <form novalidate id="form-doctor">
+        <input type="hidden" id="doctor-id" name="id">
+        <div class="form-group">
+          <label class="form-label">Специализация *</label>
+          <input class="input" type="text" id="doctor-specialty" name="specialty" placeholder="Терапевт, стоматолог..." required>
+        </div>
+        <div id="doctor-goal-wrap" class="form-group" style="display:none;">
+          <label class="form-label">Цель визита (из плана)</label>
+          <textarea class="textarea" id="doctor-goal" name="goal" placeholder="Что хочу обсудить..."></textarea>
+        </div>
+        <div style="display:grid;grid-template-columns:1fr 1fr;gap:12px;">
+          <div class="form-group">
+            <label class="form-label">Дата *</label>
+            <input class="input" type="date" id="doctor-date" name="visitDate" required>
+          </div>
+          <div class="form-group">
+            <label class="form-label">Время</label>
+            <input class="input" type="time" id="doctor-time" name="visitTime">
+          </div>
+        </div>
+        <div class="form-group">
+          <label class="form-label">ФИО врача</label>
+          <input class="input" type="text" id="doctor-name" name="doctorFullName" placeholder="Иванов И.И.">
+        </div>
+        <div class="form-group">
+          <label class="form-label">Место (клиника)</label>
+          <input class="input" type="text" id="doctor-location" name="location" placeholder="Поликлиника №1">
+        </div>
+        <div class="form-group">
+          <label class="form-label">Кабинет</label>
+          <input class="input" type="text" id="doctor-office" name="office" placeholder="305">
+        </div>
+        <div class="form-group">
+          <label class="form-label">Симптомы / причина</label>
+          <textarea class="textarea" id="doctor-symptoms" name="symptoms" placeholder="Опишите жалобы..."></textarea>
+        </div>
+        <button type="submit" class="btn btn--primary btn--full">
+          <svg class="icon" viewBox="0 0 24 24"><path d="M19 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h11l5 5v11a2 2 0 0 1-2 2z"/><polyline points="17 21 17 13 7 13 7 21"/><polyline points="7 3 7 8 15 8"/></svg>
+          Сохранить
+        </button>
+      </form>
+    </div>
+  </div>
+
+  <!-- Doctor Plan Modal (NEW) — визит без даты, только повод/цель -->
+  <div class="modal-overlay" id="modal-doctor-plan">
+    <div class="modal">
+      <div class="modal__handle"></div>
+      <div class="modal__header">
+        <h2 class="modal__title" id="plan-modal-title">
+          <svg class="icon" viewBox="0 0 24 24"><path d="M12 20h9"/><path d="M16.5 3.5a2.1 2.1 0 0 1 3 3L7 19l-4 1 1-4Z"/></svg>
+          Запланировать визит
+        </h2>
+        <button class="modal__close" onclick="window.closeModal('modal-doctor-plan')"><svg class="icon" viewBox="0 0 24 24"><path d="M18 6 6 18M6 6l12 12"/></svg></button>
+      </div>
+      <form novalidate id="form-doctor-plan">
+        <input type="hidden" id="plan-id" name="id">
+        <div class="form-group">
+          <label class="form-label">Специализация / повод *</label>
+          <input class="input" type="text" id="plan-specialty" name="specialty" placeholder="Гинеколог, дерматолог..." required>
+        </div>
+        <div class="form-group">
+          <label class="form-label">Цель визита</label>
+          <textarea class="textarea" id="plan-goal" name="goal" placeholder="Что хочу обсудить, на что обратить внимание..."></textarea>
+        </div>
+        <button type="submit" class="btn btn--primary btn--full">
+          <svg class="icon" viewBox="0 0 24 24"><path d="M19 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h11l5 5v11a2 2 0 0 1-2 2z"/><polyline points="17 21 17 13 7 13 7 21"/><polyline points="7 3 7 8 15 8"/></svg>
+          Сохранить план
+        </button>
+      </form>
+    </div>
+  </div>
+
+  <!-- Doctor Results Modal -->
+  <div class="modal-overlay" id="modal-doctor-results">
+    <div class="modal">
+      <div class="modal__header">
+        <h2 class="modal__title">
+          <svg class="icon" viewBox="0 0 24 24"><polyline points="20 6 9 17 4 12"/></svg>
+          Результаты визита
+        </h2>
+        <button class="modal__close" onclick="window.closeModal('modal-doctor-results')"><svg class="icon" viewBox="0 0 24 24"><path d="M18 6 6 18M6 6l12 12"/></svg></button>
+      </div>
+      <form novalidate id="form-doctor-results">
+        <input type="hidden" id="results-doctor-id" name="id">
+        <div class="form-group">
+          <label class="form-label">Диагноз / заключение</label>
+          <textarea class="textarea" id="doctor-results" name="results" placeholder="Введите результаты приема..." required></textarea>
+        </div>
+        <button type="submit" class="btn btn--primary btn--full">
+          <svg class="icon" viewBox="0 0 24 24"><path d="M19 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h11l5 5v11a2 2 0 0 1-2 2z"/><polyline points="17 21 17 13 7 13 7 21"/><polyline points="7 3 7 8 15 8"/></svg>
+          Сохранить
+        </button>
+      </form>
+    </div>
+  </div>
+
+  <!-- Analysis Modal -->
+  <div class="modal-overlay" id="modal-analysis">
+    <div class="modal">
+      <div class="modal__header">
+        <h2 class="modal__title">
+          <svg class="icon" viewBox="0 0 24 24"><path d="M9 2h6"/><path d="M10 2v6l-5 10a2 2 0 0 0 1.8 3h10.4a2 2 0 0 0 1.8-3l-5-10V2"/><path d="M7.5 14h9"/></svg>
+          Новый анализ
+        </h2>
+        <button class="modal__close" onclick="window.closeModal('modal-analysis')"><svg class="icon" viewBox="0 0 24 24"><path d="M18 6 6 18M6 6l12 12"/></svg></button>
+      </div>
+      <form novalidate id="form-analysis">
+        <div class="form-group">
+          <label class="form-label">Дата *</label>
+          <input class="input" type="date" id="analysis-date" name="date" required>
+        </div>
+        <div class="form-group">
+          <label class="form-label">Название анализа *</label>
+          <input class="input" type="text" id="analysis-name" name="name" placeholder="Общий анализ крови" required>
+        </div>
+        <div class="form-group">
+          <label class="form-label">Показатели</label>
+          <div id="indicators-container"></div>
+          <button type="button" class="btn btn--ghost btn--full" id="add-indicator-btn" style="margin-top:8px;">
+            <svg class="icon" viewBox="0 0 24 24"><path d="M12 5v14M5 12h14"/></svg>
+            Добавить показатель
+          </button>
+        </div>
+        <div class="form-group">
+          <label class="form-label">Файл (опционально)</label>
+          <div style="background:rgba(var(--orb-rgb),0.04);border:1.5px dashed var(--border-md);border-radius:var(--radius-sm);padding:14px;text-align:center;cursor:pointer;display:flex;flex-direction:column;align-items:center;gap:6px;" onclick="$('#analysis-pdf').click()">
+            <svg class="icon" viewBox="0 0 24 24" style="width:20px;height:20px;stroke:var(--text-secondary);"><path d="M21.4 11.5L12.5 20.4a5 5 0 0 1-7.1-7.1l8.5-8.5a3.5 3.5 0 0 1 5 5L10.4 18.3a2 2 0 0 1-2.8-2.8l7.1-7.1"/></svg>
+            <div style="font-size:13px;color:var(--text-secondary);font-weight:600;">Загрузить результат (PDF)</div>
+            <input type="file" id="analysis-pdf" accept=".pdf" style="display:none;">
+            <div id="pdf-filename" style="font-size:12px;color:var(--accent-light);margin-top:2px;font-weight:600;"></div>
+          </div>
+        </div>
+        <button type="submit" class="btn btn--primary btn--full">
+          <svg class="icon" viewBox="0 0 24 24"><path d="M19 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h11l5 5v11a2 2 0 0 1-2 2z"/><polyline points="17 21 17 13 7 13 7 21"/><polyline points="7 3 7 8 15 8"/></svg>
+          Сохранить
+        </button>
+      </form>
+    </div>
+  </div>
+
+  <!-- Analytics Modal -->
+  <div class="modal-overlay" id="modal-analytics">
+    <div class="modal">
+      <div class="modal__header">
+        <h2 class="modal__title">
+          <svg class="icon" viewBox="0 0 24 24"><path d="M4 20V10M12 20V4M20 20v-7"/></svg>
+          Аналитика показателя
+        </h2>
+        <button class="modal__close" onclick="window.closeModal('modal-analytics')"><svg class="icon" viewBox="0 0 24 24"><path d="M18 6 6 18M6 6l12 12"/></svg></button>
+      </div>
+      <div class="form-group">
+        <label class="form-label">Выберите показатель</label>
+        <select class="select" id="analytics-select"><option value="">Загрузка...</option></select>
+      </div>
+      <div style="position:relative;">
+        <canvas id="analytics-chart" style="width:100%;height:200px;background:var(--surface-other-1);border-radius:var(--radius-sm);"></canvas>
+        <div class="chart-tooltip" id="chart-tooltip" style="position:absolute;background:#1c1c22;border:1px solid var(--border-md);border-radius:10px;padding:8px 12px;font-size:12px;pointer-events:none;opacity:0;transition:opacity .15s;z-index:10;white-space:nowrap;"><div class="tt-date" style="color:var(--text-secondary);font-size:11px;"></div><div class="tt-value" style="font-weight:800;color:var(--accent-light);"></div></div>
+      </div>
+      <div class="stats-grid" style="margin-top:16px;">
+        <div class="glass-card stat-card" style="margin-bottom:0;">
+          <div class="stat-label">Среднее</div>
+          <div class="stat-value text-accent" id="analytics-avg">—</div>
+        </div>
+        <div class="glass-card stat-card" style="margin-bottom:0;">
+          <div class="stat-label">Тренд</div>
+          <div class="stat-value" id="analytics-trend">—</div>
+        </div>
+      </div>
+      <div class="text-muted" style="font-size:13px;text-align:center;margin-top:14px;font-weight:500;" id="analytics-summary"></div>
+    </div>
+  </div>
+
+  <!-- Cycle Settings Modal -->
+  <div class="modal-overlay" id="modal-cycle">
+    <div class="modal">
+      <div class="modal__header">
+        <h2 class="modal__title">
+          <svg class="icon" viewBox="0 0 24 24"><circle cx="12" cy="12" r="3"/><path d="M19.4 15a1.7 1.7 0 0 0 .3 1.9l.1.1a2 2 0 1 1-2.8 2.8l-.1-.1a1.7 1.7 0 0 0-1.9-.3 1.7 1.7 0 0 0-1 1.6V21a2 2 0 1 1-4 0v-.2a1.7 1.7 0 0 0-1-1.6 1.7 1.7 0 0 0-1.9.3l-.1.1a2 2 0 1 1-2.8-2.8l.1-.1a1.7 1.7 0 0 0 .3-1.9 1.7 1.7 0 0 0-1.6-1H3a2 2 0 1 1 0-4h.2a1.7 1.7 0 0 0 1.6-1 1.7 1.7 0 0 0-.3-1.9l-.1-.1a2 2 0 1 1 2.8-2.8l.1.1a1.7 1.7 0 0 0 1.9.3H9a1.7 1.7 0 0 0 1-1.6V3a2 2 0 1 1 4 0v.2a1.7 1.7 0 0 0 1 1.6 1.7 1.7 0 0 0 1.9-.3l.1-.1a2 2 0 1 1 2.8 2.8l-.1.1a1.7 1.7 0 0 0-.3 1.9V9a1.7 1.7 0 0 0 1.6 1H21a2 2 0 1 1 0 4h-.2a1.7 1.7 0 0 0-1.6 1z"/></svg>
+          Настройки цикла
+        </h2>
+        <button class="modal__close" onclick="window.closeModal('modal-cycle')"><svg class="icon" viewBox="0 0 24 24"><path d="M18 6 6 18M6 6l12 12"/></svg></button>
+      </div>
+      <form novalidate id="form-cycle">
+        <div class="form-group">
+          <label class="form-label">Начало последней менструации *</label>
+          <input class="input" type="date" id="cycle-last" name="lastPeriod" required>
+        </div>
+        <div class="form-group">
+          <label class="form-label">Длина цикла (дней) *</label>
+          <input class="input" type="number" id="cycle-length" name="cycleLength" min="21" max="45" value="28" required>
+        </div>
+        <div class="form-group">
+          <label class="form-label">Длительность менструации (дней) *</label>
+          <input class="input" type="number" id="cycle-period" name="periodLength" min="3" max="10" value="5" required>
+        </div>
+        <button type="submit" class="btn btn--primary btn--full">
+          <svg class="icon" viewBox="0 0 24 24"><path d="M19 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h11l5 5v11a2 2 0 0 1-2 2z"/><polyline points="17 21 17 13 7 13 7 21"/><polyline points="7 3 7 8 15 8"/></svg>
+          Сохранить
+        </button>
+      </form>
+    </div>
+  </div>
+
+  <!-- Weight Modal -->
+  <div class="modal-overlay" id="modal-weight">
+    <div class="modal">
+      <div class="modal__header">
+        <h2 class="modal__title">
+          <svg class="icon" viewBox="0 0 24 24"><rect x="3" y="3" width="18" height="18" rx="4"/><path d="M12 8v4l3 2"/></svg>
+          Запись веса
+        </h2>
+        <button class="modal__close" onclick="window.closeModal('modal-weight')"><svg class="icon" viewBox="0 0 24 24"><path d="M18 6 6 18M6 6l12 12"/></svg></button>
+      </div>
+      <form novalidate id="form-weight">
+        <input type="hidden" id="weight-id" name="id">
+        <div class="form-group">
+          <label class="form-label">Дата *</label>
+          <input class="input" type="date" id="weight-date" name="date" required>
+        </div>
+        <div class="form-group">
+          <label class="form-label">Вес (кг) *</label>
+          <input class="input" type="number" id="weight-value" name="weight" step="0.1" placeholder="70.5" required>
+        </div>
+        <div style="font-size:13px;color:var(--text-secondary);margin:10px 0 12px;font-weight:600;">Объёмы тела (необязательно)</div>
+        <div style="display:grid;grid-template-columns:1fr 1fr;gap:12px;">
+          <div class="form-group"><label class="form-label">Грудь</label><input class="input" type="number" id="weight-chest" name="chest" step="0.1" placeholder="см"></div>
+          <div class="form-group"><label class="form-label">Талия</label><input class="input" type="number" id="weight-waist" name="waist" step="0.1" placeholder="см"></div>
+          <div class="form-group"><label class="form-label">Бёдра</label><input class="input" type="number" id="weight-hips" name="hips" step="0.1" placeholder="см"></div>
+          <div class="form-group"><label class="form-label">Бицепс</label><input class="input" type="number" id="weight-bicep" name="bicep" step="0.1" placeholder="см"></div>
+          <div class="form-group"><label class="form-label">Бедро</label><input class="input" type="number" id="weight-thigh" name="thigh" step="0.1" placeholder="см"></div>
+        </div>
+        <button type="submit" class="btn btn--primary btn--full">
+          <svg class="icon" viewBox="0 0 24 24"><path d="M19 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h11l5 5v11a2 2 0 0 1-2 2z"/><polyline points="17 21 17 13 7 13 7 21"/><polyline points="7 3 7 8 15 8"/></svg>
+          Сохранить
+        </button>
+      </form>
+    </div>
+  </div>
+
+  <!-- Workout Modal -->
+  <div class="modal-overlay" id="modal-workout">
+    <div class="modal">
+      <div class="modal__header">
+        <h2 class="modal__title">
+          <svg class="icon" viewBox="0 0 24 24"><circle cx="14" cy="4.5" r="1.8"/><path d="M9 20l2-6 3 2 3-2-2-5-4-1-3 3"/></svg>
+          Новая тренировка
+        </h2>
+        <button class="modal__close" onclick="window.closeModal('modal-workout')"><svg class="icon" viewBox="0 0 24 24"><path d="M18 6 6 18M6 6l12 12"/></svg></button>
+      </div>
+      <form novalidate id="form-workout">
+        <div class="form-group">
+          <label class="form-label">Дата *</label>
+          <input class="input" type="date" id="workout-date" name="date" required>
+        </div>
+        <div class="form-group">
+          <label class="form-label">Тип тренировки *</label>
+          <select class="select" id="workout-type" name="type" required>
+            <option value="">Выберите тип</option>
+            <option value="Бег">Бег</option>
+            <option value="Ходьба">Ходьба</option>
+            <option value="Йога">Йога</option>
+            <option value="Силовая">Силовая</option>
+            <option value="Плавание">Плавание</option>
+            <option value="Велосипед">Велосипед</option>
+            <option value="Другое">Другое</option>
+          </select>
+        </div>
+        <div class="form-group">
+          <label class="form-label">Продолжительность (мин) *</label>
+          <input class="input" type="number" id="workout-duration" name="duration" min="1" placeholder="30" required>
+        </div>
+        <button type="submit" class="btn btn--primary btn--full">
+          <svg class="icon" viewBox="0 0 24 24"><path d="M19 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h11l5 5v11a2 2 0 0 1-2 2z"/><polyline points="17 21 17 13 7 13 7 21"/><polyline points="7 3 7 8 15 8"/></svg>
+          Сохранить
+        </button>
+      </form>
+    </div>
+  </div>
+
+  <!-- GLOBAL NAVIGATION -->
+  <nav class="bottom-nav">
+    <a href="tasks.html" class="nav-btn">
+      <svg viewBox="0 0 24 24"><path d="M9 11l3 3L22 4"/><path d="M21 12v7a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h11"/></svg>
+      <span>Задачи</span>
+    </a>
+    <a href="journal.html" class="nav-btn">
+      <svg viewBox="0 0 24 24"><path d="M4 19.5A2.5 2.5 0 0 1 6.5 17H20"/><path d="M6.5 2H20v20H6.5A2.5 2.5 0 0 1 4 19.5v-15A2.5 2.5 0 0 1 6.5 2z"/></svg>
+      <span>Дневник</span>
+    </a>
+    <a href="habits.html" class="nav-btn">
+      <svg viewBox="0 0 24 24"><circle cx="12" cy="12" r="10"/><polyline points="12 6 12 12 16 14"/></svg>
+      <span>Привычки</span>
+    </a>
+    <a href="finance.html" class="nav-btn">
+      <svg viewBox="0 0 24 24"><line x1="12" y1="1" x2="12" y2="23"/><path d="M17 5H9.5a3.5 3.5 0 0 0 0 7h5a3.5 3.5 0 0 1 0 7H6"/></svg>
+      <span>Финансы</span>
+    </a>
+    <a href="health.html" class="nav-btn active">
+      <svg viewBox="0 0 24 24"><path d="M20.84 4.61a5.5 5.5 0 0 0-7.78 0L12 5.67l-1.06-1.06a5.5 5.5 0 0 0-7.78 7.78l1.06 1.06L12 21.23l7.78-7.78 1.06-1.06a5.5 5.5 0 0 0 0-7.78z"/></svg>
+      <span>Здоровье</span>
+    </a>
+  </nav>
+
+  <script>
+  (function() {
+    'use strict';
+
+    /* ===== UTILITIES ===== */
+    const $ = sel => document.querySelector(sel);
+    const $$ = sel => document.querySelectorAll(sel);
+    const esc = s => String(s).replace(/[&<>"']/g, m => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#039;'}[m]));
+    const fmtDate = d => d ? new Date(d).toLocaleDateString('ru-RU', {day:'numeric', month:'short'}) : '';
+    const fmtFullDate = d => d ? new Date(d).toLocaleDateString('ru-RU', {day:'numeric', month:'long', year:'numeric'}) : '';
+    const fmtTime = t => t ? t : '';
+    const save = (k, d) => localStorage.setItem(k, JSON.stringify(d));
+    const load = (k, def) => { try { return JSON.parse(localStorage.getItem(k)) || def; } catch { return def; } };
+    const notify = (msg, type='') => {
+      const n = $('#notification'); if(!n) return;
+      n.textContent = msg; n.className = 'notification' + (type ? ` notification--${type}` : '');
+      n.classList.add('show'); setTimeout(() => n.classList.remove('show'), 2500);
+    };
+    const todayStr = () => new Date().toISOString().split('T')[0];
+    const yesterdayStr = () => { const d = new Date(); d.setDate(d.getDate()-1); return d.toISOString().split('T')[0]; };
+    const fmtTimeNow = () => { const d = new Date(); return String(d.getHours()).padStart(2,'0')+':'+String(d.getMinutes()).padStart(2,'0'); };
+
+    // Делегирование кликов по лекарствам на уровне document — регистрируется сразу,
+    // не зависит от порядка/времени вызова initForms(), поэтому работает всегда,
+    // даже если список перерисовывался до того, как остальная инициализация завершилась.
+    document.addEventListener('click', e => {
+      const delBtn = e.target.closest('[data-del-id]');
+      if(delBtn) { e.stopPropagation(); removeMedItem(parseInt(delBtn.dataset.delId, 10)); return; }
+      const checkBtn = e.target.closest('[data-toggle-id]');
+      if(checkBtn) { e.stopPropagation(); toggleMed(parseInt(checkBtn.dataset.toggleId, 10)); }
+    });
+
+    /* ===== ICONS (для рендера в JS-шаблонах) ===== */
+    const ICON_STETH = '<svg class="icon" viewBox="0 0 24 24"><path d="M6 2.5v4.5a3 3 0 0 0 6 0V2.5"/><path d="M9 11v2.5a5 5 0 0 0 10 0v-1.5"/><circle cx="19" cy="9.5" r="2"/></svg>';
+    const ICON_FLASK_SM = '<svg class="icon" viewBox="0 0 24 24"><path d="M9 2h6"/><path d="M10 2v6l-5 10a2 2 0 0 0 1.8 3h10.4a2 2 0 0 0 1.8-3l-5-10V2"/><path d="M7.5 14h9"/></svg>';
+    const ICON_EDIT = '<svg class="icon" viewBox="0 0 24 24"><path d="M12 20h9"/><path d="M16.5 3.5a2.1 2.1 0 0 1 3 3L7 19l-4 1 1-4Z"/></svg>';
+    const ICON_TRASH = '<svg class="icon" viewBox="0 0 24 24"><path d="M3 6h18"/><path d="M8 6V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"/><path d="M19 6l-1 14a2 2 0 0 1-2 2H8a2 2 0 0 1-2-2L5 6"/></svg>';
+    const ICON_TRASH_SM = '<svg class="icon" viewBox="0 0 24 24" style="width:14px;height:14px;"><path d="M3 6h18"/><path d="M8 6V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"/><path d="M19 6l-1 14a2 2 0 0 1-2 2H8a2 2 0 0 1-2-2L5 6"/></svg>';
+    const ICON_CHECK = '<svg class="icon" viewBox="0 0 24 24"><polyline points="20 6 9 17 4 12"/></svg>';
+    const ICON_PLUS_SM = '<svg class="icon" viewBox="0 0 24 24"><path d="M12 5v14M5 12h14"/></svg>';
+    const ICON_PAPERCLIP = '<svg class="icon" viewBox="0 0 24 24" style="width:12px;height:12px;"><path d="M21.4 11.5L12.5 20.4a5 5 0 0 1-7.1-7.1l8.5-8.5a3.5 3.5 0 0 1 5 5L10.4 18.3a2 2 0 0 1-2.8-2.8l7.1-7.1"/></svg>';
+    const ICON_SCALE = '<svg class="icon" viewBox="0 0 24 24"><rect x="3" y="3" width="18" height="18" rx="4"/><path d="M12 8v4l3 2"/></svg>';
+    const ICON_RUN = '<svg class="icon" viewBox="0 0 24 24"><circle cx="14" cy="4.5" r="1.8"/><path d="M9 20l2-6 3 2 3-2-2-5-4-1-3 3"/></svg>';
+
+    /* ===== DAY RATING FIELDS CONFIG ===== */
+    const DAY_RATING_FIELDS = [
+      {key:'mood', label:'Общее настроение', short:'Настроение', icon:'<svg class="icon" viewBox="0 0 24 24"><circle cx="12" cy="12" r="9"/><path d="M8 14s1.5 2 4 2 4-2 4-2"/><line x1="9" y1="9" x2="9.01" y2="9"/><line x1="15" y1="9" x2="15.01" y2="9"/></svg>'},
+      {key:'healthFeel', label:'Самочувствие по здоровью', short:'Здоровье', icon:'<svg class="icon" viewBox="0 0 24 24"><path d="M20.84 4.61a5.5 5.5 0 0 0-7.78 0L12 5.67l-1.06-1.06a5.5 5.5 0 0 0-7.78 7.78l1.06 1.06L12 21.23l7.78-7.78 1.06-1.06a5.5 5.5 0 0 0 0-7.78z"/></svg>'},
+      {key:'energy', label:'Уровень сил/мотивации', short:'Силы', icon:'<svg class="icon" viewBox="0 0 24 24"><polygon points="13 2 3 14 12 14 11 22 21 10 12 10 13 2"/></svg>'},
+      {key:'libido', label:'Сексуальное желание', short:'Либидо', icon:'<svg class="icon" viewBox="0 0 24 24"><path d="M12 3c2 3-1 5-1 8a3 3 0 0 0 6 0c0-1-.5-1.5-.5-1.5s.5 2-1 3c1-2.5-1.5-4-1.5-6.5 0 0 2.5 1.5 2.5 5A5.5 5.5 0 0 1 5 11c0-4.5 3.5-6 7-8z"/></svg>'},
+      {key:'stress', label:'Уровень стресса/загонов', short:'Стресс', icon:'<svg class="icon" viewBox="0 0 24 24"><path d="M12 2 1 21h22L12 2z"/><line x1="12" y1="9" x2="12" y2="13"/><line x1="12" y1="17" x2="12.01" y2="17"/></svg>'},
+      {key:'sleepQuality', label:'Качество сна', short:'Сон', icon:'<svg class="icon" viewBox="0 0 24 24"><path d="M20 12.8A8 8 0 1 1 11.2 4 6.5 6.5 0 0 0 20 12.8z"/></svg>'}
+    ];
+
+    /* ===== STATE ===== */
+    let state = {
+      health: load('lifeDashboard_health', { water:0, sleep:0, steps:0, date:new Date().toISOString().split('T')[0] }),
+      healthHistory: load('lifeDashboard_health_history', {}),
+      doctors: load('lifeDashboard_doctors', []),
+      analyses: load('lifeDashboard_analyses', []),
+      female: load('lifeDashboard_female', { lastPeriod: new Date().toISOString().split('T')[0], cycleLength:28, periodLength:5 }),
+      weight: load('lifeDashboard_weight', []),
+      workouts: load('lifeDashboard_workouts', []),
+      vitals: load('lifeDashboard_vitals', []),
+      dayRatings: load('lifeDashboard_dayratings', {}),
+      coffee: load('lifeDashboard_coffee', []),
+      screenTime: load('lifeDashboard_screentime', {}),
+      medItems: load('lifeDashboard_meditems', []),
+      medLog: load('lifeDashboard_medlog', {})
+    };
+    let cycleMonth = new Date();
+
+    /* ===== DAILY RESET (архивирует вчерашний день перед сбросом счётчиков) ===== */
+    (function checkReset(){
+      const today = new Date().toISOString().split('T')[0];
+      if(state.health.date !== today) {
+        // архивируем то, что было "сегодня" — чтобы не терять историю
+        state.healthHistory[state.health.date] = { water: state.health.water||0, sleep: state.health.sleep||0, steps: state.health.steps||0 };
+        save('lifeDashboard_health_history', state.healthHistory);
+        state.health = { water:0, sleep:0, steps:0, date:today };
+        save('lifeDashboard_health', state.health);
+      }
+    })();
+
+    /* ===== HISTORY HELPERS (общие для всех виджетов "Общего") ===== */
+    function lastNDays(n) {
+      const arr = [];
+      for(let i=n-1;i>=0;i--){ const d=new Date(); d.setDate(d.getDate()-i); arr.push(d.toISOString().split('T')[0]); }
+      return arr;
+    }
+    function getHealthDay(ds) {
+      if(ds === todayStr()) return { water: state.health.water||0, sleep: state.health.sleep||0, steps: state.health.steps||0 };
+      return state.healthHistory[ds] || { water:0, sleep:0, steps:0 };
+    }
+    function syncTodayIntoHistory() {
+      state.healthHistory[todayStr()] = { water: state.health.water||0, sleep: state.health.sleep||0, steps: state.health.steps||0 };
+      save('lifeDashboard_health_history', state.healthHistory);
+    }
+    function avgArr(arr) { return arr.length ? arr.reduce((a,b)=>a+b,0)/arr.length : 0; }
+
+    // Компактный бар-спарклайн (последние N значений), последний столбец — акцентный
+    function drawMiniBars(canvasId, values) {
+      const canvas = document.getElementById(canvasId); if(!canvas) return;
+      const ctx = canvas.getContext('2d'), dpr = window.devicePixelRatio||1, rect = canvas.getBoundingClientRect();
+      if(!rect.width) return;
+      canvas.width = rect.width*dpr; canvas.height = rect.height*dpr; ctx.scale(dpr,dpr); ctx.clearRect(0,0,rect.width,rect.height);
+      const max = Math.max(...values, 1);
+      const n = values.length, gap = 3, bw = (rect.width - gap*(n-1)) / n;
+      values.forEach((v,i) => {
+        const h = Math.max(2, (v/max) * rect.height);
+        const x = i*(bw+gap), y = rect.height - h;
+        ctx.fillStyle = i===n-1 ? '#d9cffc' : 'rgba(182,162,251,0.32)';
+        const r = Math.min(2, bw/2);
+        ctx.beginPath();
+        if(ctx.roundRect) { ctx.roundRect(x,y,bw,h,r); } else { ctx.rect(x,y,bw,h); }
+        ctx.fill();
+      });
+    }
+
+    /* ===== TABS ===== */
+    function initTabs() {
+      $$('.tab-btn').forEach(btn => {
+        btn.addEventListener('click', () => {
+          $$('.tab-btn').forEach(b => b.classList.remove('active'));
+          $$('.tab-content').forEach(c => c.classList.remove('active'));
+          btn.classList.add('active');
+          const tab = $(`#${btn.dataset.tab}`);
+          if(tab) tab.classList.add('active');
+          if(btn.dataset.tab === 'tabFemale') renderCycleCalendar();
+          if(btn.dataset.tab === 'tabWeight') drawWeightChart();
+          if(btn.dataset.tab === 'tabActivity') renderActivityWeek();
+        });
+      });
+    }
+
+    /* ===== MODALS ===== */
+    function openModal(id) { const m = $(`#${id}`); if(m) m.classList.add('active'); }
+    function closeModal(id) { const m = $(`#${id}`); if(m) { m.classList.remove('active'); if(id==='modal-doctor') $('#form-doctor')?.reset(); if(id==='modal-doctor-plan') $('#form-doctor-plan')?.reset(); if(id==='modal-analysis') { $('#form-analysis')?.reset(); $('#indicators-container').innerHTML=''; $('#pdf-filename').textContent=''; } } }
+    function initModals() {
+      $$('.modal__close').forEach(b => b.addEventListener('click', () => closeModal(b.closest('.modal-overlay').id)));
+      $$('.modal-overlay').forEach(m => m.addEventListener('click', e => { if(e.target===m) closeModal(m.id); }));
+    }
+
+    /* ===== GENERAL TAB (water/sleep/steps — с мини-графиками за 7 дней) ===== */
+    function initGeneral() {
+      const metrics = {
+        water: { el:$('#water-val'), spark:'water-spark', goal:2000, step:250 },
+        sleep: { el:$('#sleep-val'), spark:'sleep-spark', goal:8, step:0.5 },
+        steps: { el:$('#steps-val'), spark:'steps-spark', goal:10000, step:500 }
+      };
+      function render() {
+        const days7 = lastNDays(7);
+        Object.keys(metrics).forEach(k => {
+          const v = state.health[k] || 0, c = metrics[k];
+          if(c.el) c.el.textContent = v;
+          const vals = days7.map(ds => getHealthDay(ds)[k] || 0);
+          drawMiniBars(c.spark, vals);
+        });
+      }
+      $$('[data-metric]').forEach(btn => {
+        btn.addEventListener('click', () => {
+          const type = btn.dataset.metric, dir = btn.dataset.action;
+          if(!metrics[type]) return;
+          const delta = dir === 'inc' ? metrics[type].step : -metrics[type].step;
+          state.health[type] = Math.max(0, (state.health[type]||0) + delta);
+          save('lifeDashboard_health', state.health);
+          syncTodayIntoHistory();
+          render();
+          renderWeekOverview();
+        });
+      });
+      render();
+      window.__renderGeneralMetrics = render;
+    }
+
+    /* ===== VITALS (пульс/давление) ===== */
+    function renderVitalsLast() {
+      const valEl = $('#vitals-last-val'), timeEl = $('#vitals-last-time');
+      if(!valEl) return;
+      const sorted = [...state.vitals].sort((a,b) => (b.date+b.time).localeCompare(a.date+a.time));
+      const last = sorted[0];
+      const days7 = lastNDays(7);
+      const weekPulses = state.vitals.filter(v=>days7.includes(v.date) && v.pulse).map(v=>v.pulse);
+      drawMiniBars('vitals-spark', weekPulses.length ? days7.map(ds => {
+        const items = state.vitals.filter(v=>v.date===ds && v.pulse);
+        return items.length ? Math.round(avgArr(items.map(v=>v.pulse))) : 0;
+      }) : [0,0,0,0,0,0,0]);
+      if(!last) { valEl.textContent = '—'; timeEl.textContent = 'Нет данных'; return; }
+      let txt = '';
+      if(last.sys && last.dia) txt += `${last.sys}/${last.dia}`;
+      if(last.pulse) txt += (txt?' · ':'') + `${last.pulse} уд/мин`;
+      valEl.textContent = txt || '—';
+      const whenTxt = (last.date===todayStr()?'Сегодня':fmtDate(last.date)) + ', ' + last.time;
+      timeEl.textContent = weekPulses.length ? `${whenTxt} · Ø ${Math.round(avgArr(weekPulses))}` : whenTxt;
+    }
+
+    function openVitalsModal() {
+      $('#vitals-time').value = fmtTimeNow();
+      $('#vitals-sys').value=''; $('#vitals-dia').value=''; $('#vitals-pulse').value='';
+      renderVitalsToday();
+      drawVitalsSparkline();
+      openModal('modal-vitals');
+    }
+
+    function renderVitalsToday() {
+      const list = $('#vitals-today-list'); if(!list) return;
+      const today = todayStr();
+      const items = state.vitals.filter(v=>v.date===today).sort((a,b)=>b.time.localeCompare(a.time));
+      if(!items.length) { list.innerHTML = `<div class="text-muted" style="font-size:13px;text-align:center;padding:12px 0;">Пока нет измерений</div>`; return; }
+      list.innerHTML = items.map(v => `
+        <div class="doctor-item" style="padding:10px;">
+          <div class="doctor-icon" style="width:34px;height:34px;">${ICON_STETH}</div>
+          <div class="doctor-info">
+            <div class="doctor-name" style="font-size:14px;">${v.sys&&v.dia?`${v.sys}/${v.dia}`:''}${v.pulse?`${v.sys?' • ':''}${v.pulse} уд/мин`:''}</div>
+            <div class="doctor-meta">${v.time}</div>
+          </div>
+          <button class="btn btn--danger btn--icon" style="width:32px;height:32px;" onclick="window.removeVitals(${v.id})">${ICON_TRASH_SM}</button>
+        </div>
+      `).join('');
+    }
+
+    function saveVitalsEntry() {
+      const sys = parseInt($('#vitals-sys').value)||null;
+      const dia = parseInt($('#vitals-dia').value)||null;
+      const pulse = parseInt($('#vitals-pulse').value)||null;
+      const time = $('#vitals-time').value || fmtTimeNow();
+      if(!sys && !dia && !pulse) { notify('Введите хотя бы одно значение', 'danger'); return; }
+      state.vitals.push({ id: Date.now(), date: todayStr(), time, sys, dia, pulse });
+      save('lifeDashboard_vitals', state.vitals);
+      $('#vitals-sys').value=''; $('#vitals-dia').value=''; $('#vitals-pulse').value='';
+      renderVitalsToday(); renderVitalsLast(); drawVitalsSparkline();
+      renderWeekOverview();
+      notify('Измерение сохранено', 'success');
+    }
+
+    function removeVitals(id) {
+      state.vitals = state.vitals.filter(v=>v.id!==id);
+      save('lifeDashboard_vitals', state.vitals);
+      renderVitalsToday(); renderVitalsLast(); drawVitalsSparkline();
+      renderWeekOverview();
+      notify('Запись удалена', 'danger');
+    }
+
+    function drawVitalsSparkline() {
+      const canvas = $('#vitals-sparkline'); if(!canvas) return;
+      const ctx = canvas.getContext('2d'), dpr = window.devicePixelRatio||1, rect = canvas.getBoundingClientRect();
+      if(!ctx) return;
+      canvas.width = rect.width*dpr; canvas.height = rect.height*dpr; ctx.scale(dpr,dpr); ctx.clearRect(0,0,rect.width,rect.height);
+      const days = [];
+      for(let i=6;i>=0;i--){ const d=new Date(); d.setDate(d.getDate()-i); days.push(d.toISOString().split('T')[0]); }
+      const vals = days.map(ds => {
+        const items = state.vitals.filter(v=>v.date===ds && v.pulse);
+        if(!items.length) return null;
+        return items.reduce((s,v)=>s+v.pulse,0)/items.length;
+      });
+      const known = vals.filter(v=>v!==null);
+      if(known.length<2) { ctx.fillStyle='rgba(239,233,255,0.3)'; ctx.font='12px Manrope, sans-serif'; ctx.textAlign='center'; ctx.fillText('Недостаточно данных', rect.width/2, rect.height/2); return; }
+      const mn=Math.min(...known)*0.92, mx=Math.max(...known)*1.08, rng=mx-mn||1;
+      const pad=6, w=rect.width-pad*2, h=rect.height-pad*2;
+      const pts = vals.map((v,i)=> v===null?null:{x:pad+(i/6)*w, y:pad+h-((v-mn)/rng)*h});
+      ctx.beginPath(); ctx.strokeStyle='#b6a2fb'; ctx.lineWidth=2; ctx.lineJoin='round';
+      let started=false;
+      pts.forEach(p=>{ if(!p) return; if(!started){ctx.moveTo(p.x,p.y); started=true;} else ctx.lineTo(p.x,p.y); });
+      ctx.stroke();
+      pts.forEach(p=>{ if(!p) return; ctx.beginPath(); ctx.arc(p.x,p.y,3,0,Math.PI*2); ctx.fillStyle='#d9cffc'; ctx.fill(); });
+    }
+
+    /* ===== DAY RATING (Оценить день) ===== */
+    function renderDayRatingSliders(existing) {
+      const wrap = $('#dayRatingSliders'); if(!wrap) return;
+      wrap.innerHTML = DAY_RATING_FIELDS.map(f => {
+        const v = existing && existing[f.key]!=null ? existing[f.key] : 5;
+        return `<div class="rating-row">
+          <div class="rating-icon">${f.icon}</div>
+          <div class="rating-body">
+            <div class="rating-label-row"><span class="rating-label">${f.label}</span><span class="rating-val" id="drval-${f.key}">${v}</span></div>
+            <input type="range" min="0" max="10" step="1" value="${v}" class="range-slider" id="dr-${f.key}" oninput="document.getElementById('drval-${f.key}').textContent=this.value">
+          </div>
+        </div>`;
+      }).join('');
+    }
+
+    function openDayRatingModal() {
+      const today = todayStr();
+      const existing = state.dayRatings[today];
+      renderDayRatingSliders(existing);
+      $('#sleep-note').value = existing?.sleepNote || '';
+      renderDayRatingHistory();
+      openModal('modal-dayrating');
+    }
+
+    function saveDayRating() {
+      const today = todayStr();
+      const rec = { date: today };
+      DAY_RATING_FIELDS.forEach(f => { const el = $(`#dr-${f.key}`); rec[f.key] = el ? parseInt(el.value) : 5; });
+      rec.sleepNote = ($('#sleep-note').value || '').trim();
+      state.dayRatings[today] = rec;
+      save('lifeDashboard_dayratings', state.dayRatings);
+      updateRateDayCard();
+      renderDayRatingHistory();
+      renderWeekOverview();
+      closeModal('modal-dayrating');
+      notify('День оценён', 'success');
+    }
+
+    function updateRateDayCard() {
+      const statusEl = $('#rateDayStatus'), metaEl = $('#rateDayMeta');
+      if(!statusEl) return;
+      const rec = state.dayRatings[todayStr()];
+      if(rec) {
+        statusEl.textContent = 'Оценён';
+        statusEl.classList.add('done');
+        const avg = Math.round(DAY_RATING_FIELDS.reduce((s,f)=>s+(rec[f.key]||0),0) / DAY_RATING_FIELDS.length);
+        if(metaEl) metaEl.textContent = `Средняя оценка: ${avg} из 10`;
+      } else {
+        statusEl.textContent = 'Не оценён';
+        statusEl.classList.remove('done');
+        if(metaEl) metaEl.textContent = 'Настроение, сон, силы и другое';
+      }
+    }
+
+    function renderDayRatingHistory() {
+      const el = $('#dayrating-history'); if(!el) return;
+      const entries = Object.values(state.dayRatings).sort((a,b)=>b.date.localeCompare(a.date)).slice(0,30);
+      if(!entries.length) { el.innerHTML = `<div class="text-muted" style="font-size:13px;text-align:center;padding:10px 0;">История пока пуста</div>`; return; }
+      el.innerHTML = entries.map(r => `
+        <div class="history-entry">
+          <div class="history-entry__date">${fmtFullDate(r.date)}</div>
+          <div class="history-chips">
+            ${DAY_RATING_FIELDS.map(f => `<span class="history-chip">${f.short}: ${r[f.key]!=null?r[f.key]:'—'}</span>`).join('')}
+          </div>
+          ${r.sleepNote ? `<div class="history-note">${esc(r.sleepNote)}</div>` : ''}
+        </div>
+      `).join('');
+    }
+
+    /* ===== COFFEE ===== */
+    let coffeeBought = false, coffeeSyrup = false, coffeeCaffeine = true;
+
+    function toggleCoffeeCard() {
+      const body = $('#coffeeBody'), chev = $('#coffeeChevron');
+      if(!body) return;
+      body.classList.toggle('open');
+      if(chev) chev.classList.toggle('open', body.classList.contains('open'));
+      if(body.classList.contains('open')) renderCoffeeToday();
+    }
+
+    function togglePill(which) {
+      if(which === 'bought') coffeeBought = !coffeeBought;
+      if(which === 'syrup') coffeeSyrup = !coffeeSyrup;
+      if(which === 'caffeine') coffeeCaffeine = !coffeeCaffeine;
+      $('#pill-bought').classList.toggle('active', coffeeBought);
+      $('#pill-syrup').classList.toggle('active', coffeeSyrup);
+      $('#pill-caffeine').classList.toggle('active', coffeeCaffeine);
+      $('#coffee-location-wrap').style.display = coffeeBought ? 'block' : 'none';
+    }
+
+    function saveCoffeeEntry() {
+      const volume = parseInt($('#coffee-volume').value) || null;
+      if(!volume) { notify('Укажите объём', 'danger'); return; }
+      const type = $('#coffee-type').value;
+      const location = coffeeBought ? ($('#coffee-location').value || '').trim() : '';
+      state.coffee.push({ id: Date.now(), date: todayStr(), time: fmtTimeNow(), volume, type, bought: coffeeBought, location, syrup: coffeeSyrup, caffeine: coffeeCaffeine });
+      save('lifeDashboard_coffee', state.coffee);
+      $('#coffee-volume').value=''; $('#coffee-location').value='';
+      coffeeBought=false; coffeeSyrup=false; coffeeCaffeine=true;
+      $('#pill-bought').classList.remove('active'); $('#pill-syrup').classList.remove('active'); $('#pill-caffeine').classList.add('active');
+      $('#coffee-location-wrap').style.display='none';
+      renderCoffeeToday();
+      renderWeekOverview();
+      notify('Кофе добавлен', 'success');
+    }
+
+    function renderCoffeeToday() {
+      const list = $('#coffee-today-list'); const meta = $('#coffeeMeta');
+      const today = todayStr();
+      const items = state.coffee.filter(c=>c.date===today);
+      if(meta) meta.textContent = items.length ? `Сегодня: ${items.length} • ${items.reduce((s,c)=>s+c.volume,0)} мл` : 'Сегодня ещё не было';
+      if(!list) return;
+      if(!items.length) { list.innerHTML = `<div class="text-muted" style="font-size:12px;text-align:center;padding:8px 0;">Сегодня ещё не было кофе</div>`; return; }
+      list.innerHTML = items.slice().reverse().map(c => `
+        <div style="display:flex;align-items:center;gap:10px;padding:8px 0;border-bottom:1px solid var(--border);">
+          <div style="flex:1;">
+            <div style="font-size:13px;font-weight:600;">${esc(c.type)} · ${c.volume} мл</div>
+            <div style="font-size:11px;color:var(--text-muted);">${c.time}${c.bought?' · куплен'+(c.location?' ('+esc(c.location)+')':''):' · дома'}${c.syrup?' · сироп':''}${!c.caffeine?' · без кофеина':''}</div>
+          </div>
+          <button class="btn btn--danger btn--icon" style="width:30px;height:30px;" onclick="event.stopPropagation(); window.removeCoffee(${c.id})">${ICON_TRASH_SM}</button>
+        </div>
+      `).join('');
+    }
+
+    function removeCoffee(id) {
+      state.coffee = state.coffee.filter(c=>c.id!==id);
+      save('lifeDashboard_coffee', state.coffee);
+      renderCoffeeToday();
+      renderWeekOverview();
+    }
+
+    /* ===== SCREEN TIME ===== */
+    function updateScreenTimeCard() {
+      const meta = $('#screenTimeMeta'); if(!meta) return;
+      const yd = yesterdayStr();
+      const mins = state.screenTime[yd];
+      meta.textContent = mins != null ? `За вчера: ${Math.floor(mins/60)}ч ${mins%60}м` : 'За вчера — не указано';
+    }
+
+    function openScreenTimeModal() {
+      const yd = yesterdayStr();
+      $('#screentime-date-label').textContent = 'За ' + fmtFullDate(yd);
+      $('#screentime-minutes').value = state.screenTime[yd] != null ? state.screenTime[yd] : '';
+      renderScreenTimeHistory();
+      openModal('modal-screentime');
+    }
+
+    function saveScreenTime() {
+      const yd = yesterdayStr();
+      const raw = $('#screentime-minutes').value;
+      if(raw === '') { notify('Введите значение', 'danger'); return; }
+      const mins = parseInt(raw);
+      state.screenTime[yd] = mins;
+      save('lifeDashboard_screentime', state.screenTime);
+      renderScreenTimeHistory();
+      updateScreenTimeCard
